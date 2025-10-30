@@ -48,6 +48,7 @@ def navbar(active: str = "Home"):
         ("Home", "/"),
         ("Encerramento", "/01_Encerramento_Disponibilidades"),
         ("LME", "/02_Analise_LME"),
+        ("MSC", "/03_Analise_MSC_Mensal"),
     ]
     html = [
         f'<a class="{"active" if label==active else ""}" href="{href}">{label}</a>'

@@ -123,15 +123,15 @@ def processar_txt(raw_text: str) -> pd.DataFrame:
 # ═══════════════════════════════════════════════════════════════
 
 tab0, tab1 = st.tabs([
-    "🔍 Análise Processo de Encerramento Disponibilidades",
-    "📊 Análise Saldos 72111 - (82114+82115)"
+    "Análise Processo de Encerramento Disponibilidades",
+    "Análise Saldos 72111 - (82114+82115)"
 ])
 
 # ============================================================================
 # TAB 0: ANÁLISE DE REGRAS
 # ============================================================================
 with tab0:
-    st.header("🔍 Análise Erros no Processo de Encerramento das Disponibilidade e Gerador de Regras de Compatibilidade")
+    st.header("Análise Erros no Processo de Encerramento das Disponibilidade e Gerador de Regras de Compatibilidade")
 
     # Seção de upload e configurações
     col1, col2, col3 = st.columns([2, 1, 1])
@@ -428,7 +428,7 @@ with tab1:
         st.info("👆 Faça upload de um arquivo CSV (extraído do Flex) para começar a análise.")
 
         st.markdown("""
-        ### 📋 Como usar:
+        ### Como usar:
         1. Acesse o **Flexvision**, depois acesse a pasta de "Outros usuários" e pesquise pelo número da Consulta: `077683`
         2. Nome da Consulta: `Diferenças entre C/C 72111 x 82114 e 82115`
         3. Gere a consulta e **exporte para CSV**
@@ -437,7 +437,7 @@ with tab1:
         6. **Filtrar (opcional)**: Se escolher filtrar, selecione a UG desejada
         7. **Exportar**: Baixe os dados filtrados em CSV ou Excel
 
-        ### 📊 Recursos:
+        ### Recursos:
 
         - Visualização completa ou filtrada por Unidade Gestora
         - Exportação em múltiplos formatos
