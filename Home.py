@@ -12,11 +12,13 @@ MENU = {
     "MSC e Ranking": [
         {"path":"pages/01_🗓️ Analise_MSC_Mensal.py", "label":"Análise MSC Mensal", "icon":"📄"},
     ],
+    "Dashboards": [
+        {"path":"pages/04_📊 Dashboard_RREO.py", "label":"Dashboard RREO", "icon":"📈"},
+    ],
     "Outras Análises": [
         {"path":"pages/02_🧮 Analise_LME.py", "label":"Análise de LME", "icon":"📊"},
         {"path":"pages/03_🧩 Encerramento_Disponibilidades.py", "label":"Encerramento/Disponibilidades", "icon":"🧮"},
     ],
-    
 }
 sidebar_menu(MENU, use_expanders=True, expanded=False)
 
@@ -28,10 +30,11 @@ st.markdown(
     """
 **Sobre o Sistema**
 
-Este hub integra três ferramentas essenciais para análise e controle contábil:
+Este hub integra ferramentas essenciais para análise e controle contábil e fiscal:
 
-- **🗓️ Análise MSC Mensal**: Validação da Matriz de Saldos Contábeis conforme normas STN  
-- **🧮 Análise de LME**: Sistema para análise de Limite de Movimentação e Empenho  
+- **🗓️ Análise MSC Mensal**: Validação da Matriz de Saldos Contábeis conforme normas STN
+- **📈 Dashboard RREO**: Visualização de demonstrativos fiscais com dados do SICONFI
+- **🧮 Análise de LME**: Sistema para análise de Limite de Movimentação e Empenho
 - **🧩 Encerramento de Disponibilidades**: Análise de erros e regras para encerramento das disponibilidades
 
 **Sistema desenvolvido pela equipe SUGESC/SUBCONT**
