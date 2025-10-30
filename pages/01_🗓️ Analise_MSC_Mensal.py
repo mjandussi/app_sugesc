@@ -6,10 +6,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import io
-from core.layout import navbar
 from core.utils import convert_df_to_excel, convert_df_to_csv
 
-#navbar(active="MSC")
 
 st.title("🗓️ Análise da Matriz de Saldos Contábeis (MSC) Mensal")
 st.markdown("---")

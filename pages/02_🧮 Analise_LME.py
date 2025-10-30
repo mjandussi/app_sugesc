@@ -8,10 +8,7 @@ import numpy as np
 import math
 import datetime as dt
 import re
-from core.layout import navbar
 from core.utils import convert_df_to_excel, formatar_reais
-
-#navbar(active="LME")
 
 st.header("🧮 Sistema para Análise de Controle de LME")
 st.markdown("---")

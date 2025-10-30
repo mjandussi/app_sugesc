@@ -6,10 +6,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import re
-from core.layout import navbar
 from core.utils import br_to_float, chunk_list, serie_6dig, convert_df_to_excel, convert_df_to_csv
 
-#navbar(active="Encerramento")
 
 st.title("🧩 Análise Para Encerramento de Disponibilidades Financeiras no SiafeRio")
 st.markdown("---")
