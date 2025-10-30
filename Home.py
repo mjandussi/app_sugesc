@@ -10,14 +10,15 @@ MENU = {
         {"path":"Home.py", "label":"Início", "icon":"🏠"},
     ],
     "MSC e Ranking": [
-        {"path":"pages/01_🗓️ Analise_MSC_Mensal.py", "label":"Análise MSC Mensal", "icon":"📄"},
+        {"path":"pages/01_🗓️ Analise_MSC_Mensal.py", "label":"Análise MSC Mensal", "icon":"🗓️"},
+        {"path":"pages/05_📑 Extratos_Homologacoes.py", "label":"Extratos de Homologações", "icon":"📑"},
     ],
     "Dashboards": [
-        {"path":"pages/04_📊 Dashboard_RREO.py", "label":"Dashboard RREO", "icon":"📈"},
+        {"path":"pages/04_📊 Dashboard_RREO.py", "label":"Dashboard RREO", "icon":"📊"},
     ],
     "Outras Análises": [
-        {"path":"pages/02_🧮 Analise_LME.py", "label":"Análise de LME", "icon":"📊"},
-        {"path":"pages/03_🧩 Encerramento_Disponibilidades.py", "label":"Encerramento/Disponibilidades", "icon":"🧮"},
+        {"path":"pages/02_🧮 Analise_LME.py", "label":"Análise de LME", "icon":"🧮"},
+        {"path":"pages/03_🧩 Encerramento_Disponibilidades.py", "label":"Encerramento_Disponibilidades", "icon":"🧩"},
     ],
 }
 sidebar_menu(MENU, use_expanders=True, expanded=False)
