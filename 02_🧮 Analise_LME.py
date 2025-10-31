@@ -26,7 +26,6 @@ MENU = {
     ],
     "Outras Análises": [
         {"path":"pages/02_🧮 Analise_LME.py", "label":"Análise de LME", "icon":"🧮"},
-        {"path":"pages/07_💾 Banco_LME.py", "label":"Banco de Dados LME", "icon":"💾"},
         {"path":"pages/03_🧩 Encerramento_Disponibilidades.py", "label":"Encerramento_Disponibilidades", "icon":"🧩"},
     ],
 }
@@ -80,7 +79,7 @@ def processar_txt_lme(conteudo, nome_arquivo=""):
         nome_arquivo: Nome do arquivo (opcional)
 
     Returns:
-        DataFrame com colunas: GRUPO DE DESPESA (=), UNIDADE ORÇAMENTÁRIA (=), AÇÃO PPA (TERMINA COM), chave, regra_completa
+        DataFrame com colunas: GRUPO DE DESPESA (=), UNIDADE ORÇAMENTÁRIA (=), AÇÃO PPA (TERMINA COM), chave
     """
     # Dividir o conteúdo por " OU " e remover parênteses e espaços extras
     grupos_condicoes = [grupo.strip()[1:-1].strip() for grupo in conteudo.split(' OU ')]
@@ -109,13 +108,6 @@ def processar_txt_lme(conteudo, nome_arquivo=""):
             df['GRUPO DE DESPESA (=)'].astype(str) +
             df['UNIDADE ORÇAMENTÁRIA (=)'].astype(str) +
             df['AÇÃO PPA (TERMINA COM)'].astype(str)
-        )
-
-        # Criar coluna regra_completa para compatibilidade com banco de dados
-        df['regra_completa'] = (
-            "[GRUPO DE DESPESA].[Código] = '" + df['GRUPO DE DESPESA (=)'].astype(str) + "' E " +
-            "[UNIDADE ORÇAMENTÁRIA].[Código] = '" + df['UNIDADE ORÇAMENTÁRIA (=)'].astype(str) + "' E " +
-            "[AÇÃO PPA].[Código] TERMINA COM '" + df['AÇÃO PPA (TERMINA COM)'].astype(str) + "'"
         )
 
     return df
