@@ -104,9 +104,11 @@ MENU = {
     "Dashboards": [
         {"path":"pages/04_📊 Dashboard_RREO.py", "label":"Dashboard RREO", "icon":"📊"},
     ],
-    "Outras Análises": [
+    "Análises LME": [
         {"path":"pages/02_🧮 Analise_LME.py", "label":"Análise de LME", "icon":"🧮"},
         {"path":"pages/07_💾 Banco_LME.py", "label":"Banco de Dados LME", "icon":"💾"},
+    ],
+    "Outras Análises": [
         {"path":"pages/03_🧩 Encerramento_Disponibilidades.py", "label":"Encerramento_Disponibilidades", "icon":"🧩"},
     ],
 }
