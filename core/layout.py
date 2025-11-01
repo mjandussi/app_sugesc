@@ -1,4 +1,5 @@
 # core/layout.py
+import os
 import streamlit as st
 
 def setup_page(page_title: str = "SICONFI DADOS", layout: str = "wide", hide_default_nav: bool = False):
@@ -19,7 +20,7 @@ def setup_page(page_title: str = "SICONFI DADOS", layout: str = "wide", hide_def
     css += "</style>"
     st.markdown(css, unsafe_allow_html=True)
 
-def sidebar_menu(structure: dict, *, use_expanders: bool = True, expanded: bool = True):
+def sidebar_menu(structure: dict, *, use_expanders: bool = True, expanded: bool = True, show_env_info: bool = True):
     """
     Desenha um menu lateral organizado por seções.
     structure = {
@@ -33,6 +34,45 @@ def sidebar_menu(structure: dict, *, use_expanders: bool = True, expanded: bool 
     }
     """
     with st.sidebar:
+        # Indicador de ambiente
+        if show_env_info:
+            db_url_env = os.environ.get("DB_URL")
+
+            # Detectar se é localhost (mesmo com variável de ambiente)
+            is_localhost = False
+            if db_url_env and ("localhost" in db_url_env or "127.0.0.1" in db_url_env):
+                is_localhost = True
+
+            # Pegar URL do secrets.toml se não tiver env
+            db_url_secrets = None
+            if not db_url_env:
+                try:
+                    if hasattr(st, "secrets") and "db_url" in st.secrets:
+                        db_url_secrets = st.secrets["db_url"]
+                        if "localhost" in db_url_secrets or "127.0.0.1" in db_url_secrets:
+                            is_localhost = True
+                except:
+                    pass
+
+            # Mostrar indicador apropriado
+            if is_localhost:
+                st.info("💻 **Desenvolvimento Local**", icon="ℹ️")
+                if st.session_state.get("show_debug", False):
+                    url = db_url_env if db_url_env else db_url_secrets
+                    if url:
+                        masked = url.split("@")[-1] if "@" in url else "???"
+                        fonte = "env DB_URL" if db_url_env else "secrets.toml"
+                        st.caption(f"🔍 {masked} ({fonte})")
+            elif db_url_env:
+                st.success("🌐 **Produção** (EasyPanel)", icon="✅")
+                if st.session_state.get("show_debug", False):
+                    masked = db_url_env.split("@")[-1] if "@" in db_url_env else "???"
+                    st.caption(f"🔍 {masked}")
+            else:
+                st.warning("⚠️ **Sem configuração de banco**", icon="⚠️")
+
+            st.divider()
+
         st.markdown("## 📚 Módulos")
         for section, links in structure.items():
             if use_expanders:

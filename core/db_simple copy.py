@@ -26,16 +26,13 @@ from sqlalchemy import create_engine, text
 #         st.error(f"Erro ao conectar com banco de dados: {e}")
 #         return None
 
-@st.cache_resource(show_spinner="Conectando ao banco de dados...")
+@st.cache_resource
 def get_engine():
     """
     Retorna a engine do PostgreSQL.
     Prioridade:
       1) Variável de ambiente DB_URL (produção/EasyPanel)
       2) st.secrets["db_url"] (desenvolvimento local com secrets.toml)
-
-    NOTA: Se você mudou o secrets.toml e o erro persiste, pressione 'C' no terminal
-    ou clique em 'Clear cache' no menu (⋮) do Streamlit para forçar reconexão.
     """
     db_url = os.environ.get("DB_URL")
 
