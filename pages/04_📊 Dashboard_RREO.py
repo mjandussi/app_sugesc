@@ -313,8 +313,9 @@ if 'rreo_1' in st.session_state:
             df_rec["conta"] = df_rec["conta"].astype("string").str.strip()
             df_rec["cod_conta"] = df_rec.get("cod_conta", df_rec["conta"]).astype("string").str.strip()
 
-            # Extrair arrecadado
-            mask_arrec_col = df_rec['coluna'].astype(str).str.upper().str.contains('BIMESTRE', na=False)
+            # Extrair arrecadado — somente colunas de receita acumulada (que terminam em "(c)")
+            coluna_norm = df_rec["coluna"].astype("string").map(normalizar_texto)
+            mask_arrec_col = coluna_norm.str.contains(r"ATE O BIMESTRE \(C\)", na=False, regex=True)
             df_rec_arrec = df_rec[mask_arrec_col].copy()
             df_rec_arrec["arrec_acum_num"] = pd.to_numeric(df_rec_arrec["valor"], errors="coerce")
 
@@ -325,7 +326,10 @@ if 'rreo_1' in st.session_state:
             )
             tem_minuscula = df_rec_arrec["conta"].str.contains(r"[a-záéíóúâêôãõç]", regex=True, na=False)
 
-            folhas_rec = df_rec_arrec[m_val & tem_minuscula & ~eh_agregador_codigo].copy()
+            # Blindagem extra: garantir que não entre nenhuma conta de despesa
+            mask_receita_conta = ~df_rec_arrec["conta"].str.contains(r"\bDESPES", case=False, na=False)
+
+            folhas_rec = df_rec_arrec[m_val & tem_minuscula & ~eh_agregador_codigo & mask_receita_conta].copy()
 
             if folhas_rec.empty:
                 st.info("Não há contas de receita detalhadas para exibir.")
