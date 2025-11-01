@@ -14,18 +14,51 @@ from sqlalchemy import create_engine, text
 # -------------------------------------------------------------------
 # Conexão (reaproveite seu secrets.toml: db_url="postgresql+psycopg2://.../lme_db")
 # -------------------------------------------------------------------
+# @st.cache_resource
+# def get_engine():
+#     """Retorna conexão do PostgreSQL (cacheia resource)."""
+#     try:
+#         if not hasattr(st, "secrets") or "db_url" not in st.secrets or not st.secrets["db_url"]:
+#             st.warning("⚠️ Configure db_url em .streamlit/secrets.toml")
+#             return None
+#         return create_engine(st.secrets["db_url"], pool_pre_ping=True, client_encoding="utf8")
+#     except Exception as e:
+#         st.error(f"Erro ao conectar com banco de dados: {e}")
+#         return None
+
 @st.cache_resource
 def get_engine():
-    """Retorna conexão do PostgreSQL (cacheia resource)."""
+    """
+    Retorna a engine do PostgreSQL.
+    Prioridade:
+      1) Variável de ambiente DB_URL (produção/EasyPanel)
+      2) st.secrets["db_url"] (desenvolvimento local com secrets.toml)
+    """
+    db_url = os.environ.get("DB_URL")
+
+    # Fallback para secrets, útil no dev local
+    if not db_url:
+        try:
+            if hasattr(st, "secrets") and "db_url" in st.secrets and st.secrets["db_url"]:
+                db_url = st.secrets["db_url"]
+        except Exception:
+            db_url = None
+
+    if not db_url:
+        st.error(
+            "Não encontrei a URL do banco. "
+            "Defina a env `DB_URL` no EasyPanel (web → Ambiente) "
+            "ou crie `.streamlit/secrets.toml` com `db_url = \"postgresql+psycopg2://...\"`."
+        )
+        return None
+
     try:
-        if not hasattr(st, "secrets") or "db_url" not in st.secrets or not st.secrets["db_url"]:
-            st.warning("⚠️ Configure db_url em .streamlit/secrets.toml")
-            return None
-        return create_engine(st.secrets["db_url"], pool_pre_ping=True, client_encoding="utf8")
+        return create_engine(db_url, pool_pre_ping=True, client_encoding="utf8")
     except Exception as e:
         st.error(f"Erro ao conectar com banco de dados: {e}")
         return None
-
+    
+    
 
 def sha256(s: str) -> str:
     """Calcula SHA256 de uma string."""
