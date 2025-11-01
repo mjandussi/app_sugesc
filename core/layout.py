@@ -56,7 +56,7 @@ def sidebar_menu(structure: dict, *, use_expanders: bool = True, expanded: bool 
 
             # Mostrar indicador apropriado
             if is_localhost:
-                st.info("💻 **Desenvolvimento Local**", icon="ℹ️")
+                st.info("**Desenvolvimento**", icon="⚠️")
                 if st.session_state.get("show_debug", False):
                     url = db_url_env if db_url_env else db_url_secrets
                     if url:
@@ -64,7 +64,7 @@ def sidebar_menu(structure: dict, *, use_expanders: bool = True, expanded: bool 
                         fonte = "env DB_URL" if db_url_env else "secrets.toml"
                         st.caption(f"🔍 {masked} ({fonte})")
             elif db_url_env:
-                st.success("🌐 **Produção** (EasyPanel)", icon="✅")
+                st.success("**Produção**", icon="🌐")
                 if st.session_state.get("show_debug", False):
                     masked = db_url_env.split("@")[-1] if "@" in db_url_env else "???"
                     st.caption(f"🔍 {masked}")
