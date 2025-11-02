@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import math
 import unicodedata
+from io import BytesIO
 from core.layout import setup_page, sidebar_menu
 
 # Configuração da página
@@ -101,6 +102,128 @@ def normalizar_texto(s: str) -> str:
     s = unicodedata.normalize("NFD", s)
     s = "".join(ch for ch in s if unicodedata.category(ch) != "Mn")
     return s.upper().strip()
+
+def gerar_excel_bytes(df: pd.DataFrame, sheet_name: str = "Dados") -> bytes:
+    """Cria um Excel em memória a partir do DataFrame informado."""
+    buf = BytesIO()
+    with pd.ExcelWriter(buf, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name=sheet_name)
+    buf.seek(0)
+    return buf.getvalue()
+
+def render_raw_dataset(
+    df_source: pd.DataFrame,
+    titulo: str,
+    key_prefix: str,
+    sheet_name: str,
+    ano: str,
+    periodo: str,
+) -> None:
+    """Mostra dados brutos com filtros e opção de download."""
+    st.markdown(f"### {titulo}")
+
+    if df_source.empty:
+        st.warning("Sem dados para este anexo.")
+        return
+
+    col_filter, conta_filter = st.columns(2)
+
+    with col_filter:
+        col_series = df_source.get("coluna", pd.Series(dtype=str))
+        opcoes_coluna = sorted(col_series.dropna().astype(str).unique())
+        filtro_coluna = st.multiselect(
+            "Filtrar coluna",
+            options=opcoes_coluna,
+            placeholder="Selecione uma ou mais colunas",
+            key=f"{key_prefix}_coluna",
+        )
+
+    with conta_filter:
+        conta_series = df_source.get("conta", pd.Series(dtype=str))
+        opcoes_conta = sorted(conta_series.dropna().astype(str).unique())
+        filtro_conta = st.multiselect(
+            "Filtrar conta",
+            options=opcoes_conta,
+            placeholder="Selecione uma ou mais contas",
+            key=f"{key_prefix}_conta",
+        )
+
+    df_view = df_source.copy()
+    if filtro_coluna:
+        df_view = df_view[df_view["coluna"].astype(str).isin(filtro_coluna)]
+    if filtro_conta:
+        df_view = df_view[df_view["conta"].astype(str).isin(filtro_conta)]
+
+    if df_view.empty:
+        st.info("Nenhum registro encontrado com os filtros selecionados.")
+    else:
+        # Selecionar apenas as 3 colunas principais
+        colunas_exibir = ["coluna", "conta", "valor"]
+        df_view_display = df_view[colunas_exibir].copy()
+
+        # Formatar valores no padrão brasileiro
+        df_view_display["valor"] = pd.to_numeric(df_view_display["valor"], errors="coerce")
+
+        # Criar DataFrame formatado para exibição
+        df_formatted = df_view_display.copy()
+        df_formatted["valor"] = df_formatted["valor"].apply(
+            lambda x: f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if pd.notna(x) else ""
+        )
+
+        st.dataframe(df_formatted, use_container_width=True, height=460)
+
+    # Para o Excel, manter todas as colunas originais
+    excel_bytes = gerar_excel_bytes(df_view, sheet_name)
+    st.download_button(
+        "⬇️ Exportar para Excel",
+        data=excel_bytes,
+        file_name=f"{key_prefix}_{ano}_{periodo}b.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        type="primary",
+    )
+
+# ═══════════════════════════════════════════════════════════════
+# Lista Oficial de Funções de Governo (Portaria STN 642)
+# ═══════════════════════════════════════════════════════════════
+
+FUNCOES_PORTARIA_642 = [
+    ("01", "Legislativa"),
+    ("02", "Judiciária"),
+    ("03", "Essencial à Justiça"),
+    ("04", "Administração"),
+    ("05", "Defesa Nacional"),
+    ("06", "Segurança Pública"),
+    ("07", "Relações Exteriores"),
+    ("08", "Assistência Social"),
+    ("09", "Previdência Social"),
+    ("10", "Saúde"),
+    ("11", "Trabalho"),
+    ("12", "Educação"),
+    ("13", "Cultura"),
+    ("14", "Direitos da Cidadania"),
+    ("15", "Urbanismo"),
+    ("16", "Habitação"),
+    ("17", "Saneamento"),
+    ("18", "Gestão Ambiental"),
+    ("19", "Ciência e Tecnologia"),
+    ("20", "Agricultura"),
+    ("21", "Organização Agrária"),
+    ("22", "Indústria"),
+    ("23", "Comércio e Serviços"),
+    ("24", "Comunicações"),
+    ("25", "Energia"),
+    ("26", "Transporte"),
+    ("27", "Desporto e Lazer"),
+    ("28", "Encargos Especiais"),
+    ("99", "Reservas"),
+]
+
+# Criar conjunto normalizado de nomes de funções para matching
+FUNCOES_PORTARIA_642_NORM = {
+    normalizar_texto(nome) for _, nome in FUNCOES_PORTARIA_642
+} | {
+    normalizar_texto(f"{codigo} - {nome}") for codigo, nome in FUNCOES_PORTARIA_642
+}
 
 # ═══════════════════════════════════════════════════════════════
 # Interface - Configuração
@@ -520,39 +643,27 @@ if 'rreo_1' in st.session_state:
 
                 st.plotly_chart(fig_topD, use_container_width=True)
 
+
+
     # ═══════════════════════════════════════════════════════════════
-    # TAB RREO 2 - Despesa por Função
+    # TAB RREO 2 - Despesa por Função (Portaria STN 642)
     # ═══════════════════════════════════════════════════════════════
     with tab_rreo02:
         if df_rreo_2.empty:
             st.warning("⚠️ Não há dados do RREO Anexo 02.")
         else:
             st.subheader("Despesa por Função de Governo")
+            st.caption("📋 Análise baseada nas 29 funções oficiais da Portaria STN 642/2023")
 
-            # No RREO 2, as FUNÇÕES têm padrões específicos:
-            # - Começam com "FU" (ex: "FU01 - Administração Geral")
-            # - Ou são palavras únicas (ex: "Legislativa", "Judiciária")
-            # - NÃO têm prefixos como "Ação", "Demais", etc (essas são subfunções)
-
+            # Filtrar apenas as funções oficiais da Portaria STN 642
             df_funcoes_raw = df_rreo_2.copy()
+            df_funcoes_raw["conta"] = df_funcoes_raw["conta"].astype("string").str.strip()
+            df_funcoes_raw["conta_norm"] = df_funcoes_raw["conta"].map(normalizar_texto)
 
-            # Remover totalizadores
-            conta_str = df_funcoes_raw["conta"].astype(str)
-            conta_upper = conta_str.str.upper()
-
-            # Banir agregadores e subfunções
-            ban_mask = (
-                conta_upper.str.contains('DESPESAS', na=False) |
-                conta_upper.str.contains('TOTAL', na=False) |
-                conta_upper.str.contains('SUBTOTAL', na=False) |
-                conta_upper.str.contains('INTRA', na=False) |
-                conta_upper.str.contains('RESERVA', na=False) |
-                conta_str.str.startswith('Ação ', na=False) |
-                conta_str.str.startswith('Demais ', na=False) |
-                conta_str.str.startswith('Essencial ', na=False)
-            )
-
-            df_funcoes = df_funcoes_raw[~ban_mask].copy()
+            # Aplicar filtro: apenas contas que batem com a Portaria 642
+            mask_funcoes = df_funcoes_raw["conta_norm"].isin(FUNCOES_PORTARIA_642_NORM)
+            df_funcoes = df_funcoes_raw[mask_funcoes].copy()
+            df_funcoes.drop(columns="conta_norm", inplace=True)
 
             if not df_funcoes.empty and 'coluna' in df_funcoes.columns:
                 funcoes_agrupadas = []
@@ -647,23 +758,25 @@ if 'rreo_1' in st.session_state:
     with tab_dados:
         st.subheader("📋 Dados Brutos do SICONFI")
 
-        col1, col2 = st.columns(2)
+        render_raw_dataset(
+            df_rreo_1,
+            "RREO Anexo 01 - Balanço Orçamentário",
+            "rreo1",
+            "RREO1",
+            ano_sel,
+            periodo_sel,
+        )
 
-        with col1:
-            st.write("**RREO Anexo 01 - Balanço Orçamentário**")
-            if not df_rreo_1.empty:
-                st.info(f"Total de registros: {len(df_rreo_1):,}")
-                st.dataframe(df_rreo_1.head(50), use_container_width=True, height=400)
-            else:
-                st.warning("Sem dados")
+        st.divider()
 
-        with col2:
-            st.write("**RREO Anexo 02 - Despesa por Função**")
-            if not df_rreo_2.empty:
-                st.info(f"Total de registros: {len(df_rreo_2):,}")
-                st.dataframe(df_rreo_2.head(50), use_container_width=True, height=400)
-            else:
-                st.warning("Sem dados")
+        render_raw_dataset(
+            df_rreo_2,
+            "RREO Anexo 02 - Despesa por Função",
+            "rreo2",
+            "RREO2",
+            ano_sel,
+            periodo_sel,
+        )
 
 else:
     st.info("👆 Configure os parâmetros e clique em **Buscar Dados** para iniciar.")

@@ -91,7 +91,7 @@ with abas[0]:
     5. Faça o **upload do arquivo CSV** abaixo
     """)
 
-    uploaded_file = st.file_uploader("📁 Carregar arquivo CSV de análise de contas", type=['csv'], key="uploaded_file_saldos")
+    uploaded_file = st.file_uploader("📁 Carregar arquivo CSV com os Saldos das Contas", type=['csv'], key="uploaded_file_saldos")
 
     if uploaded_file is not None:
         df, erro = processar_csv_principal(uploaded_file)
@@ -524,10 +524,11 @@ with abas[1]:
 
     st.markdown("""
     ### Instruções:
-    1. Acesse o **Flexvision** e gere a consulta de **Rolagem de Trimestre**
-    2. Exporte o resultado para **CSV**
-    3. Faça o upload do arquivo abaixo
-    4. O sistema verificará se os saldos estão no trimestre correto
+    1. Acesse o **Flexvision**, depois acesse a pasta de "Outros usuários" e pesquise pelo número da Consulta: `077656`
+    2. Local da consula no Flex (diretório): `MARCELO JANDUSSI / Rolagem de Trimestre` (OBS: ou copie a consulta para sua pasta e utilize de lá para gerar o CSV!)
+    3. Nome da Consulta: `Analise Rolagem de Trimestre` 
+    4. Gere a consulta **por UG** e **exporte para CSV**
+    5. Faça o **upload do arquivo CSV** abaixo
     """)
 
     uploaded_tri = st.file_uploader(
