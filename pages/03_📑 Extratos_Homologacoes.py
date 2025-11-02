@@ -29,7 +29,10 @@ MENU = {
         {"path":"pages/06_🧮 LME_Analise_TXT.py", "label":"Análise dos TXT de LME", "icon":"🧮"},
     ],
     "Outras Análises": [
-        {"path":"pages/07_🧩 Encerramento_Disponibilidades.py", "label":"Encerramento_Disponibilidades", "icon":"🧩"},
+        {"path":"pages/07_🧩 Encerramento_Disponibilidades.py", "label":"Encerramento de Disponibilidades Financeiras", "icon":"🧩"},
+    ],
+    "Manuais": [
+        {"path":"pages/08_🏦 Manual_Encerramento_Exercicio.py", "label":"Manual Encerramento do Exercício", "icon":"🏦"},
     ],
 }
 sidebar_menu(MENU, use_expanders=True, expanded=False)
