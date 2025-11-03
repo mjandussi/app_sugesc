@@ -46,7 +46,7 @@ MENU = {
         {"path":"pages/07_🧩 Encerramento_Disponibilidades.py", "label":"Encerramento de Disponibilidades Financeiras", "icon":"🧩"},
     ],
     "Manuais": [
-        {"path":"pages/08_🏦 Manual_Encerramento_Exercicio.py", "label":"Manual Encerramento do Exercício", "icon":"🏦"},
+        {"path":"pages/08_🏦 Manuais_SUGESC.py", "label":"Manuais SUGESC (SUBCONT)", "icon":"🏦"},
     ],
 }
 sidebar_menu(MENU, use_expanders=True, expanded=False)
@@ -587,5 +587,10 @@ with abas[1]:
                 )
 
 
+# Rodapé
 st.markdown("---")
-st.caption("Sistema de Conferências de Saldos de LME | SUGESC/SUBCONT")
+st.markdown(f"""
+<div style='text-align: center; color: #666;'>
+    <small>APP SUGESC — Hub Central de Análises | Desenvolvido pela equipe CISSC/SUGESC/SUBCONT | © {pd.Timestamp.today().year}</small>
+</div>
+""", unsafe_allow_html=True)

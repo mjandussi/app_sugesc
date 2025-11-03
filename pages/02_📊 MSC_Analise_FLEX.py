@@ -33,7 +33,7 @@ MENU = {
         {"path":"pages/07_🧩 Encerramento_Disponibilidades.py", "label":"Encerramento de Disponibilidades Financeiras", "icon":"🧩"},
     ],
     "Manuais": [
-        {"path":"pages/08_🏦 Manual_Encerramento_Exercicio.py", "label":"Manual Encerramento do Exercício", "icon":"🏦"},
+        {"path":"pages/08_🏦 Manuais_SUGESC.py", "label":"Manuais SUGESC (SUBCONT)", "icon":"🏦"},
     ],
 }
 sidebar_menu(MENU, use_expanders=True, expanded=False)
@@ -593,3 +593,12 @@ if 'relacao_final' in st.session_state:
                           f"item5_msc_flex_{mes}_{ano}.xlsx",
                           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                           key="download_item5")
+
+
+# Rodapé
+st.markdown("---")
+st.markdown(f"""
+<div style='text-align: center; color: #666;'>
+    <small>APP SUGESC — Hub Central de Análises | Desenvolvido pela equipe CISSC/SUGESC/SUBCONT | © {pd.Timestamp.today().year}</small>
+</div>
+""", unsafe_allow_html=True)

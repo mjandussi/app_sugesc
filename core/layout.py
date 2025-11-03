@@ -54,24 +54,24 @@ def sidebar_menu(structure: dict, *, use_expanders: bool = True, expanded: bool 
                 except:
                     pass
 
-            # Mostrar indicador apropriado
-            if is_localhost:
-                st.info("**Desenvolvimento**", icon="⚠️")
-                if st.session_state.get("show_debug", False):
-                    url = db_url_env if db_url_env else db_url_secrets
-                    if url:
-                        masked = url.split("@")[-1] if "@" in url else "???"
-                        fonte = "env DB_URL" if db_url_env else "secrets.toml"
-                        st.caption(f"🔍 {masked} ({fonte})")
-            elif db_url_env:
-                st.success("**Produção**", icon="🌐")
-                if st.session_state.get("show_debug", False):
-                    masked = db_url_env.split("@")[-1] if "@" in db_url_env else "???"
-                    st.caption(f"🔍 {masked}")
-            else:
-                st.warning("⚠️ **Sem configuração de banco**", icon="⚠️")
+            # # Mostrar indicador apropriado
+            # if is_localhost:
+            #     st.info("**Desenvolvimento**", icon="⚠️")
+            #     if st.session_state.get("show_debug", False):
+            #         url = db_url_env if db_url_env else db_url_secrets
+            #         if url:
+            #             masked = url.split("@")[-1] if "@" in url else "???"
+            #             fonte = "env DB_URL" if db_url_env else "secrets.toml"
+            #             st.caption(f"🔍 {masked} ({fonte})")
+            # elif db_url_env:
+            #     st.success("**Produção**", icon="🌐")
+            #     if st.session_state.get("show_debug", False):
+            #         masked = db_url_env.split("@")[-1] if "@" in db_url_env else "???"
+            #         st.caption(f"🔍 {masked}")
+            # else:
+            #     st.warning("⚠️ **Sem configuração de banco**", icon="⚠️")
 
-            st.divider()
+            # st.divider()
 
         st.markdown("## 📚 Módulos")
         for section, links in structure.items():

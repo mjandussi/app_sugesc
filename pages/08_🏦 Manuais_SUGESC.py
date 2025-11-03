@@ -8,9 +8,10 @@ from pathlib import Path
 import re
 from datetime import datetime
 from core.layout import setup_page, sidebar_menu
+import pandas as pd
 
 # Configuração da página
-setup_page(page_title="Manuais de Procedimentos", layout="wide", hide_default_nav=True)
+setup_page(page_title="Manuais da SUGESC (SUBCONT)", layout="wide", hide_default_nav=True)
 
 # Menu lateral estruturado
 MENU = {
@@ -33,7 +34,7 @@ MENU = {
         {"path":"pages/07_🧩 Encerramento_Disponibilidades.py", "label":"Encerramento de Disponibilidades Financeiras", "icon":"🧩"},
     ],
     "Manuais": [
-        {"path":"pages/08_🏦 Manual_Encerramento_Exercicio.py", "label":"Manual Encerramento do Exercício", "icon":"🏦"},
+        {"path":"pages/08_🏦 Manuais_SUGESC.py", "label":"Manuais SUGESC (SUBCONT)", "icon":"🏦"},
     ],
 }
 sidebar_menu(MENU, use_expanders=True, expanded=False)
@@ -155,7 +156,7 @@ def split_subsections(content):
 # Interface Principal
 # ═══════════════════════════════════════════════════════════════
 
-st.title("📚 Manuais de Procedimentos")
+st.title("🏦 Manuais da SUGESC (SUBCONT)")
 st.markdown("Documentação técnica e guias de procedimentos do sistema")
 st.markdown("---")
 
@@ -201,7 +202,7 @@ if manual_selecionado:
     st.markdown("---")
 
     # Informações do manual
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3 = st.columns([70, 10, 20])
     with col1:
         st.metric("📄 Arquivo", manual_selecionado.name)
     with col2:
@@ -274,4 +275,8 @@ if manual_selecionado:
 
 # Rodapé
 st.markdown("---")
-st.caption(f"Sistema de Manuais de Procedimentos | SUGESC/SUBCONT | © {CURRENT_YEAR}")
+st.markdown(f"""
+<div style='text-align: center; color: #666;'>
+    <small>APP SUGESC — Hub Central de Análises | Desenvolvido pela equipe CISSC/SUGESC/SUBCONT | © {pd.Timestamp.today().year}</small>
+</div>
+""", unsafe_allow_html=True)
