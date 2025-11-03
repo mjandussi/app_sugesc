@@ -15,21 +15,51 @@ st.caption("Use o menu lateral para navegar ou clique nos atalhos abaixo.")
 st.divider()
 st.markdown(
     """
-**Sobre o Sistema**
+<style>
+.home-sections { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: 1rem; }
+.home-section { flex: 1 1 280px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 12px; padding: 1.1rem 1.3rem; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); }
+.home-section h4 { margin: 0 0 0.6rem 0; font-weight: 700; font-size: 1rem; }
+.home-section ul { margin: 0; padding-left: 1.1rem; }
+.home-section li { margin-bottom: 0.35rem; line-height: 1.45; }
+.home-section li:last-child { margin-bottom: 0; }
+</style>
 
-Este hub integra ferramentas essenciais para análise e controle contábil e fiscal:
+**Sobre o Aplicativo**
 
-- **🗓️ Análise MSC Mensal**: Validação da Matriz de Saldos Contábeis conforme normativos da STN.
-- **📊 Análise MSC x FLEX**: Conciliação entre a MSC e os demonstrativos FLEX para identificar divergências.
-- **📑 Extratos de Homologações**: Consulta centralizada aos extratos emitidos pela STN.
-- **⚖️ Análise Novas Dimensões**: Consulta para verificar em relação as Novas Dimensões Criadas, quais foram os melhores e piores Estados.
-- **📈 Dashboard RREO**: Visualização dos demonstrativos fiscais do SICONFI com filtros interativos.
-- **📊 Conferência de Saldos de LME**: Análises automáticas dos saldos informados nos relatórios de LME.
-- **🧮 Análise dos TXT de LME**: Tratamento dos arquivos TXT de LME para detectar inconsistências.
-- **🧩 Encerramento de Disponibilidades**: Regras e verificações para o fechamento das disponibilidades financeiras.
-- **🏦 Manual Encerramento do Exercício**: Documentação e orientações para o encerramento contábil anual.
-
-"""
+<div class="home-sections">
+  <div class="home-section">
+    <h4>🏆 MSC e Ranking</h4>
+    <ul>
+      <li><strong>🗓️ Análise MSC Mensal</strong>: Validação da Matriz de Saldos Contábeis conforme as Dimensões D1 do ranking SICONFI.</li>
+      <li><strong>📊 Análise MSC x FLEX</strong>: Conciliação entre a MSC e alguns relatórios do FLEX para identificar possíveis divergências de dados.</li>
+      <li><strong>📑 Extratos de Homologações</strong>: Consulta sobre os demonstrativos homologados no portal do SICONFI.</li>
+      <li><strong>⚖️ Análise Novas Dimensões</strong>: Comparação do desempenho dos estados em relação às novas verificações do Ranking Siconfi.</li>
+    </ul>
+  </div>
+  <div class="home-section">
+    <h4>📊 Dashboards</h4>
+    <ul>
+      <li><strong>📈 Dashboard RREO</strong>: Visualização dos demonstrativos fiscais do SICONFI com filtros interativos.</li>
+    </ul>
+    <h4 style="margin-top:1.1rem;">🧮 Análises LME</h4>
+    <ul>
+      <li><strong>📊 Conferência de Saldos de LME</strong>: Análises dos saldos e integridade do Controle de LME.</li>
+      <li><strong>🧮 Análise dos TXT de LME</strong>: Tratamento dos arquivos TXT de LME para detectar diferenças após mudanças na Regra de LME.</li>
+    </ul>
+  </div>
+  <div class="home-section">
+    <h4>🧩 Outras Análises</h4>
+    <ul>
+      <li><strong>🧩 Encerramento de Disponibilidades</strong>: Regras e verificações para processar o encerramento das disponibilidades financeiras por fonte.</li>
+    </ul>
+    <h4 style="margin-top:1.1rem;">🏦 Manuais</h4>
+    <ul>
+      <li><strong>🏦 Manuais SUGESC</strong>: Visualização dos Manuais da Superintendência de Gerenciamento dos Sistemas Contábeis (SUGESC) .</li>
+    </ul>
+  </div>
+</div>
+""",
+    unsafe_allow_html=True,
 )
 
 # Rodapé
