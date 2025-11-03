@@ -7,37 +7,14 @@ import streamlit as st
 from pathlib import Path
 import re
 from datetime import datetime
-from core.layout import setup_page, sidebar_menu
+from core.layout import setup_page, sidebar_menu, get_app_menu
 import pandas as pd
 
 # Configuração da página
 setup_page(page_title="Manuais da SUGESC (SUBCONT)", layout="wide", hide_default_nav=True)
 
 # Menu lateral estruturado
-MENU = {
-    "Home": [
-        {"path":"Home.py", "label":"Início", "icon":"🏠"},
-    ],
-    "MSC e Ranking": [
-        {"path":"pages/01_🗓️ MSC_Analise_Mensal.py", "label":"Análise MSC Mensal", "icon":"🗓️"},
-        {"path":"pages/02_📊 MSC_Analise_FLEX.py", "label":"Análise MSC x FLEX", "icon":"📊"},
-        {"path":"pages/03_📑 Extratos_Homologacoes.py", "label":"Extratos de Homologações", "icon":"📑"},
-    ],
-    "Dashboards": [
-        {"path":"pages/04_📊 Dashboard_RREO.py", "label":"Dashboard RREO", "icon":"📊"},
-    ],
-    "Análises LME": [
-        {"path":"pages/05_📊 LME_Conferencias_Saldos.py", "label":"Conferência de Saldos de LME", "icon":"📊"},
-        {"path":"pages/06_🧮 LME_Analise_TXT.py", "label":"Análise dos TXT de LME", "icon":"🧮"},
-    ],
-    "Outras Análises": [
-        {"path":"pages/07_🧩 Encerramento_Disponibilidades.py", "label":"Encerramento de Disponibilidades Financeiras", "icon":"🧩"},
-    ],
-    "Manuais": [
-        {"path":"pages/08_🏦 Manuais_SUGESC.py", "label":"Manuais SUGESC (SUBCONT)", "icon":"🏦"},
-    ],
-}
-sidebar_menu(MENU, use_expanders=True, expanded=False)
+sidebar_menu(get_app_menu(), use_expanders=True, expanded=False)
 
 # ═══════════════════════════════════════════════════════════════
 # Configurações e Utilitários
