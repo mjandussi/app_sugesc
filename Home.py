@@ -51,7 +51,6 @@ Este hub integra ferramentas essenciais para análise e controle contábil e fis
 - **🧩 Encerramento de Disponibilidades**: Regras e verificações para o fechamento das disponibilidades financeiras.
 - **🏦 Manual Encerramento do Exercício**: Documentação e orientações para o encerramento contábil anual.
 
-**Sistema desenvolvido pela equipe SUGESC/SUBCONT**
 """
 )
 
