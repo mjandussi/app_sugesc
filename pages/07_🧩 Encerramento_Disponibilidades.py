@@ -6,7 +6,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import re
-from core.utils import br_to_float, chunk_list, serie_6dig, convert_df_to_excel, convert_df_to_csv
+from core.utils import br_to_float, chunk_list, serie_6dig, convert_df_to_excel, convert_df_to_csv, convert_df_to_csv_com_zfill
 from core.layout import setup_page, sidebar_menu, get_app_menu
 
 # Configuração da página
@@ -54,7 +54,7 @@ def montar_regras_por_ug(df: pd.DataFrame, max_terms_por_expressao: int = 80) ->
                 "ano_fonte": int(ano),
                 "tipo_deta": int(tipo),
                 "FONTE": fonte,
-                "detalhame": len(dets),
+                "quantidade_detalhamentos": len(dets),
                 "parte": parte,
                 "expressao": regra,
             })
@@ -150,12 +150,12 @@ with tab0:
 
     with col2:
         max_terms = st.number_input(
-            "Máximo de termos por expressão",
-            min_value=20,
-            max_value=200,
-            value=80,
-            step=10,
-            help="Quantidade máxima de detalhamentos por regra"
+            "Termos por expressão - mín 100 / máx 400",
+            min_value=100,
+            max_value=400,
+            value=200,
+            step=20,
+            help="Quantidade de detalhamentos por regra fora do intervalo"
         )
 
     with col3:
@@ -224,23 +224,18 @@ with tab0:
 
             st.dataframe(df_filtered, use_container_width=True, height=400)
 
-            col1, col2 = st.columns(2)
-            with col1:
-                csv_encerr = convert_df_to_csv(df_filtered)
-                st.download_button(
-                    label="📥 Download CSV",
-                    data=csv_encerr,
-                    file_name="df_encerr.csv",
-                    mime="text/csv"
-                )
-            with col2:
-                excel_encerr = convert_df_to_excel(df_filtered)
-                st.download_button(
-                    label="📥 Download Excel",
-                    data=excel_encerr,
-                    file_name="df_encerr.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
+
+            # Exportar Tabela Filtrada
+            csv_encerr = convert_df_to_csv_com_zfill(
+                df_filtered,
+                zfill_map={"ug": 6, "FONTE": 6, "detalhamento": 6}
+            )
+            st.download_button(
+                label="📥 Download CSV",
+                data=csv_encerr,
+                file_name="df_encerr.csv",
+                mime="text/csv"
+            )
 
         st.markdown("---")
         st.header("🎯 Regras Geradas")
@@ -262,27 +257,19 @@ with tab0:
         st.dataframe(df_regras, use_container_width=True, height=500)
 
         st.markdown("### 📥 Exportar Regras")
-        col1, col2 = st.columns(2)
 
-        with col1:
-            csv_regras = convert_df_to_csv(df_regras)
-            st.download_button(
-                label="📥 Download CSV",
-                data=csv_regras,
-                file_name="df_regras.csv",
-                mime="text/csv",
-                type="primary"
-            )
-
-        with col2:
-            excel_regras = convert_df_to_excel(df_regras)
-            st.download_button(
-                label="📥 Download Excel",
-                data=excel_regras,
-                file_name="df_regras.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                type="primary"
-            )
+        # Exportar as Regras de Compatibilidade em CSV (com padding de zeros)
+        csv_regras = convert_df_to_csv_com_zfill(
+            df_regras,
+            zfill_map={"ug": 6, "FONTE": 6, "detalhamento": 6}
+        )
+        st.download_button(
+            label="📥 Download CSV",
+            data=csv_regras,
+            file_name="df_regras.csv",
+            mime="text/csv",
+            type="primary"
+        )
 
         with st.expander("🔍 Ver Detalhes de uma Regra Específica"):
             regra_idx = st.number_input(
@@ -298,7 +285,7 @@ with tab0:
                 st.write("**Ano Fonte:**", regra['ano_fonte'])
                 st.write("**Tipo Detalhamento:**", regra['tipo_deta'])
                 st.write("**Fonte:**", regra['FONTE'])
-                st.write("**Quantidade de Detalhamentos:**", regra['detalhame'])
+                st.write("**Quantidade de Detalhamentos:**", regra['quantidade_detalhamentos'])
                 st.write("**Parte:**", regra['parte'])
                 st.write("**Expressão:**")
                 st.code(regra['expressao'], language="text")
