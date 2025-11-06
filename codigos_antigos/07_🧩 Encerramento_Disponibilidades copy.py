@@ -21,17 +21,7 @@ st.markdown("---")
 # ═══════════════════════════════════════════════════════════════
 
 
-def _iterar_pedacos(dets: list[str], max_terms: int | None):
-    """Gera pedaços de detalhamentos respeitando o limite máximo, se definido."""
-    if not dets:
-        return
-    if max_terms is None or max_terms <= 0:
-        yield dets
-        return
-    yield from chunk_list(dets, max_terms)
-
-
-def montar_regras_por_ug(df: pd.DataFrame, max_terms_por_expressao: int | None = None) -> pd.DataFrame:
+def montar_regras_por_ug(df: pd.DataFrame, max_terms_por_expressao: int = 80) -> pd.DataFrame:
     """Gera regras básicas por ano/fonte a partir do DataFrame processado."""
     regras = []
     gcols = ["ano_fonte", "FONTE_STN"]
@@ -46,7 +36,7 @@ def montar_regras_por_ug(df: pd.DataFrame, max_terms_por_expressao: int | None =
         dets = sorted(dfg["detalhamento"].dropna().astype(str).unique().tolist())
         if not dets:
             continue
-        for parte, pedaco in enumerate(_iterar_pedacos(dets, max_terms_por_expressao), start=1):
+        for parte, pedaco in enumerate(chunk_list(dets, max_terms_por_expressao), start=1):
             det_join = ",".join(pedaco)
             regra = (
                 f"[IDENTIFICADOR EXERCÍCIO FONTE].[CÓDIGO] = {int(ano)} "
@@ -71,7 +61,7 @@ def montar_regras_por_ug(df: pd.DataFrame, max_terms_por_expressao: int | None =
 
 def combinar_regras_com_limite(df_regras: pd.DataFrame, max_chars_por_regra: int = 3500) -> pd.DataFrame:
     """
-    Agrupa regras por ano/fonte, unindo-as com 'OU' e quebrando em partes
+    Agrupa regras por ano da fonte, unindo-as com 'OU' e quebrando em partes
     quando o tamanho excede max_chars_por_regra.
     """
 
@@ -79,27 +69,28 @@ def combinar_regras_com_limite(df_regras: pd.DataFrame, max_chars_por_regra: int
         return pd.DataFrame(columns=["ano_fonte", "FONTE_STN", "parte", "tamanho", "expressao_combinada"])
 
     saidas = []
-    for (ano, fonte), grupo in df_regras.groupby(["ano_fonte", "FONTE_STN"], dropna=False):
+    for ano, grupo in df_regras.groupby(["ano_fonte"], dropna=False):
         exprs = grupo["expressao"].astype(str).tolist()
-        parte, buffer = 1, []
+        fontes = grupo["FONTE_STN"].astype(str).tolist()
+        parte, buffer, fts = 1, [], []
 
         def fecha():
-            nonlocal parte, buffer
+            nonlocal parte, buffer, fts
             if not buffer:
                 return
             ou_txt = " OU ".join(f"({e})" for e in buffer)
             regra_final = f"({ou_txt})"
             saidas.append({
                 "ano_fonte": ano,
-                "FONTE_STN": str(fonte),
+                "FONTE_STN": ", ".join(sorted(set(fts))),
                 "parte": parte,
                 "tamanho": len(regra_final),
                 "expressao_combinada": regra_final
             })
             parte += 1
-            buffer = []
+            buffer, fts = [], []
 
-        for expr in exprs:
+        for expr, fonte in zip(exprs, fontes):
             temp = buffer + [expr]
             teste = f"({' OU '.join(f'({x})' for x in temp)})"
             if buffer and len(teste) > max_chars_por_regra:
@@ -107,18 +98,19 @@ def combinar_regras_com_limite(df_regras: pd.DataFrame, max_chars_por_regra: int
                 temp = [expr]
                 teste = f"({' OU '.join(f'({x})' for x in temp)})"
             buffer.append(expr)
+            fts.append(fonte)
             if len(teste) > max_chars_por_regra:
                 fecha()
         fecha()
 
-    return pd.DataFrame(saidas).sort_values(["ano_fonte", "FONTE_STN", "parte"]).reset_index(drop=True)
+    return pd.DataFrame(saidas).sort_values(["ano_fonte", "parte"]).reset_index(drop=True)
 
 
-def gerar_regras(df_negativos: pd.DataFrame, max_chars: int) -> pd.DataFrame:
+def gerar_regras(df_negativos: pd.DataFrame, max_terms: int, max_chars: int) -> pd.DataFrame:
     """Gera o DataFrame final de regras a partir dos detalhamentos negativos."""
     if df_negativos.empty:
         return pd.DataFrame()
-    df_regras = montar_regras_por_ug(df_negativos)
+    df_regras = montar_regras_por_ug(df_negativos, max_terms_por_expressao=max_terms)
     if df_regras.empty:
         return pd.DataFrame()
     df_final = combinar_regras_com_limite(df_regras, max_chars_por_regra=max_chars)
@@ -244,10 +236,12 @@ def processar_csv_disponibilidade(arquivo: bytes | str) -> tuple[pd.DataFrame, p
 # Interface Streamlit
 # ═══════════════════════════════════════════════════════════════
 
-col1, col2 = st.columns([3, 1])
+col1, col2, col3 = st.columns([2, 1, 1])
 with col1:
     uploaded_file = st.file_uploader("📁 Carregar arquivo CSV", type=["csv"])
 with col2:
+    max_terms = st.number_input("Detalhamentos por regra", 50, 400, 200, 10)
+with col3:
     max_chars = st.number_input("Limite de caracteres por expressão", 1000, 8000, 3500, 500)
 
 st.markdown("---")
@@ -258,8 +252,8 @@ if uploaded_file is not None:
         try:
             df_negativos_82115, df_negativos_82114 = processar_csv_disponibilidade(arquivo)
             st.session_state.pop("df_final", None)
-            regras_82115 = gerar_regras(df_negativos_82115, max_chars)
-            regras_82114 = gerar_regras(df_negativos_82114, max_chars)
+            regras_82115 = gerar_regras(df_negativos_82115, max_terms, max_chars)
+            regras_82114 = gerar_regras(df_negativos_82114, max_terms, max_chars)
 
             st.session_state["regras_82115"] = regras_82115
             st.session_state["regras_82114"] = regras_82114
