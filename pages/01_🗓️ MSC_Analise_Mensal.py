@@ -231,6 +231,52 @@ def dimensao_d1_00019(df_original, po_stn):
     return resultado, d1_00019_erros
 
 
+def dimensao_d1_00020(df_mes_atual, df_mes_anterior=None):
+    """
+    D1_00020: Verifica se SI do mês atual = SF do mês anterior.
+
+    Args:
+        df_mes_atual: DataFrame do mês atual
+        df_mes_anterior: DataFrame do mês anterior (opcional)
+
+    Returns:
+        Tuple (resultado, DataFrame com divergências)
+    """
+    if df_mes_anterior is None:
+        resultado = 'N/A'
+        df_divergencias = pd.DataFrame()
+        return resultado, df_divergencias
+
+    # Processar mês anterior: SF (ending_balance)
+    sf_anterior = df_mes_anterior[df_mes_anterior['TIPO_VALOR'] == 'ending_balance'].copy()
+    sf_anterior = sf_anterior.groupby(['CONTA'])['VALOR'].sum().reset_index()
+    sf_anterior = sf_anterior.rename(columns={'VALOR': 'SF_MES_ANTERIOR'})
+
+    # Processar mês atual: SI (beginning_balance)
+    si_atual = df_mes_atual[df_mes_atual['TIPO_VALOR'] == 'beginning_balance'].copy()
+    si_atual = si_atual.groupby(['CONTA'])['VALOR'].sum().reset_index()
+    si_atual = si_atual.rename(columns={'VALOR': 'SI_MES_ATUAL'})
+
+    # Merge e comparar
+    comparacao = sf_anterior.merge(si_atual, on='CONTA', how='outer', indicator=True)
+    comparacao['SF_MES_ANTERIOR'] = comparacao['SF_MES_ANTERIOR'].fillna(0)
+    comparacao['SI_MES_ATUAL'] = comparacao['SI_MES_ATUAL'].fillna(0)
+    comparacao['DIF'] = comparacao['SF_MES_ANTERIOR'] - comparacao['SI_MES_ATUAL']
+
+    # Tolerância
+    limite_zero = 1e-2
+    filtro_divergencias = (comparacao['DIF'].abs() > limite_zero)
+    df_divergencias = comparacao[filtro_divergencias].copy()
+
+    if len(df_divergencias) > 0:
+        resultado = 'ERRO'
+    else:
+        resultado = 'OK'
+
+    return resultado, df_divergencias
+
+
+
 def dimensao_d1_00021(df_base, pc_estendido):
     """
     D1_00021: Verifica contas dos grupos 1111, 1121, 1125, 1231, 1232
@@ -293,6 +339,87 @@ def dimensao_d1_00022(df_base):
         df_erros = pd.DataFrame()
 
     return resultado, df_erros
+
+
+
+def _analisar_repeticao_por_poder(df_mes_atual, df_mes_anterior, codigos_poder):
+    """
+    Compara os totais por Grupo de Contas entre dois meses e identifica valores idênticos.
+    Retorna ('ERRO', df) quando algum grupo repetir exatamente o mesmo valor em meses consecutivos.
+    """
+    if df_mes_anterior is None or df_mes_atual is None:
+        return 'N/A', pd.DataFrame()
+
+    agregados = []
+    for df in (df_mes_anterior, df_mes_atual):
+        subset = df[df['IC1'].isin(codigos_poder)].copy()
+        if subset.empty:
+            continue
+        if 'Grupo_Contas' not in subset.columns:
+            subset['Grupo_Contas'] = subset['CONTA'].astype(str).str[0]
+        subset['mes'] = subset['mes'].astype(str).str.zfill(2)
+        subset['mes_int'] = subset['mes'].astype(int)
+        grupo = subset.groupby(['Grupo_Contas', 'mes', 'mes_int'])['VALOR'].sum().reset_index()
+        agregados.append(grupo)
+
+    if len(agregados) < 2:
+        return 'OK', pd.DataFrame()
+
+    analise = pd.concat(agregados, ignore_index=True)
+    analise = analise.sort_values(['Grupo_Contas', 'mes_int'])
+    analise['diferenca'] = analise.groupby('Grupo_Contas')['VALOR'].diff()
+
+    df_erros = analise[analise['diferenca'] == 0].copy()
+    df_erros = df_erros.rename(columns={
+        'Grupo_Contas': 'Grupo de Contas',
+        'mes': 'Mês',
+        'VALOR': 'Valor'
+    })
+    df_erros = df_erros[['Grupo de Contas', 'Mês', 'Valor']]
+
+    resultado = 'ERRO' if not df_erros.empty else 'OK'
+    return resultado, df_erros
+
+
+def dimensao_d1_00023(df_mes_atual, df_mes_anterior=None):
+    """
+    D1_00023: Verifica se dados do Executivo (10111, 10112) estão repetidos entre meses.
+
+    Args:
+        df_mes_atual: DataFrame do mês atual (com saldos invertidos)
+        df_mes_anterior: DataFrame do mês anterior (com saldos invertidos, opcional)
+
+    Returns:
+        Tuple (resultado, DataFrame com erros)
+    """
+    if df_mes_anterior is None:
+        resultado = 'N/A'
+        df_erros = pd.DataFrame()
+        return resultado, df_erros
+
+    codigos_executivo = ['10111', '10112']
+    return _analisar_repeticao_por_poder(df_mes_atual, df_mes_anterior, codigos_executivo)
+
+
+def dimensao_d1_00024(df_mes_atual, df_mes_anterior=None):
+    """
+    D1_00024: Verifica se dados do Legislativo (20211, 20212) estão repetidos entre meses.
+
+    Args:
+        df_mes_atual: DataFrame do mês atual (com saldos invertidos)
+        df_mes_anterior: DataFrame do mês anterior (com saldos invertidos, opcional)
+
+    Returns:
+        Tuple (resultado, DataFrame com erros)
+    """
+    if df_mes_anterior is None:
+        resultado = 'N/A'
+        df_erros = pd.DataFrame()
+        return resultado, df_erros
+
+    codigos_legislativo = ['20211', '20212']
+    return _analisar_repeticao_por_poder(df_mes_atual, df_mes_anterior, codigos_legislativo)
+
 
 
 def dimensao_d1_00025(df_base, pc_estendido):
@@ -458,144 +585,6 @@ def dimensao_d1_00029(df_base):
 
     return resultado, d1_00029_erros
 
-
-def dimensao_d1_00020(df_mes_atual, df_mes_anterior=None):
-    """
-    D1_00020: Verifica se SI do mês atual = SF do mês anterior.
-
-    Args:
-        df_mes_atual: DataFrame do mês atual
-        df_mes_anterior: DataFrame do mês anterior (opcional)
-
-    Returns:
-        Tuple (resultado, DataFrame com divergências)
-    """
-    if df_mes_anterior is None:
-        resultado = 'N/A'
-        df_divergencias = pd.DataFrame()
-        return resultado, df_divergencias
-
-    # Processar mês anterior: SF (ending_balance)
-    sf_anterior = df_mes_anterior[df_mes_anterior['TIPO_VALOR'] == 'ending_balance'].copy()
-    sf_anterior = sf_anterior.groupby(['CONTA'])['VALOR'].sum().reset_index()
-    sf_anterior = sf_anterior.rename(columns={'VALOR': 'SF_MES_ANTERIOR'})
-
-    # Processar mês atual: SI (beginning_balance)
-    si_atual = df_mes_atual[df_mes_atual['TIPO_VALOR'] == 'beginning_balance'].copy()
-    si_atual = si_atual.groupby(['CONTA'])['VALOR'].sum().reset_index()
-    si_atual = si_atual.rename(columns={'VALOR': 'SI_MES_ATUAL'})
-
-    # Merge e comparar
-    comparacao = sf_anterior.merge(si_atual, on='CONTA', how='outer', indicator=True)
-    comparacao['SF_MES_ANTERIOR'] = comparacao['SF_MES_ANTERIOR'].fillna(0)
-    comparacao['SI_MES_ATUAL'] = comparacao['SI_MES_ATUAL'].fillna(0)
-    comparacao['DIF'] = comparacao['SF_MES_ANTERIOR'] - comparacao['SI_MES_ATUAL']
-
-    # Tolerância
-    limite_zero = 1e-2
-    filtro_divergencias = (comparacao['DIF'].abs() > limite_zero)
-    df_divergencias = comparacao[filtro_divergencias].copy()
-
-    if len(df_divergencias) > 0:
-        resultado = 'ERRO'
-    else:
-        resultado = 'OK'
-
-    return resultado, df_divergencias
-
-
-def dimensao_d1_00023(df_mes_atual, df_mes_anterior=None):
-    """
-    D1_00023: Verifica se dados do Executivo (10111, 10112) estão repetidos entre meses.
-
-    Args:
-        df_mes_atual: DataFrame do mês atual (com saldos invertidos)
-        df_mes_anterior: DataFrame do mês anterior (com saldos invertidos, opcional)
-
-    Returns:
-        Tuple (resultado, DataFrame com erros)
-    """
-    if df_mes_anterior is None:
-        resultado = 'N/A'
-        df_erros = pd.DataFrame()
-        return resultado, df_erros
-
-    # Filtrar códigos do Executivo
-    codigos_executivo = ['10111', '10112']
-
-    # Dados do mês anterior
-    exec_anterior = df_mes_anterior[df_mes_anterior['IC1'].isin(codigos_executivo)].copy()
-    exec_anterior = exec_anterior.groupby(['IC1', 'CONTA'])['VALOR'].sum().reset_index()
-    exec_anterior['chave'] = exec_anterior['IC1'].astype(str) + '_' + exec_anterior['CONTA']
-    exec_anterior['hash'] = exec_anterior.apply(lambda x: f"{x['IC1']}_{x['CONTA']}_{x['VALOR']}", axis=1)
-
-    # Dados do mês atual
-    exec_atual = df_mes_atual[df_mes_atual['IC1'].isin(codigos_executivo)].copy()
-    exec_atual = exec_atual.groupby(['IC1', 'CONTA'])['VALOR'].sum().reset_index()
-    exec_atual['chave'] = exec_atual['IC1'].astype(str) + '_' + exec_atual['CONTA']
-    exec_atual['hash'] = exec_atual.apply(lambda x: f"{x['IC1']}_{x['CONTA']}_{x['VALOR']}", axis=1)
-
-    # Verificar se há hashes repetidos (mesmo poder, mesma conta, mesmo valor)
-    hashes_anterior = set(exec_anterior['hash'])
-    hashes_atual = set(exec_atual['hash'])
-    hashes_repetidos = hashes_anterior.intersection(hashes_atual)
-
-    if len(hashes_repetidos) > 0:
-        resultado = 'ERRO'
-        df_erros = exec_atual[exec_atual['hash'].isin(hashes_repetidos)].copy()
-        df_erros = df_erros.drop(columns=['chave', 'hash'])
-    else:
-        resultado = 'OK'
-        df_erros = pd.DataFrame()
-
-    return resultado, df_erros
-
-
-def dimensao_d1_00024(df_mes_atual, df_mes_anterior=None):
-    """
-    D1_00024: Verifica se dados do Legislativo (20211, 20212) estão repetidos entre meses.
-
-    Args:
-        df_mes_atual: DataFrame do mês atual (com saldos invertidos)
-        df_mes_anterior: DataFrame do mês anterior (com saldos invertidos, opcional)
-
-    Returns:
-        Tuple (resultado, DataFrame com erros)
-    """
-    if df_mes_anterior is None:
-        resultado = 'N/A'
-        df_erros = pd.DataFrame()
-        return resultado, df_erros
-
-    # Filtrar códigos do Legislativo
-    codigos_legislativo = ['20211', '20212']
-
-    # Dados do mês anterior
-    leg_anterior = df_mes_anterior[df_mes_anterior['IC1'].isin(codigos_legislativo)].copy()
-    leg_anterior = leg_anterior.groupby(['IC1', 'CONTA'])['VALOR'].sum().reset_index()
-    leg_anterior['chave'] = leg_anterior['IC1'].astype(str) + '_' + leg_anterior['CONTA']
-    leg_anterior['hash'] = leg_anterior.apply(lambda x: f"{x['IC1']}_{x['CONTA']}_{x['VALOR']}", axis=1)
-
-    # Dados do mês atual
-    leg_atual = df_mes_atual[df_mes_atual['IC1'].isin(codigos_legislativo)].copy()
-    leg_atual = leg_atual.groupby(['IC1', 'CONTA'])['VALOR'].sum().reset_index()
-    leg_atual['chave'] = leg_atual['IC1'].astype(str) + '_' + leg_atual['CONTA']
-    leg_atual['hash'] = leg_atual.apply(lambda x: f"{x['IC1']}_{x['CONTA']}_{x['VALOR']}", axis=1)
-
-    # Verificar se há hashes repetidos (mesmo poder, mesma conta, mesmo valor)
-    hashes_anterior = set(leg_anterior['hash'])
-    hashes_atual = set(leg_atual['hash'])
-    hashes_repetidos = hashes_anterior.intersection(hashes_atual)
-
-    if len(hashes_repetidos) > 0:
-        resultado = 'ERRO'
-        df_erros = leg_atual[leg_atual['hash'].isin(hashes_repetidos)].copy()
-        df_erros = df_erros.drop(columns=['chave', 'hash'])
-    else:
-        resultado = 'OK'
-        df_erros = pd.DataFrame()
-
-    return resultado, df_erros
 
 
 def dimensao_d1_00030(df_base):
@@ -1035,8 +1024,17 @@ if 'msc_base' in st.session_state:
     st.header("🔎 Detalhamento por Dimensão")
     st.info("💡 Expanda cada dimensão abaixo para ver os detalhes dos erros encontrados")
 
+    def format_expander_title(codigo, descricao, resultado):
+        status_map = {
+            'OK': ('🟢', 'OK'),
+            'ERRO': ('🔴', 'ERRO'),
+            'N/A': ('⚪️', 'N/A')
+        }
+        icon, label = status_map.get(resultado, ('🟡', resultado))
+        return f"📌 {codigo} - {descricao} | {icon} {label}"
+
     # D1_00017
-    with st.expander("📌 D1_00017 - Valores Negativos"):
+    with st.expander(format_expander_title("D1_00017", "Valores Negativos", resultado_17)):
         st.markdown("**Descrição:** Verifica se existem valores negativos na matriz")
         if resultado_17 == 'OK':
             st.success(f"✅ {resultado_17} - Nenhum valor negativo encontrado")
@@ -1051,7 +1049,7 @@ if 'msc_base' in st.session_state:
             )
 
     # D1_00018
-    with st.expander("📌 D1_00018 - Consistência SI + MOV = SF"):
+    with st.expander(format_expander_title("D1_00018", "Consistência SI + MOV = SF", resultado_18)):
         st.markdown("**Descrição:** Verifica se Saldo Inicial + Movimentação = Saldo Final")
 
         if resultado_18 == 'OK':
@@ -1067,7 +1065,7 @@ if 'msc_base' in st.session_state:
             )
 
     # D1_00019
-    with st.expander("📌 D1_00019 - Códigos de Poderes Incorretos"):
+    with st.expander(format_expander_title("D1_00019", "Códigos de Poderes Incorretos", resultado_19)):
         st.markdown("**Descrição:** Verifica códigos de poder/órgão não cadastrados")
 
         if resultado_19 == 'OK':
@@ -1082,8 +1080,21 @@ if 'msc_base' in st.session_state:
                 key="btn_19"
             )
 
+    # D1_00020
+    with st.expander(format_expander_title("D1_00020", "SI = SF mês anterior", resultado_20)):
+        st.markdown("**Descrição:** Verifica se SI do mês atual = SF do mês anterior")
+        if resultado_20 == 'N/A':
+            st.info("ℹ️ N/A - Mês anterior não fornecido ou é Janeiro")
+        elif resultado_20 == 'OK':
+            st.success(f"✅ {resultado_20} - Saldos consistentes entre meses")
+        else:
+            st.error(f"❌ {resultado_20} - {len(erros_20)} contas com divergências")
+            st.dataframe(erros_20.head(100), use_container_width=True, height=300)
+            st.download_button("📥 Download Erros (Excel)", convert_df_to_excel(erros_20), "d1_00020_erros.xlsx", key="btn_20")
+
+
     # D1_00021
-    with st.expander("📌 D1_00021 - Natureza Ativo (1111, 1121, 1125, 1231, 1232)"):
+    with st.expander(format_expander_title("D1_00021", "Natureza Ativo (1111, 1121, 1125, 1231, 1232)", resultado_21)):
         st.markdown("**Descrição:** Verifica natureza de saldo das contas de ativo")
 
         if resultado_21 == 'OK':
@@ -1099,7 +1110,7 @@ if 'msc_base' in st.session_state:
             )
 
     # D1_00022
-    with st.expander("📌 D1_00022 - IC1 (Poder/Órgão) Preenchido"):
+    with st.expander(format_expander_title("D1_00022", "IC1 (Poder/Órgão) Preenchido", resultado_22)):
         st.markdown("**Descrição:** Verifica se todos os registros têm IC1 preenchido")
 
         if resultado_22 == 'OK':
@@ -1113,9 +1124,34 @@ if 'msc_base' in st.session_state:
                 "d1_00022_erros.xlsx",
                 key="btn_22"
             )
+    
+    # D1_00023
+    with st.expander(format_expander_title("D1_00023", "Dados Executivo Repetidos", resultado_23)):
+        st.markdown("**Descrição:** Verifica se dados do Executivo (10111, 10112) estão idênticos entre meses")
+        if resultado_23 == 'N/A':
+            st.info("ℹ️ N/A - Mês anterior não fornecido ou é Janeiro")
+        elif resultado_23 == 'OK':
+            st.success(f"✅ {resultado_23} - Sem repetições entre meses")
+        else:
+            st.error(f"❌ {resultado_23} - {len(erros_23)} registros repetidos")
+            st.dataframe(erros_23.head(100), use_container_width=True, height=300)
+            st.download_button("📥 Download Erros (Excel)", convert_df_to_excel(erros_23), "d1_00023_erros.xlsx", key="btn_23")
+
+    # D1_00024
+    with st.expander(format_expander_title("D1_00024", "Dados Legislativo Repetidos", resultado_24)):
+        st.markdown("**Descrição:** Verifica se dados do Legislativo (20211, 20212) estão idênticos entre meses")
+        if resultado_24 == 'N/A':
+            st.info("ℹ️ N/A - Mês anterior não fornecido ou é Janeiro")
+        elif resultado_24 == 'OK':
+            st.success(f"✅ {resultado_24} - Sem repetições entre meses")
+        else:
+            st.error(f"❌ {resultado_24} - {len(erros_24)} registros repetidos")
+            st.dataframe(erros_24.head(100), use_container_width=True, height=300)
+            st.download_button("📥 Download Erros (Excel)", convert_df_to_excel(erros_24), "d1_00024_erros.xlsx", key="btn_24")
+
 
     # D1_00025
-    with st.expander("📌 D1_00025 - Natureza Passivo (2111-2126, 213-215, 221-223)"):
+    with st.expander(format_expander_title("D1_00025", "Natureza Passivo (2111-2126, 213-215, 221-223)", resultado_25)):
         st.markdown("**Descrição:** Verifica natureza de saldo das contas de passivo")
 
         if resultado_25 == 'OK':
@@ -1131,7 +1167,7 @@ if 'msc_base' in st.session_state:
             )
 
     # D1_00026
-    with st.expander("📌 D1_00026 - Natureza PL (2311, 2321, 232-236)"):
+    with st.expander(format_expander_title("D1_00026", "Natureza PL (2311, 2321, 232-236)", resultado_26)):
         st.markdown("**Descrição:** Verifica natureza de saldo das contas de patrimônio líquido")
 
         if resultado_26 == 'OK':
@@ -1147,7 +1183,7 @@ if 'msc_base' in st.session_state:
             )
 
     # D1_00027
-    with st.expander("📌 D1_00027 - ISF sem FR"):
+    with st.expander(format_expander_title("D1_00027", "ISF sem FR", resultado_27)):
         st.markdown("**Descrição:** Verifica contas com ISF=F sem informação complementar de FR")
 
         if resultado_27 == 'OK':
@@ -1163,7 +1199,7 @@ if 'msc_base' in st.session_state:
             )
 
     # D1_00028
-    with st.expander("📌 D1_00028 - Classes de Contas Completas (1-8)"):
+    with st.expander(format_expander_title("D1_00028", "Classes de Contas Completas (1-8)", resultado_28)):
         st.markdown("**Descrição:** Verifica se foram enviados valores em todas as 8 classes")
 
         if resultado_28 == 'OK':
@@ -1172,7 +1208,7 @@ if 'msc_base' in st.session_state:
             st.error(f"❌ {resultado_28} - Apenas {qtd_grupos} classes encontradas (esperado: 8)")
 
     # D1_00029
-    with st.expander("📌 D1_00029 - Contas 6211/6212/6213 sem IC2"):
+    with st.expander(format_expander_title("D1_00029", "Contas 6211/6212/6213 sem IC2", resultado_29)):
         st.markdown("**Descrição:** Verifica contas 6211, 6212, 6213 sem IC2 preenchido")
         if resultado_29 == 'OK':
             st.success(f"✅ {resultado_29} - Todas as contas com IC2 preenchido")
@@ -1181,44 +1217,9 @@ if 'msc_base' in st.session_state:
             st.dataframe(erros_29.head(100), use_container_width=True, height=300)
             st.download_button("📥 Download Erros (Excel)", convert_df_to_excel(erros_29), "d1_00029_erros.xlsx", key="btn_29")
 
-    # D1_00020
-    with st.expander("📌 D1_00020 - SI = SF mês anterior"):
-        st.markdown("**Descrição:** Verifica se SI do mês atual = SF do mês anterior")
-        if resultado_20 == 'N/A':
-            st.info("ℹ️ N/A - Mês anterior não fornecido ou é Janeiro")
-        elif resultado_20 == 'OK':
-            st.success(f"✅ {resultado_20} - Saldos consistentes entre meses")
-        else:
-            st.error(f"❌ {resultado_20} - {len(erros_20)} contas com divergências")
-            st.dataframe(erros_20.head(100), use_container_width=True, height=300)
-            st.download_button("📥 Download Erros (Excel)", convert_df_to_excel(erros_20), "d1_00020_erros.xlsx", key="btn_20")
-
-    # D1_00023
-    with st.expander("📌 D1_00023 - Dados Executivo Repetidos"):
-        st.markdown("**Descrição:** Verifica se dados do Executivo (10111, 10112) estão idênticos entre meses")
-        if resultado_23 == 'N/A':
-            st.info("ℹ️ N/A - Mês anterior não fornecido ou é Janeiro")
-        elif resultado_23 == 'OK':
-            st.success(f"✅ {resultado_23} - Sem repetições entre meses")
-        else:
-            st.error(f"❌ {resultado_23} - {len(erros_23)} registros repetidos")
-            st.dataframe(erros_23.head(100), use_container_width=True, height=300)
-            st.download_button("📥 Download Erros (Excel)", convert_df_to_excel(erros_23), "d1_00023_erros.xlsx", key="btn_23")
-
-    # D1_00024
-    with st.expander("📌 D1_00024 - Dados Legislativo Repetidos"):
-        st.markdown("**Descrição:** Verifica se dados do Legislativo (20211, 20212) estão idênticos entre meses")
-        if resultado_24 == 'N/A':
-            st.info("ℹ️ N/A - Mês anterior não fornecido ou é Janeiro")
-        elif resultado_24 == 'OK':
-            st.success(f"✅ {resultado_24} - Sem repetições entre meses")
-        else:
-            st.error(f"❌ {resultado_24} - {len(erros_24)} registros repetidos")
-            st.dataframe(erros_24.head(100), use_container_width=True, height=300)
-            st.download_button("📥 Download Erros (Excel)", convert_df_to_excel(erros_24), "d1_00024_erros.xlsx", key="btn_24")
-
+    
     # D1_00030
-    with st.expander("📌 D1_00030 - Contas 6211/6212/6213 sem IC4 (NR)"):
+    with st.expander(format_expander_title("D1_00030", "Contas 6211/6212/6213 sem IC4 (NR)", resultado_30)):
         st.markdown("**Descrição:** Verifica contas 6211, 6212, 6213 sem IC4 (Natureza da Receita) preenchido")
         if resultado_30 == 'OK':
             st.success(f"✅ {resultado_30} - Todas as contas com IC4 preenchido")
@@ -1228,7 +1229,7 @@ if 'msc_base' in st.session_state:
             st.download_button("📥 Download Erros (Excel)", convert_df_to_excel(erros_30), "d1_00030_erros.xlsx", key="btn_30")
 
     # D1_00031
-    with st.expander("📌 D1_00031 - Contas 62213 sem IC5 (ND)"):
+    with st.expander(format_expander_title("D1_00031", "Contas 62213 sem IC5 (ND)", resultado_31)):
         st.markdown("**Descrição:** Verifica contas 62213 sem IC5 (Natureza da Despesa) preenchido")
         if resultado_31 == 'OK':
             st.success(f"✅ {resultado_31} - Todas as contas com IC5 preenchido")
@@ -1238,7 +1239,7 @@ if 'msc_base' in st.session_state:
             st.download_button("📥 Download Erros (Excel)", convert_df_to_excel(erros_31), "d1_00031_erros.xlsx", key="btn_31")
 
     # D1_00032
-    with st.expander("📌 D1_00032 - Contas 62213 sem IC2 (Função/Subfunção)"):
+    with st.expander(format_expander_title("D1_00032", "Contas 62213 sem IC2 (Função/Subfunção)", resultado_32)):
         st.markdown("**Descrição:** Verifica contas 62213 sem IC2 (Função/Subfunção) preenchido")
         if resultado_32 == 'OK':
             st.success(f"✅ {resultado_32} - Todas as contas com IC2 preenchido")
@@ -1248,7 +1249,7 @@ if 'msc_base' in st.session_state:
             st.download_button("📥 Download Erros (Excel)", convert_df_to_excel(erros_32), "d1_00032_erros.xlsx", key="btn_32")
 
     # D1_00033
-    with st.expander("📌 D1_00033 - Contas 5221/5222/6221/6222/6223 sem IC3 (FR)"):
+    with st.expander(format_expander_title("D1_00033", "Contas 5221/5222/6221/6222/6223 sem IC3 (FR)", resultado_33)):
         st.markdown("**Descrição:** Verifica contas 5221, 5222, 6221, 6222, 6223 sem IC3 (Fonte de Recursos) preenchido")
         if resultado_33 == 'OK':
             st.success(f"✅ {resultado_33} - Todas as contas com IC3 preenchido")
@@ -1258,7 +1259,7 @@ if 'msc_base' in st.session_state:
             st.download_button("📥 Download Erros (Excel)", convert_df_to_excel(erros_33), "d1_00033_erros.xlsx", key="btn_33")
 
     # D1_00034
-    with st.expander("📌 D1_00034 - Natureza VPD (Variações Patrimoniais Diminutivas)"):
+    with st.expander(format_expander_title("D1_00034", "Natureza VPD (Variações Patrimoniais Diminutivas)", resultado_34)):
         st.markdown("**Descrição:** Verifica contas VPD (311-363) com natureza diferente do PCASP")
         if resultado_34 == 'OK':
             st.success(f"✅ {resultado_34} - Naturezas corretas")
@@ -1268,7 +1269,7 @@ if 'msc_base' in st.session_state:
             st.download_button("📥 Download Erros (Excel)", convert_df_to_excel(erros_34), "d1_00034_erros.xlsx", key="btn_34")
 
     # D1_00035
-    with st.expander("📌 D1_00035 - Natureza VPA (Variações Patrimoniais Aumentativas)"):
+    with st.expander(format_expander_title("D1_00035", "Natureza VPA (Variações Patrimoniais Aumentativas)", resultado_35)):
         st.markdown("**Descrição:** Verifica contas VPA (411-424) com natureza diferente do PCASP")
         if resultado_35 == 'OK':
             st.success(f"✅ {resultado_35} - Naturezas corretas")
