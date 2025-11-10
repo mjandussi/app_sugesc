@@ -55,29 +55,49 @@ month_options = [f"{i:02d}" for i in range(1, 13)]
 col1, col2, col3 = st.columns(3)
 with col1:
     mes = st.selectbox("Mês de Análise", month_options, index=month_options.index(default_mes))
+
+previous_index = (month_options.index(mes) - 1) % len(month_options)
+mes_anterior = month_options[previous_index]
+
 with col2:
-    mes_anterior = st.selectbox("Mês Anterior", month_options, index=month_options.index(default_mes_anterior))
+    st.text_input("Mês Anterior", value=mes_anterior, disabled=True)
 with col3:
     ano = st.text_input("Ano", value=default_ano, max_chars=4)
+
+st.caption("O mês anterior é sempre calculado automaticamente com base no mês de análise.")
 
 st.divider()
 
 st.subheader("📂 Upload dos Arquivos")
 st.caption("Faça o upload dos 6 arquivos necessários para a análise (todos em formato XLSX)")
+st.info("Inclua o mês correspondente (formato MM) no nome de cada arquivo, por exemplo `msc_08_2025.xlsx`. Usaremos o nome para alertar quando o mês não combinar com os campos selecionados.", icon="ℹ️")
+
+def warn_mismatched_month(uploaded_file, expected_month, label):
+    if uploaded_file and expected_month not in uploaded_file.name:
+        st.warning(
+            f"{label}: o arquivo parece não conter o mês {expected_month} no nome. Confirme se está enviando o período correto.",
+            icon="⚠️"
+        )
 
 col_upload1, col_upload2 = st.columns(2)
 
 with col_upload1:
     st.markdown("**Arquivos MSC e DETA:**")
     uploaded_msc = st.file_uploader("1. MSC Base (Excel)", type=['xlsx'], key="msc")
+    warn_mismatched_month(uploaded_msc, mes, "MSC Base")
     uploaded_deta_ant = st.file_uploader("2. DETA Mês Anterior (Excel)", type=['xlsx'], key="deta_ant")
+    warn_mismatched_month(uploaded_deta_ant, mes_anterior, "DETA Mês Anterior")
     uploaded_deta = st.file_uploader("3. DETA Mês Atual (Excel)", type=['xlsx'], key="deta")
+    warn_mismatched_month(uploaded_deta, mes, "DETA Mês Atual")
 
 with col_upload2:
     st.markdown("**Arquivos FLEX:**")
     uploaded_rec = st.file_uploader("4. Receita Realizada (Excel)", type=['xlsx'], key="rec")
+    warn_mismatched_month(uploaded_rec, mes, "Receita Realizada")
     uploaded_dps = st.file_uploader("5. Despesa Empenhada a Liquidar (Excel)", type=['xlsx'], key="dps")
+    warn_mismatched_month(uploaded_dps, mes, "Despesa Empenhada a Liquidar")
     uploaded_rp = st.file_uploader("6. Restos a Pagar (Excel)", type=['xlsx'], key="rp")
+    warn_mismatched_month(uploaded_rp, mes, "Restos a Pagar")
 
 st.divider()
 
@@ -521,7 +541,16 @@ if 'relacao_final' in st.session_state:
     def format_numeric_columns(df):
         formatted = df.copy()
         numeric_cols = formatted.select_dtypes(include='number').columns
-        formatted[numeric_cols] = formatted[numeric_cols].round(2)
+
+        def format_value(val):
+            if pd.isna(val):
+                return ""
+            formatted_value = f"{val:,.2f}"
+            return formatted_value.replace(",", "X").replace(".", ",").replace("X", ".")
+
+        for col in numeric_cols:
+            formatted[col] = formatted[col].apply(format_value)
+
         return formatted
 
     styled_df = st.session_state['relacao_final'].style.applymap(
