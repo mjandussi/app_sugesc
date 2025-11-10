@@ -6,6 +6,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+from datetime import date
 from core.layout import setup_page, sidebar_menu, get_app_menu
 from core.utils import convert_df_to_excel
 
@@ -39,32 +40,42 @@ st.divider()
 
 st.subheader("⚙️ Configurações de Período")
 
+# Default the period inputs to the two most recent closed months
+today = date.today()
+analysis_month = today.month - 1 if today.month > 1 else 12
+analysis_year = today.year if today.month > 1 else today.year - 1
+previous_month = analysis_month - 1 if analysis_month > 1 else 12
+
+default_mes = f"{analysis_month:02d}"
+default_mes_anterior = f"{previous_month:02d}"
+default_ano = str(analysis_year)
+
 col1, col2, col3 = st.columns(3)
 with col1:
-    mes = st.text_input("Mês de Análise", value="09", max_chars=2)
+    mes = st.text_input("Mês de Análise", value=default_mes, max_chars=2)
 with col2:
-    mes_anterior = st.text_input("Mês Anterior", value="08", max_chars=2)
+    mes_anterior = st.text_input("Mês Anterior", value=default_mes_anterior, max_chars=2)
 with col3:
-    ano = st.text_input("Ano", value="2025", max_chars=4)
+    ano = st.text_input("Ano", value=default_ano, max_chars=4)
 
 st.divider()
 
 st.subheader("📂 Upload dos Arquivos")
-st.caption("Faça o upload dos 6 arquivos necessários para a análise")
+st.caption("Faça o upload dos 6 arquivos necessários para a análise (todos em formato XLSX)")
 
 col_upload1, col_upload2 = st.columns(2)
 
 with col_upload1:
     st.markdown("**Arquivos MSC e DETA:**")
-    uploaded_msc = st.file_uploader("1. MSC Base (Excel)", type=['xlsx', 'xls'], key="msc")
-    uploaded_deta_ant = st.file_uploader("2. DETA Mês Anterior (Excel)", type=['xlsx', 'xls'], key="deta_ant")
-    uploaded_deta = st.file_uploader("3. DETA Mês Atual (Excel)", type=['xlsx', 'xls'], key="deta")
+    uploaded_msc = st.file_uploader("1. MSC Base (Excel)", type=['xlsx'], key="msc")
+    uploaded_deta_ant = st.file_uploader("2. DETA Mês Anterior (Excel)", type=['xlsx'], key="deta_ant")
+    uploaded_deta = st.file_uploader("3. DETA Mês Atual (Excel)", type=['xlsx'], key="deta")
 
 with col_upload2:
     st.markdown("**Arquivos FLEX:**")
-    uploaded_rec = st.file_uploader("4. Receita Realizada (Excel)", type=['xlsx', 'xls'], key="rec")
-    uploaded_dps = st.file_uploader("5. Despesa Empenhada a Liquidar (Excel)", type=['xlsx', 'xls'], key="dps")
-    uploaded_rp = st.file_uploader("6. Restos a Pagar (Excel)", type=['xlsx', 'xls'], key="rp")
+    uploaded_rec = st.file_uploader("4. Receita Realizada (Excel)", type=['xlsx'], key="rec")
+    uploaded_dps = st.file_uploader("5. Despesa Empenhada a Liquidar (Excel)", type=['xlsx'], key="dps")
+    uploaded_rp = st.file_uploader("6. Restos a Pagar (Excel)", type=['xlsx'], key="rp")
 
 st.divider()
 
