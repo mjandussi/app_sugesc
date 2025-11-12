@@ -329,30 +329,18 @@ def _resumo_base(id_dim: str, titulo: str, resposta: str) -> pd.DataFrame:
     })
 
 
-def _pcasp_lazy_from_excel(ano: int, base_dir: str = "data/layouts", uploaded_file=None) -> pl.LazyFrame:
+def _pcasp_lazy_from_excel(ano: int, base_dir: str = "data/layouts") -> pl.LazyFrame:
     """Lê o PCASP do Excel e converte para Polars LazyFrame"""
+    path = os.path.join(base_dir, ARQUIVO_PCASP_FMT.format(ano=ano))
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Não encontrei o layout PCASP: {path}")
 
-    # Se foi feito upload, usa o arquivo em memória
-    if uploaded_file is not None:
-        sheet = f"PcaspEstendido{ano}"
-        try:
-            df = pd.read_excel(uploaded_file, sheet_name=sheet, header=3, engine="openpyxl")
-        except Exception:
-            uploaded_file.seek(0)  # Reset file pointer
-            xls = pd.ExcelFile(uploaded_file)
-            df = pd.read_excel(uploaded_file, sheet_name=xls.sheet_names[0], header=3, engine="openpyxl")
-    else:
-        # Fallback: tenta ler do disco
-        path = os.path.join(base_dir, ARQUIVO_PCASP_FMT.format(ano=ano))
-        if not os.path.exists(path):
-            raise FileNotFoundError(f"Não encontrei o layout PCASP: {path}")
-
-        sheet = f"PcaspEstendido{ano}"
-        try:
-            df = pd.read_excel(path, sheet_name=sheet, header=3, engine="openpyxl")
-        except Exception:
-            xls = pd.ExcelFile(path)
-            df = pd.read_excel(path, sheet_name=xls.sheet_names[0], header=3, engine="openpyxl")
+    sheet = f"PcaspEstendido{ano}"
+    try:
+        df = pd.read_excel(path, sheet_name=sheet, header=3, engine="openpyxl")
+    except Exception:
+        xls = pd.ExcelFile(path)
+        df = pd.read_excel(path, sheet_name=xls.sheet_names[0], header=3, engine="openpyxl")
 
     if "CONTA" not in df.columns:
         if "conta_contabil" in df.columns:
@@ -364,9 +352,9 @@ def _pcasp_lazy_from_excel(ano: int, base_dir: str = "data/layouts", uploaded_fi
     return pl.from_pandas(df).lazy()
 
 
-def _pcasp_filtrado_lazy(ano: int, regex_pcasp: str, base_dir: str = "data/layouts", uploaded_file=None) -> pl.LazyFrame:
+def _pcasp_filtrado_lazy(ano: int, regex_pcasp: str, base_dir: str = "data/layouts") -> pl.LazyFrame:
     """Filtra o PCASP por regex e agrega"""
-    pc = _pcasp_lazy_from_excel(ano, base_dir=base_dir, uploaded_file=uploaded_file)
+    pc = _pcasp_lazy_from_excel(ano, base_dir=base_dir)
 
     pc_filtro = (
         pc.filter(pl.col("CONTA").cast(pl.Utf8).str.contains(regex_pcasp, literal=False))
@@ -1469,7 +1457,6 @@ def _checar_natureza_vs_pcasp_result(
     tol: float = 5e-3,
     max_evidencias: int = 200,
     base_dir_pcasp: str = "data/layouts",
-    uploaded_pcasp=None,
 ) -> dict | None:
     """Implementa validação genérica de natureza contábil vs PCASP"""
     paths = _list_paths(
@@ -1517,12 +1504,7 @@ def _checar_natureza_vs_pcasp_result(
 
     # Tenta carregar PCASP - se falhar, retorna OK (sem validação)
     try:
-        pc_filtro = _pcasp_filtrado_lazy(
-            ano,
-            regex_pcasp=regex_pcasp,
-            base_dir=base_dir_pcasp,
-            uploaded_file=uploaded_pcasp
-        )
+        pc_filtro = _pcasp_filtrado_lazy(ano, regex_pcasp=regex_pcasp, base_dir=base_dir_pcasp)
     except Exception as e:
         df_resumo = _resumo_base(dim_id, titulo, "⚠️ PCASP não disponível")
         return {
@@ -1595,7 +1577,7 @@ def _checar_natureza_vs_pcasp_result(
     }
 
 
-def d1_00021_result(ente: str, ano: int, mes_limite: int, incluir_encerramento: bool = True, uploaded_pcasp=None) -> dict | None:
+def d1_00021_result(ente: str, ano: int, mes_limite: int, incluir_encerramento: bool = True) -> dict | None:
     """D1_00021 - ATIVO com natureza diferente do PCASP"""
     return _checar_natureza_vs_pcasp_result(
         ente=ente, ano=ano, mes_limite=mes_limite,
@@ -1605,11 +1587,10 @@ def d1_00021_result(ente: str, ano: int, mes_limite: int, incluir_encerramento: 
         regex_pcasp=REGEX_ATIVO, regex_msc=REGEX_ATIVO,
         usar_ending_balance=False, natureza_por_sinal_positivo="D",
         incluir_msce_no_dataset=True, tol=5e-3, max_evidencias=200,
-        uploaded_pcasp=uploaded_pcasp,
     )
 
 
-def d1_00025_result(ente: str, ano: int, mes_limite: int, incluir_encerramento: bool = True, uploaded_pcasp=None) -> dict | None:
+def d1_00025_result(ente: str, ano: int, mes_limite: int, incluir_encerramento: bool = True) -> dict | None:
     """D1_00025 - PASSIVO com natureza diferente do PCASP"""
     return _checar_natureza_vs_pcasp_result(
         ente=ente, ano=ano, mes_limite=mes_limite,
@@ -1619,11 +1600,10 @@ def d1_00025_result(ente: str, ano: int, mes_limite: int, incluir_encerramento: 
         regex_pcasp=REGEX_PASSIVO, regex_msc=REGEX_PASSIVO,
         usar_ending_balance=True, natureza_por_sinal_positivo="C",
         incluir_msce_no_dataset=False, tol=5e-3, max_evidencias=200,
-        uploaded_pcasp=uploaded_pcasp,
     )
 
 
-def d1_00026_result(ente: str, ano: int, mes_limite: int, incluir_encerramento: bool = True, uploaded_pcasp=None) -> dict | None:
+def d1_00026_result(ente: str, ano: int, mes_limite: int, incluir_encerramento: bool = True) -> dict | None:
     """D1_00026 - Patrimônio Líquido com natureza diferente do PCASP"""
     return _checar_natureza_vs_pcasp_result(
         ente=ente, ano=ano, mes_limite=mes_limite,
@@ -1633,11 +1613,10 @@ def d1_00026_result(ente: str, ano: int, mes_limite: int, incluir_encerramento: 
         regex_pcasp=REGEX_PL_PCASP, regex_msc=REGEX_PL_MSC,
         usar_ending_balance=True, natureza_por_sinal_positivo="C",
         incluir_msce_no_dataset=False, tol=5e-3, max_evidencias=200,
-        uploaded_pcasp=uploaded_pcasp,
     )
 
 
-def d1_00034_result(ente: str, ano: int, mes_limite: int, incluir_encerramento: bool = True, uploaded_pcasp=None) -> dict | None:
+def d1_00034_result(ente: str, ano: int, mes_limite: int, incluir_encerramento: bool = True) -> dict | None:
     """D1_00034 - VPD com natureza diferente do PCASP"""
     return _checar_natureza_vs_pcasp_result(
         ente=ente, ano=ano, mes_limite=mes_limite,
@@ -1647,11 +1626,10 @@ def d1_00034_result(ente: str, ano: int, mes_limite: int, incluir_encerramento: 
         regex_pcasp=REGEX_VPD, regex_msc=REGEX_VPD,
         usar_ending_balance=True, natureza_por_sinal_positivo="D",
         incluir_msce_no_dataset=False, tol=5e-3, max_evidencias=200,
-        uploaded_pcasp=uploaded_pcasp,
     )
 
 
-def d1_00035_result(ente: str, ano: int, mes_limite: int, incluir_encerramento: bool = True, uploaded_pcasp=None) -> dict | None:
+def d1_00035_result(ente: str, ano: int, mes_limite: int, incluir_encerramento: bool = True) -> dict | None:
     """D1_00035 - VPA com natureza diferente do PCASP"""
     return _checar_natureza_vs_pcasp_result(
         ente=ente, ano=ano, mes_limite=mes_limite,
@@ -1661,7 +1639,6 @@ def d1_00035_result(ente: str, ano: int, mes_limite: int, incluir_encerramento: 
         regex_pcasp=REGEX_VPA, regex_msc=REGEX_VPA,
         usar_ending_balance=True, natureza_por_sinal_positivo="C",
         incluir_msce_no_dataset=False, tol=5e-3, max_evidencias=200,
-        uploaded_pcasp=uploaded_pcasp,
     )
 
 
@@ -1669,7 +1646,7 @@ def d1_00035_result(ente: str, ano: int, mes_limite: int, incluir_encerramento: 
 # EXECUTOR - DIMENSÃO I
 # ============================================================================
 
-def run_all_d1(ente: str, ano: int, mes_limite: int, incluir_encerramento: bool = True, uploaded_pcasp=None):
+def run_all_d1(ente: str, ano: int, mes_limite: int, incluir_encerramento: bool = True):
     """
     Executa todas as validações da Dimensão I.
 
@@ -1712,12 +1689,7 @@ def run_all_d1(ente: str, ano: int, mes_limite: int, incluir_encerramento: bool 
 
     for f in funs:
         try:
-            # Passa uploaded_pcasp apenas para funções que precisam (d1_00021, d1_00025, d1_00026, d1_00034, d1_00035)
-            if f.__name__ in ['d1_00021_result', 'd1_00025_result', 'd1_00026_result', 'd1_00034_result', 'd1_00035_result']:
-                r = f(ente, ano, mes_limite, incluir_encerramento=incluir_encerramento, uploaded_pcasp=uploaded_pcasp)
-            else:
-                r = f(ente, ano, mes_limite, incluir_encerramento=incluir_encerramento)
-
+            r = f(ente, ano, mes_limite, incluir_encerramento=incluir_encerramento)
             if r:
                 resultados.append(r)
                 ok.append(r["df_resumo"])
@@ -1843,24 +1815,6 @@ else:
 
 st.divider()
 
-# Upload do arquivo PCASP
-st.markdown("### 📊 PCASP Estendido (Opcional)")
-st.markdown("**Para validar dimensões de natureza contábil (D1_00021, D1_00025, D1_00026, D1_00034, D1_00035), faça upload do arquivo PCASP:**")
-
-uploaded_pcasp = st.file_uploader(
-    "Arquivo PCASP Excel",
-    type=["xlsx", "xls"],
-    help=f"Upload do arquivo PCASP do ano {ano} (ex: {ano}_Anexo_II_Portaria_STN_642_Leiaute_MSC.xlsx)",
-    key="pcasp_uploader"
-)
-
-if uploaded_pcasp:
-    st.success(f"✅ Arquivo PCASP carregado: **{uploaded_pcasp.name}**")
-else:
-    st.info("ℹ️ Sem arquivo PCASP: as dimensões D1_00021, D1_00025, D1_00026, D1_00034 e D1_00035 retornarão '⚠️ PCASP não disponível'")
-
-st.divider()
-
 # Botões de ação
 colA, colB = st.columns(2)
 run = colA.button("🚀 Carregar e Analisar Dados", type="primary", use_container_width=True)
@@ -1924,7 +1878,7 @@ if run:
 
         # 2. Calcular análises
         progress_bar.progress(50, text="🔍 Calculando análises mensais (Dimensão I)...")
-        resultados, df_resumo, erros_analise = run_all_d1(ente, ano, mes, incluir_encerramento, uploaded_pcasp=uploaded_pcasp)
+        resultados, df_resumo, erros_analise = run_all_d1(ente, ano, mes, incluir_encerramento)
 
         # 3. Processar resultados
         progress_bar.progress(90, text="📊 Processando resultados...")
@@ -1945,12 +1899,6 @@ if run:
         # ========================================================================
 
         st.success(f"✅ Análise concluída para **{nome_ente}** ({ente}) - Ano {ano}, Mês {mes}")
-
-        # Exibir erros de análise (se houver)
-        if erros_analise:
-            with st.expander(f"⚠️ Avisos de Análise ({len(erros_analise)} dimensão/ões não processada/s)", expanded=False):
-                for func_name, erro_msg in erros_analise:
-                    st.warning(f"**{func_name}:** {erro_msg}")
 
         # Métricas principais
         st.markdown("### 📊 Resumo Geral")
