@@ -9,8 +9,9 @@ APP_MENU = {
         {"path": "Home.py", "label": "Início", "icon": "🏠"},
     ],
     "MSC e Ranking": [
-        {"path": "pages/01_🗓️ MSC_Analise_Mensal.py", "label": "Análise MSC Mensal", "icon": "🗓️"},
+        {"path": "pages/01_🗓️ MSC_Analise_Mensal.py", "label": "Análise MSC Mensal", "icon": "🗓️"}, 
         {"path": "pages/02_📊 MSC_Analise_FLEX.py", "label": "Análise MSC x FLEX", "icon": "📊"},
+        {"path": "pages/10_🗓️ MSC_Analise_Mensal_Acum_API.py", "label": "Análise MSC API Acumulado Mensal", "icon": "🗓️"},
         {"path": "pages/03_📑 Extratos_Homologacoes.py", "label": "Extratos de Homologações", "icon": "📑"},
         {"path": "pages/09_⚖️ Analise_Novas_Dimensões.py", "label": "Análise das Novas Dimensões", "icon": "⚖️"},
     ],
