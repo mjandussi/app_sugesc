@@ -1,42 +1,3 @@
-"""
-MSC API Mensal - Arquivo Consolidado
-=====================================
-Análise completa da Matriz de Saldos Contábeis (MSC) - Dimensão I
-
-Este arquivo consolida todas as funções necessárias para realizar análises
-mensais da MSC sem dependências de outros arquivos do projeto.
-
-Uso:
-    import asyncio
-    from msc_api_mensal import analisar_msc_mensal
-
-    # Análise simples
-    resultados, df_resumo = asyncio.run(
-        analisar_msc_mensal(
-            ente="3304557",  # Rio de Janeiro
-            ano=2024,
-            mes_limite=6,
-            incluir_encerramento=False
-        )
-    )
-
-    # Processar resultados
-    for r in resultados:
-        print(f"{r['id']}: {r['titulo']} - Nota: {r['meta']['nota']}")
-
-Dependências:
-    - pandas
-    - polars
-    - pyarrow
-    - httpx
-"""
-
-"""
-Página de Análise MSC Mensal através da API
-============================================
-Análises mensais acumuladas da Matriz de Saldos Contábeis (MSC) - Dimensão I
-"""
-
 import os
 import asyncio
 import shutil
@@ -99,8 +60,10 @@ LIMITE_ZERO = 1e-2
 # Grupos e dimensões
 GRUPO_D1 = "Dimensão I - Matriz MSC (Mensal)"
 
-# Códigos de poder/órgão válidos
-VALID_PO = ["10131", "10132", "20231", "20232"]
+# Códigos de poder/órgão válidos 
+# 10111, 10112, 20211, 20212, 30390, 50511, 60611 (ESTADOS)
+# "10131", "10132", "20231", "20232" (MUNICÍPIOS)
+VALID_PO = ["10111", "10112", "20211", "20212", "30390", "50511", "60611"]
 
 # Configurações de PCASP
 ARQUIVO_PCASP_FMT = "{ano}_Anexo_II_Portaria_STN_642_Leiaute_MSC.xlsx"
