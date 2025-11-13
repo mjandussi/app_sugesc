@@ -14,6 +14,7 @@ APP_MENU = {
         {"path": "pages/10_🗓️ MSC_Analise_Mensal_Acum_API.py", "label": "Análise MSC API Acumulado Mensal", "icon": "🗓️"},
         {"path": "pages/03_📑 Extratos_Homologacoes.py", "label": "Extratos de Homologações", "icon": "📑"},
         {"path": "pages/09_⚖️ Analise_Novas_Dimensões.py", "label": "Análise das Novas Dimensões", "icon": "⚖️"},
+        {"path": "pages/11_🚨 MSC_Acertos_Fonte_Banco.py", "label": "Acerto de Fontes em Banco", "icon": "🚨"},
     ],
     "Dashboards": [
         {"path": "pages/04_📊 Dashboard_RREO.py", "label": "Dashboard RREO", "icon": "📊"},
