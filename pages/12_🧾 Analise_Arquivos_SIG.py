@@ -51,12 +51,17 @@ COLS_VAL_TXT = [
     'RECEITA_A_ARRECADAR',
 ]
 
+# Colunas de valores principais (usadas em comparações e totais)
 COLS_VAL = [
     'RECEITA_PREVISTA',
     'ALTERACAO_PREVISAO_RECEITA',
     'RECEITA_ARRECADADA',
-    'DEDU_RECEITA_ARRECADADA',
     'RECEITA_A_ARRECADAR',
+]
+
+# Colunas auxiliares do Flex (usadas apenas no processamento intermediário)
+COLS_VAL_AUX_FLEX = [
+    'DEDU_RECEITA_ARRECADADA',
 ]
 
 # Lista de colunas que devem ficar apenas com valores positivos no Flex
@@ -218,17 +223,30 @@ def process_flex(uploaded_file):
     )
     flex.insert(3, 'FONTE_COMPLETA', flex.pop('FONTE_COMPLETA'))
 
-    flex['chave'] = flex['POSICAO'] + flex['COD_UG'] + flex['COD_NAT_RECEITA'] + flex['FONTE_COMPLETA']     
+    flex['chave'] = flex['POSICAO'] + flex['COD_UG'] + flex['COD_NAT_RECEITA'] + flex['FONTE_COMPLETA']
 
+    # Garante que todas as colunas principais e auxiliares existam
     ensure_columns(flex, COLS_VAL)
+    ensure_columns(flex, COLS_VAL_AUX_FLEX)
 
-    # Conversão das colunas de valores para float
+    # Conversão das colunas de valores principais para float
     for col in COLS_VAL:
         flex[col] = to_float_ptbr(flex[col])
         if col in COLS_VAL_POSITIVO_FLEX:
             flex[col] = flex[col].abs()
 
+    # Conversão das colunas auxiliares para float e torná-las positivas
+    for col in COLS_VAL_AUX_FLEX:
+        flex[col] = to_float_ptbr(flex[col])
+        if col in COLS_VAL_POSITIVO_FLEX:
+            flex[col] = flex[col].abs()
+
+    # Soma as deduções (agora positivas) com a receita arrecadada
+    # Isso replica o comportamento do TXT onde as deduções já vêm somadas
     flex['RECEITA_ARRECADADA'] = flex['RECEITA_ARRECADADA'] + flex['DEDU_RECEITA_ARRECADADA']
+
+    # Remove a coluna auxiliar DEDU_RECEITA_ARRECADADA após a soma
+    flex.drop(columns=['DEDU_RECEITA_ARRECADADA'], inplace=True)
 
     # Agrega por chave para evitar duplicidades
     flex = aggregate_by_key(flex)
