@@ -293,7 +293,7 @@ if manual_selecionado:
         st.stop()
 
     info = manual_selecionado.stat()
-    last_modified = datetime.fromtimestamp(info.st_mtime).strftime("%d/%m/%Y %H:%M")
+    last_modified = datetime.fromtimestamp(info.st_mtime).strftime("%d/%m/%Y")
     file_size = info.st_size / 1024
 
     manual_banner = f"""
