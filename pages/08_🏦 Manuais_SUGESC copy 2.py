@@ -130,54 +130,38 @@ def split_subsections(content):
     return subsections
 
 
-def find_checklist_sections(md_text):
+def extract_checklist_from_manual(md_text, section_title="Anexo D - Checklist Cronograma SATI 2025/2026"):
     """
-    Identifica todas as seções (H3) que contenham checklists no formato Markdown (- [ ]) e
-    retorna um dicionário {titulo_secao: [ {Etapa, Atividade}, ... ]}.
+    Procura pelo checklist específico no manual e retorna uma lista de dicts com etapa e atividade.
+    Isso permite disponibilizar os itens em tabela e exportá-los em formatos como Excel.
     """
-    pattern = r"(^###\s+.+?$)"
-    parts = re.split(pattern, md_text, flags=re.MULTILINE)
-    checklists = {}
+    pattern = rf"###\s+{re.escape(section_title)}\s*(.*?)(?=^###\s+|\Z)"
+    match = re.search(pattern, md_text, flags=re.MULTILINE | re.DOTALL)
+    if not match:
+        return []
 
-    if len(parts) == 1:
-        return checklists
+    section_body = match.group(1).strip()
+    current_stage = None
+    checklist_rows = []
 
-    i = 1
-    while i < len(parts):
-        heading = parts[i].strip()
-        body = parts[i+1] if (i+1) < len(parts) else ""
-        title = heading.lstrip("#").strip()
-
-        if "- [" not in body:
-            i += 2
+    for raw_line in section_body.splitlines():
+        line = raw_line.strip()
+        if not line:
             continue
 
-        current_stage = title
-        rows = []
+        stage_match = re.match(r"^\*\*(.+?)\*\*$", line)
+        if stage_match:
+            current_stage = stage_match.group(1).strip()
+            continue
 
-        for raw_line in body.splitlines():
-            line = raw_line.strip()
-            if not line:
-                continue
+        task_match = re.match(r"^-\s*\[(?: |x|X)\]\s*(.+)$", line)
+        if task_match and current_stage:
+            checklist_rows.append({
+                "Etapa": current_stage,
+                "Atividade": task_match.group(1).strip()
+            })
 
-            stage_match = re.match(r"^\*\*(.+?)\*\*:?$", line)
-            if stage_match:
-                current_stage = stage_match.group(1).strip()
-                continue
-
-            task_match = re.match(r"^-\s*\[(?: |x|X)\]\s*(.+)$", line)
-            if task_match:
-                rows.append({
-                    "Etapa": current_stage,
-                    "Atividade": task_match.group(1).strip()
-                })
-
-        if rows:
-            checklists[title] = rows
-
-        i += 2
-
-    return checklists
+    return checklist_rows
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -223,7 +207,7 @@ if manual_selecionado:
     try:
         manual_text = manual_selecionado.read_text(encoding="utf-8")
         sections = split_markdown_sections(manual_text)
-        checklist_sections = find_checklist_sections(manual_text)
+        checklist_rows = extract_checklist_from_manual(manual_text)
     except Exception as e:
         st.error(f"❌ Erro ao ler o manual: {e}")
         st.stop()
@@ -238,6 +222,24 @@ if manual_selecionado:
         st.metric("📊 Seções", len(sections))
     with col3:
         st.metric("📅 Ano", f"{CURRENT_YEAR}/{NEXT_YEAR}")
+
+    if checklist_rows:
+        st.markdown("### 📋 Checklist Cronograma SATI")
+        with st.expander("Visualizar e exportar checklist (Anexo D)", expanded=False):
+            checklist_df = pd.DataFrame(checklist_rows)
+            st.dataframe(checklist_df, use_container_width=True, hide_index=True)
+
+            buffer = BytesIO()
+            with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+                checklist_df.to_excel(writer, sheet_name="Checklist SATI", index=False)
+            buffer.seek(0)
+
+            st.download_button(
+                "⬇️ Exportar checklist para Excel",
+                data=buffer.getvalue(),
+                file_name=f"Checklist_SATI_{CURRENT_YEAR}_{NEXT_YEAR}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 
     st.markdown("---")
 
@@ -300,34 +302,6 @@ if manual_selecionado:
 
         #st.markdown("---")
         st.markdown(manual_text, unsafe_allow_html=True)
-
-    if checklist_sections:
-        st.markdown("---")
-        st.markdown("### ✅ Checklists dos Anexos")
-        with st.expander("Opcional: visualizar ou exportar checklists (Anexos)", expanded=False):
-            checklist_titles = list(checklist_sections.keys())
-            selected_title = st.selectbox(
-                "Selecione o anexo:",
-                options=checklist_titles,
-                format_func=lambda x: x
-            )
-
-            selected_rows = checklist_sections[selected_title]
-            checklist_df = pd.DataFrame(selected_rows)
-            st.dataframe(checklist_df, use_container_width=True, hide_index=True)
-
-            buffer = BytesIO()
-            with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-                checklist_df.to_excel(writer, sheet_name=selected_title[:31], index=False)
-            buffer.seek(0)
-
-            st.download_button(
-                "⬇️ Exportar checklist para Excel",
-                data=buffer.getvalue(),
-                file_name=f"{selected_title.replace(' ', '_')}_{CURRENT_YEAR}_{NEXT_YEAR}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                key=f"download_{manual_selecionado.stem}"
-            )
 
 
 # Rodapé

@@ -9,7 +9,6 @@ import re
 from datetime import datetime
 from core.layout import setup_page, sidebar_menu, get_app_menu
 import pandas as pd
-from io import BytesIO
 
 # Configuração da página
 setup_page(page_title="Manuais da SUGESC (SUBCONT)", layout="wide", hide_default_nav=True)
@@ -130,56 +129,6 @@ def split_subsections(content):
     return subsections
 
 
-def find_checklist_sections(md_text):
-    """
-    Identifica todas as seções (H3) que contenham checklists no formato Markdown (- [ ]) e
-    retorna um dicionário {titulo_secao: [ {Etapa, Atividade}, ... ]}.
-    """
-    pattern = r"(^###\s+.+?$)"
-    parts = re.split(pattern, md_text, flags=re.MULTILINE)
-    checklists = {}
-
-    if len(parts) == 1:
-        return checklists
-
-    i = 1
-    while i < len(parts):
-        heading = parts[i].strip()
-        body = parts[i+1] if (i+1) < len(parts) else ""
-        title = heading.lstrip("#").strip()
-
-        if "- [" not in body:
-            i += 2
-            continue
-
-        current_stage = title
-        rows = []
-
-        for raw_line in body.splitlines():
-            line = raw_line.strip()
-            if not line:
-                continue
-
-            stage_match = re.match(r"^\*\*(.+?)\*\*:?$", line)
-            if stage_match:
-                current_stage = stage_match.group(1).strip()
-                continue
-
-            task_match = re.match(r"^-\s*\[(?: |x|X)\]\s*(.+)$", line)
-            if task_match:
-                rows.append({
-                    "Etapa": current_stage,
-                    "Atividade": task_match.group(1).strip()
-                })
-
-        if rows:
-            checklists[title] = rows
-
-        i += 2
-
-    return checklists
-
-
 # ═══════════════════════════════════════════════════════════════
 # Interface Principal
 # ═══════════════════════════════════════════════════════════════
@@ -223,7 +172,6 @@ if manual_selecionado:
     try:
         manual_text = manual_selecionado.read_text(encoding="utf-8")
         sections = split_markdown_sections(manual_text)
-        checklist_sections = find_checklist_sections(manual_text)
     except Exception as e:
         st.error(f"❌ Erro ao ler o manual: {e}")
         st.stop()
@@ -298,36 +246,8 @@ if manual_selecionado:
             Para uma navegação mais fácil durante apresentações, utilize o modo **Por Seções**.
             """)
 
-        #st.markdown("---")
-        st.markdown(manual_text, unsafe_allow_html=True)
-
-    if checklist_sections:
         st.markdown("---")
-        st.markdown("### ✅ Checklists dos Anexos")
-        with st.expander("Opcional: visualizar ou exportar checklists (Anexos)", expanded=False):
-            checklist_titles = list(checklist_sections.keys())
-            selected_title = st.selectbox(
-                "Selecione o anexo:",
-                options=checklist_titles,
-                format_func=lambda x: x
-            )
-
-            selected_rows = checklist_sections[selected_title]
-            checklist_df = pd.DataFrame(selected_rows)
-            st.dataframe(checklist_df, use_container_width=True, hide_index=True)
-
-            buffer = BytesIO()
-            with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-                checklist_df.to_excel(writer, sheet_name=selected_title[:31], index=False)
-            buffer.seek(0)
-
-            st.download_button(
-                "⬇️ Exportar checklist para Excel",
-                data=buffer.getvalue(),
-                file_name=f"{selected_title.replace(' ', '_')}_{CURRENT_YEAR}_{NEXT_YEAR}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                key=f"download_{manual_selecionado.stem}"
-            )
+        st.markdown(manual_text, unsafe_allow_html=True)
 
 
 # Rodapé
