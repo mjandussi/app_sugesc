@@ -10,6 +10,7 @@ from datetime import datetime
 from core.layout import setup_page, sidebar_menu, get_app_menu
 import pandas as pd
 from io import BytesIO
+from contextlib import contextmanager
 
 # Configuração da página
 setup_page(page_title="Manuais da SUGESC (SUBCONT)", layout="wide", hide_default_nav=True)
@@ -31,45 +32,99 @@ NEXT_YEAR = CURRENT_YEAR + 1
 # CSS customizado para melhor visualização
 st.markdown("""
 <style>
-    /* Cards informativos */
-    .info-card {
-        background: rgba(59, 130, 246, 0.1);
-        border-left: 4px solid #3b82f6;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin-bottom: 1rem;
+    .main {
+        background: radial-gradient(circle at top, rgba(59,130,246,.15), rgba(0,0,0,0)) no-repeat fixed;
     }
-
-    .success-card {
-        background: rgba(34, 197, 94, 0.1);
-        border-left: 4px solid #22c55e;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin-bottom: 1rem;
+    .block-container {
+        padding-top: 1.5rem;
     }
-
-    .warning-card {
-        background: rgba(251, 146, 60, 0.1);
-        border-left: 4px solid #fb923c;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin-bottom: 1rem;
+    .manual-banner {
+        background: linear-gradient(120deg, rgba(59,130,246,.25), rgba(147,51,234,.25));
+        border: 1px solid rgba(255,255,255,.1);
+        padding: 1.5rem;
+        border-radius: 1rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 20px 40px rgba(15,23,42,.25);
     }
-
-    /* Melhorar visualização de listas */
-    .stMarkdown ul {
-        margin-left: 1.5rem;
+    .manual-banner h2 {
+        margin: 0;
+        font-size: 1.4rem;
     }
-
-    .stMarkdown ol {
-        margin-left: 1.5rem;
+    .manual-banner__meta {
+        display: flex;
+        gap: 1.5rem;
+        margin-top: .75rem;
+        flex-wrap: wrap;
+        font-size: .9rem;
+        color: rgba(255,255,255,.8);
     }
-
-    /* Melhorar visualização de código */
-    .stMarkdown code {
-        background: rgba(0, 0, 0, 0.05);
-        padding: 0.2rem 0.4rem;
-        border-radius: 0.25rem;
+    .manual-banner__meta span {
+        display: block;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #fff;
+    }
+    .manual-section-card:has(*), .manual-checklist-card:has(*) {
+        background: rgba(17, 24, 39, .65);
+        border: 1px solid rgba(148,163,184,.25);
+        border-radius: 1rem;
+        padding: 1.25rem;
+        box-shadow: 0 10px 30px rgba(15,23,42,.35);
+        margin-bottom: 1.5rem;
+    }
+    /* Ocultar containers vazios */
+    .manual-section-card:empty, .manual-checklist-card:empty,
+    div[data-testid="stMarkdownContainer"]:empty {
+        display: none !important;
+        height: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    .manual-section-card h2, .manual-section-card h3 {
+        margin-top: 0;
+    }
+    .stTabs [data-baseweb="tab-list"] {
+        gap: .5rem;
+    }
+    .stTabs [data-baseweb="tab"] {
+        padding-top: .75rem;
+        padding-bottom: .75rem;
+        border-radius: 999px !important;
+        background: rgba(148,163,184,.12);
+        color: rgba(255,255,255,.7);
+        font-weight: 500;
+    }
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(120deg, rgba(59,130,246,.4), rgba(147,51,234,.4)) !important;
+        color: #fff !important;
+    }
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] > div:first-child {
+        background: rgba(15,23,42,.6);
+        border: 1px solid rgba(148,163,184,.4);
+        border-radius: .75rem;
+        box-shadow: 0 12px 25px rgba(2,6,23,.45);
+        color: #fff;
+    }
+    div[data-testid="stRadio"] > div[role="radiogroup"] {
+        gap: 1rem;
+        padding: .5rem 1rem;
+        background: rgba(15,23,42,.6);
+        border-radius: 999px;
+        border: 1px solid rgba(148,163,184,.3);
+    }
+    div[data-testid="stRadio"] label {
+        font-weight: 600;
+    }
+    div[data-testid="stExpander"] {
+        border: 1px solid rgba(148,163,184,.3);
+        border-radius: .75rem;
+        overflow: hidden;
+    }
+    div[data-testid="stExpander"] > details {
+        background: rgba(15,23,42,.4);
+    }
+    div[data-testid="stExpander"] summary {
+        font-weight: 600;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -180,6 +235,15 @@ def find_checklist_sections(md_text):
     return checklists
 
 
+@contextmanager
+def card_container(css_class="manual-section-card"):
+    st.markdown(f"<div class='{css_class}'>", unsafe_allow_html=True)
+    try:
+        yield
+    finally:
+        st.markdown("</div>", unsafe_allow_html=True)
+
+
 # ═══════════════════════════════════════════════════════════════
 # Interface Principal
 # ═══════════════════════════════════════════════════════════════
@@ -228,16 +292,33 @@ if manual_selecionado:
         st.error(f"❌ Erro ao ler o manual: {e}")
         st.stop()
 
-    st.markdown("---")
+    info = manual_selecionado.stat()
+    last_modified = datetime.fromtimestamp(info.st_mtime).strftime("%d/%m/%Y %H:%M")
+    file_size = info.st_size / 1024
 
-    # Informações do manual
-    col1, col2, col3 = st.columns([70, 10, 20])
-    with col1:
-        st.metric("📄 Arquivo", manual_selecionado.name)
-    with col2:
-        st.metric("📊 Seções", len(sections))
-    with col3:
-        st.metric("📅 Ano", f"{CURRENT_YEAR}/{NEXT_YEAR}")
+    manual_banner = f"""
+    <div class="manual-banner">
+        <div>
+            <h2>{manual_selecionado.stem}</h2>
+            <p style="margin:0.25rem 0 0 0; color: rgba(255,255,255,.85);">Manual técnico exibido abaixo com recursos de navegação por seções ou visualização completa.</p>
+        </div>
+        <div class="manual-banner__meta">
+            <div>
+                <small>Última atualização</small>
+                <span>{last_modified}</span>
+            </div>
+            <div>
+                <small>Total de seções</small>
+                <span>{len(sections)}</span>
+            </div>
+            <div>
+                <small>Tamanho do arquivo</small>
+                <span>{file_size:.1f} KB</span>
+            </div>
+        </div>
+    </div>
+    """
+    st.markdown(manual_banner, unsafe_allow_html=True)
 
     st.markdown("---")
 
@@ -268,66 +349,66 @@ if manual_selecionado:
             if secao_selecionada_idx is not None:
                 title, content = sections[secao_selecionada_idx]
 
-                st.markdown(f"## {secao_selecionada_idx + 1}. {title}")
-                st.caption(f"Seção {secao_selecionada_idx + 1} de {len(sections)}")
+                with card_container():
+                    st.markdown(f"## {secao_selecionada_idx + 1}. {title}")
+                    st.caption(f"Seção {secao_selecionada_idx + 1} de {len(sections)}")
 
-                st.markdown("---")
+                    # Dividir em subseções
+                    subsections = split_subsections(content)
 
-                # Dividir em subseções
-                subsections = split_subsections(content)
+                    # Se houver subseções, usar tabs
+                    if len(subsections) > 1:
+                        tab_names = [sub_title for sub_title, _ in subsections]
+                        tabs = st.tabs(tab_names)
 
-                # Se houver subseções, usar tabs
-                if len(subsections) > 1:
-                    tab_names = [sub_title for sub_title, _ in subsections]
-                    tabs = st.tabs(tab_names)
-
-                    for tab, (sub_title, sub_content) in zip(tabs, subsections):
-                        with tab:
-                            st.markdown(sub_content, unsafe_allow_html=True)
-                else:
-                    st.markdown(content, unsafe_allow_html=True)
+                        for tab, (sub_title, sub_content) in zip(tabs, subsections):
+                            with tab:
+                                st.markdown(sub_content, unsafe_allow_html=True)
+                    else:
+                        st.markdown(content, unsafe_allow_html=True)
 
     # Visualização completa
     else:
-        st.markdown("## 📖 Visualização Completa")
+        with card_container():
+            st.markdown("## 📖 Visualização Completa")
 
-        with st.expander("ℹ️ Sobre este modo de visualização", expanded=False):
-            st.info("""
-            **Modo Manual Completo** exibe todo o conteúdo do documento de uma vez.
+            with st.expander("ℹ️ Sobre este modo de visualização", expanded=False):
+                st.info("""
+                **Modo Manual Completo** exibe todo o conteúdo do documento de uma vez.
 
-            Para uma navegação mais fácil durante apresentações, utilize o modo **Por Seções**.
-            """)
+                Para uma navegação mais fácil durante apresentações, utilize o modo **Por Seções**.
+                """)
 
-        #st.markdown("---")
-        st.markdown(manual_text, unsafe_allow_html=True)
+            #st.markdown("---")
+            st.markdown(manual_text, unsafe_allow_html=True)
 
     if checklist_sections:
-        st.markdown("---")
-        st.markdown("### ✅ Checklists dos Anexos")
-        with st.expander("Opcional: visualizar ou exportar checklists (Anexos)", expanded=False):
-            checklist_titles = list(checklist_sections.keys())
-            selected_title = st.selectbox(
-                "Selecione o anexo:",
-                options=checklist_titles,
-                format_func=lambda x: x
-            )
+        with card_container("manual-checklist-card"):
+            st.markdown("### ✅ Checklists dos Anexos")
+            with st.expander("Opcional: visualizar ou exportar checklists (Anexos)", expanded=False):
+                checklist_titles = list(checklist_sections.keys())
+                selected_title = st.selectbox(
+                    "Selecione o anexo:",
+                    options=checklist_titles,
+                    format_func=lambda x: x
+                )
 
-            selected_rows = checklist_sections[selected_title]
-            checklist_df = pd.DataFrame(selected_rows)
-            st.dataframe(checklist_df, use_container_width=True, hide_index=True)
+                selected_rows = checklist_sections[selected_title]
+                checklist_df = pd.DataFrame(selected_rows)
+                st.dataframe(checklist_df, use_container_width=True, hide_index=True)
 
-            buffer = BytesIO()
-            with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-                checklist_df.to_excel(writer, sheet_name=selected_title[:31], index=False)
-            buffer.seek(0)
+                buffer = BytesIO()
+                with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+                    checklist_df.to_excel(writer, sheet_name=selected_title[:31], index=False)
+                buffer.seek(0)
 
-            st.download_button(
-                "⬇️ Exportar checklist para Excel",
-                data=buffer.getvalue(),
-                file_name=f"{selected_title.replace(' ', '_')}_{CURRENT_YEAR}_{NEXT_YEAR}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                key=f"download_{manual_selecionado.stem}"
-            )
+                st.download_button(
+                    "⬇️ Exportar checklist para Excel",
+                    data=buffer.getvalue(),
+                    file_name=f"{selected_title.replace(' ', '_')}_{CURRENT_YEAR}_{NEXT_YEAR}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    key=f"download_{manual_selecionado.stem}"
+                )
 
 
 # Rodapé
