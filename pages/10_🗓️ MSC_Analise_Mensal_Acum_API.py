@@ -9,6 +9,7 @@ from core.layout import setup_page, sidebar_menu, get_app_menu
 
 # Configuração da página
 setup_page(page_title="Análise MSC API Acumulado Mensal", layout="wide", hide_default_nav=True)
+st.markdown("---")
 
 # Menu lateral estruturado
 sidebar_menu(get_app_menu(), use_expanders=True, expanded=False)
@@ -699,16 +700,32 @@ def compute_d1(ano: str, mes_selecionado: int, ente: str, po_stn: pd.DataFrame, 
 
     return d1, detalhes
 
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+
 # -------------------------
 # App Streamlit
 # -------------------------
-st.set_page_config(page_title='Analises MSC - API Siconfi', layout='wide')
-st.title('Analises MSC – API Siconfi')
 
-st.subheader('Parametros')
-ano = st.selectbox('Ano', options=['2023', '2024', '2025'], index=2)
-mes = st.selectbox('Mes (1..13)', options=list(range(1, 14)), index=8)
-st.caption('Para Encerramento, selecione o mes 13')
+st.title('🗓️ Análise MSC - API Acumulado Mensal')
+
+c1, c2 = st.columns([1,1])
+with c1:
+    ano = st.selectbox('Ano', options=['2023', '2024', '2025'], index=2)
+with c2:
+    mes = st.selectbox('Mes (1..13)', options=list(range(1, 14)), index=8)
+    st.caption('Para Encerramento, selecione o mes 13')
+
 uploaded_layout = st.file_uploader('Leiaute da Portaria STN (xlsx)', type=['xlsx'])
 executar = st.button('Executar analises')
 
