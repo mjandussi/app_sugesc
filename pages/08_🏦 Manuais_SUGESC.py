@@ -300,7 +300,7 @@ if manual_selecionado:
     <div class="manual-banner">
         <div>
             <h2>{manual_selecionado.stem}</h2>
-            <p style="margin:0.25rem 0 0 0; color: rgba(255,255,255,.85);">Manual técnico exibido abaixo com recursos de navegação por seções ou visualização completa.</p>
+            <p style="margin:0.25rem 0 0 0; color: rgba(255,255,255,.85);">Manual exibido abaixo com recursos de navegação por seções ou visualização completa.</p>
         </div>
         <div class="manual-banner__meta">
             <div>
