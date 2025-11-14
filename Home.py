@@ -32,8 +32,10 @@ st.markdown(
     <ul>
       <li><strong>🗓️ Análise MSC Mensal</strong>: Validação da Matriz de Saldos Contábeis conforme as Dimensões D1 do ranking SICONFI.</li>
       <li><strong>📊 Análise MSC x FLEX</strong>: Conciliação entre a MSC e alguns relatórios do FLEX para identificar possíveis divergências de dados.</li>
+      <li><strong>🗓️ Análise MSC API Acumulado Mensal</strong>: Consulta à API do SICONFI sobre os dados da Matriz de Saldos Contábeis nas Dimensões D1 do ranking.</li>
       <li><strong>📑 Extratos de Homologações</strong>: Consulta sobre os demonstrativos homologados no portal do SICONFI.</li>
       <li><strong>⚖️ Análise Novas Dimensões</strong>: Comparação do desempenho dos estados em relação às novas verificações do Ranking Siconfi.</li>
+      <li><strong>🚨 Acerto de Fontes em Banco</strong>: Permite o acerto dos dados de Ativos F sem Fonte de Recursos na MSC.</li>
     </ul>
   </div>
   <div class="home-section">

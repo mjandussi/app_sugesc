@@ -785,9 +785,9 @@ if executar:
     # Função para aplicar estilo com cores intermediárias
     def highlight_resposta(row):
         if row['Resposta'] == 'OK':
-            color = 'background-color: #6fbf73; color: white; font-weight: bold;'  # verde médio
+            color = 'background-color: #44ac7a; color: white; font-weight: bold;'  # verde
         elif row['Resposta'] == 'ERRO':
-            color = 'background-color: #e57373; color: white; font-weight: bold;'  # vermelho médio
+            color = 'background-color: #ed475c; color: white; font-weight: bold;'  # vermelho
         else:
             color = ''
         return [''] * len(row) if not color else [color if col == 'Resposta' else '' for col in row.index]
