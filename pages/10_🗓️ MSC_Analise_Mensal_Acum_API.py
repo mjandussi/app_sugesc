@@ -3,11 +3,12 @@ from io import BytesIO
 import httpx
 import numpy as np
 import pandas as pd
+import re
 import streamlit as st
 from core.layout import setup_page, sidebar_menu, get_app_menu
 
 # Configuração da página
-setup_page(page_title="Análise das Novas Dimensões", layout="wide", hide_default_nav=True)
+setup_page(page_title="Análise MSC API Acumulado Mensal", layout="wide", hide_default_nav=True)
 
 # Menu lateral estruturado
 sidebar_menu(get_app_menu(), use_expanders=True, expanded=False)
@@ -644,16 +645,16 @@ def compute_d1(ano: str, mes_selecionado: int, ente: str, po_stn: pd.DataFrame, 
     erro_6['chave'] = erro_6['NATUREZA_VALOR'] + erro_6['NATUREZA DO SALDO']
     condicao_5 = int(erro_5.query('chave == "CDevedora" or chave == "DCredora"').value_counts().sum()) if not erro_5.empty else 0
     condicao_6 = int(erro_6.query('chave == "CDevedora" or chave == "DCredora"').value_counts().sum()) if not erro_6.empty else 0
-    d1_00038_t_5 = erro_5.groupby(['chave', 'mes_referencia', 'tipo_matriz'])['VALOR'].sum().reset_index() if not erro_5.empty else pd.DataFrame()
-    d1_00038_t_6 = erro_6.groupby(['chave', 'mes_referencia', 'tipo_matriz'])['VALOR'].sum().reset_index() if not erro_6.empty else pd.DataFrame()
-    d1_00038_ta_5 = d1_00038_t_5.query('chave == "CDevedora" or chave == "DCredora"') if not d1_00038_t_5.empty else pd.DataFrame()
-    d1_00038_ta_6 = d1_00038_t_6.query('chave == "CDevedora" or chave == "DCredora"') if not d1_00038_t_6.empty else pd.DataFrame()
-    d1_00038_ta = pd.concat([d1_00038_ta_5, d1_00038_ta_6]) if not d1_00038_ta_5.empty or not d1_00038_ta_6.empty else pd.DataFrame()
-    if not d1_00038_ta.empty:
-        condicao_alt = (d1_00038_ta['mes_referencia'] == 12) & (d1_00038_ta['tipo_matriz'] == 'MSCE')
-        d1_00038_ta.loc[condicao_alt, 'mes_referencia'] = 13
-        d1_00038_ta = d1_00038_ta.reset_index(drop=True)
-    contagem = d1_00038_ta.mes_referencia.unique() if not d1_00038_ta.empty else []
+    d1_00038_ta_5 = erro_5.groupby(['chave', 'CONTA', 'mes_referencia', 'tipo_matriz'])['VALOR'].sum().reset_index() if not erro_5.empty else pd.DataFrame()
+    d1_00038_ta_6 = erro_6.groupby(['chave', 'CONTA', 'mes_referencia', 'tipo_matriz'])['VALOR'].sum().reset_index() if not erro_6.empty else pd.DataFrame()
+    d1_00038_t_5 = d1_00038_ta_5.query('chave == "CDevedora" or chave == "DCredora"') if not d1_00038_ta_5.empty else pd.DataFrame()
+    d1_00038_t_6 = d1_00038_ta_6.query('chave == "CDevedora" or chave == "DCredora"') if not d1_00038_ta_6.empty else pd.DataFrame()
+    d1_00038_t = pd.concat([d1_00038_t_5, d1_00038_t_6]) if not d1_00038_t_5.empty or not d1_00038_t_6.empty else pd.DataFrame()
+    if not d1_00038_t.empty:
+        condicao_alt = (d1_00038_t['mes_referencia'] == 12) & (d1_00038_t['tipo_matriz'] == 'MSCE')
+        d1_00038_t.loc[condicao_alt, 'mes_referencia'] = 13
+        d1_00038_t = d1_00038_t.reset_index(drop=True)
+    contagem = d1_00038_t.mes_referencia.unique() if not d1_00038_t.empty else []
     erros = len(contagem)
     nota = (100/13) * (13-erros)
     nota = round(nota)/100
@@ -670,7 +671,33 @@ def compute_d1(ano: str, mes_selecionado: int, ente: str, po_stn: pd.DataFrame, 
         d1_00033, d1_00034, d1_00035, d1_00037, d1_00038
     ], ignore_index=True)
     d1.reset_index(drop=True, inplace=True)
-    return d1
+
+    # Dicionário com os detalhes de cada dimensão
+    detalhes = {
+        'D1_00017': d1_00017_t,
+        'D1_00018': d1_00018_t,
+        'D1_00019': d1_00019_t,
+        'D1_00020': d1_00020_t,
+        'D1_00021': d1_00021_t,
+        'D1_00022': d1_00022_t,
+        'D1_00023': d1_00023_t,
+        'D1_00024': d1_00024_t,
+        'D1_00025': d1_00025_t,
+        'D1_00026': d1_00026_t,
+        'D1_00027': d1_00027_t,
+        'D1_00028': d1_00028_t,
+        'D1_00029': d1_00029_t,
+        'D1_00030': d1_00030_t,
+        'D1_00031': d1_00031_t,
+        'D1_00032': d1_00032_t,
+        'D1_00033': d1_00033_t,
+        'D1_00034': d1_00034_t,
+        'D1_00035': d1_00035_t,
+        'D1_00037': d1_00037_t,
+        'D1_00038': d1_00038_t,
+    }
+
+    return d1, detalhes
 
 # -------------------------
 # App Streamlit
@@ -692,23 +719,168 @@ if executar:
         st.warning('Envie o arquivo do leiaute da Portaria STN (xlsx).')
         st.stop()
 
-    with st.spinner('Carregando leiaute e consultando a API…'):
+    with st.spinner('Carregando os dados da API e realizando analises…'):
         po_stn, pc_estendido = load_layout_from_upload(uploaded_layout, ano)
         if po_stn is None or pc_estendido is None:
             st.error('Nao foi possivel ler o leiaute enviado. Verifique o arquivo e tente novamente.')
             st.stop()
 
         try:
-            d1 = compute_d1(ano=ano, mes_selecionado=int(mes), ente=ENTE_FIXO, po_stn=po_stn, pc_estendido=pc_estendido)
+            d1, detalhes = compute_d1(ano=ano, mes_selecionado=int(mes), ente=ENTE_FIXO, po_stn=po_stn, pc_estendido=pc_estendido)
         except Exception as e:
             st.exception(e)
             st.stop()
 
-    st.success(f'Dados extraidos da API – Ente: {ENTE_FIXO} – Ano: {ano}')
-    st.dataframe(d1, use_container_width=True)
+    st.success(f'✅ Dados extraídos da API – Ente: {ENTE_FIXO} – Ano: {ano} – Mês: {mes}')
 
+    # Resumo Geral
+    st.markdown("### 📊 Resumo Geral das Análises")
+
+    # Contabilizar resultados
+    total_dimensoes = len(d1)
+    ok_count = len(d1[d1['Resposta'] == 'OK'])
+    erro_count = len(d1[d1['Resposta'] == 'ERRO'])
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Total de Dimensões", total_dimensoes)
+    with col2:
+        st.metric("✅ OK", ok_count, delta=f"{(ok_count/total_dimensoes*100):.1f}%")
+    with col3:
+        st.metric("❌ ERRO", erro_count, delta=f"{(erro_count/total_dimensoes*100):.1f}%" if erro_count > 0 else None, delta_color="inverse")
+
+    st.divider()
+
+    # Tabela resumida com formatação
+    st.markdown("### 📋 Tabela Resumida")
+
+    # Preparar DataFrame para exibição com formatação
+    d1_display = d1.copy()
+
+    # Extrair Erros e Pontos da coluna OBS
+    def extrair_erros_pontos(obs_texto):
+        # Padrão: "Cada MSC vale 1/13 - Erros: 3 - Pontos: 0.77"
+        match_erros = re.search(r'Erros:\s*(\d+)', str(obs_texto))
+        match_pontos = re.search(r'Pontos:\s*([\d\.]+)', str(obs_texto))
+        erros = int(match_erros.group(1)) if match_erros else 0
+        pontos = float(match_pontos.group(1)) if match_pontos else 0.0
+        return erros, pontos
+
+    d1_display[['Qtd Erros', 'Pontuação']] = d1_display['OBS'].apply(
+        lambda x: pd.Series(extrair_erros_pontos(x))
+    )
+
+    # Remover coluna OBS original
+    d1_display = d1_display.drop(columns=['OBS'])
+
+    # Reordenar colunas
+    d1_display = d1_display[['Dimensão', 'Resposta', 'Descrição da Dimensão', 'Qtd Erros', 'Pontuação']]
+
+    # Converter Qtd Erros para inteiro
+    d1_display['Qtd Erros'] = d1_display['Qtd Erros'].astype(int)
+
+    # Formatar coluna Pontuação para 2 casas decimais
+    d1_display['Pontuação'] = d1_display['Pontuação'].apply(lambda x: f"{x:.2f}")
+
+    # Função para aplicar estilo com cores intermediárias
+    def highlight_resposta(row):
+        if row['Resposta'] == 'OK':
+            color = 'background-color: #6fbf73; color: white; font-weight: bold;'  # verde médio
+        elif row['Resposta'] == 'ERRO':
+            color = 'background-color: #e57373; color: white; font-weight: bold;'  # vermelho médio
+        else:
+            color = ''
+        return [''] * len(row) if not color else [color if col == 'Resposta' else '' for col in row.index]
+
+    # Aplicar estilo condicional
+    styled_df = d1_display.style.apply(highlight_resposta, axis=1)
+
+    # Exibir tabela estilizada
+    st.dataframe(styled_df, use_container_width=True, height=400, hide_index=True)
+
+    # Download
     csv = d1.to_csv(index=False).encode('utf-8')
-    st.download_button('Baixar d1 (CSV)', data=csv, file_name=f'd1_{ENTE_FIXO}_{ano}_m{mes}.csv', mime='text/csv')
+    st.download_button(
+        '📥 Baixar Análises Completas (CSV)',
+        data=csv,
+        file_name=f'd1_{ENTE_FIXO}_{ano}_m{mes}.csv',
+        mime='text/csv',
+        use_container_width=True
+    )
+
+    st.divider()
+
+    # Função para formatar título do expander
+    def format_expander_title(codigo, descricao, resposta):
+        status_map = {
+            'OK': ('🟢', 'OK'),
+            'ERRO': ('🔴', 'ERRO')
+        }
+        icon, label = status_map.get(resposta, ('🟡', resposta))
+        return f"📌 {codigo} - {descricao} | {icon} {label}"
+
+    st.markdown("### 🔍 Detalhamento por Dimensão")
+
+    # Iterar sobre cada dimensão e criar expanders
+    for idx, row in d1.iterrows():
+        dimensao = row['Dimensão']
+        descricao = row['Descrição da Dimensão']
+        resposta = row['Resposta']
+        obs = row['OBS']
+
+        # Pegar os detalhes da dimensão (se disponíveis)
+        df_detalhes = detalhes.get(dimensao, pd.DataFrame())
+        # # Para D1_00038, usar a chave especial
+        # if dimensao == 'D1_00038' and df_detalhes.empty:
+        #     df_detalhes = detalhes.get('D1_00038_ta', pd.DataFrame())
+
+        with st.expander(format_expander_title(dimensao, descricao, resposta), expanded=(resposta == 'ERRO')):
+            # # Cabeçalho
+            # col_info1, col_info2 = st.columns([3, 1])
+            # with col_info1:
+            #     st.markdown(f"**Descrição:** {descricao}")
+            # with col_info2:
+            #     st.markdown(f"**Status:** {resposta}")
+
+            # st.markdown(f"**Observações:** {obs}")
+
+            # st.divider()
+
+            # Conteúdo baseado no status
+            if resposta == 'OK':
+                st.success(f"✅ **{resposta}** - Esta dimensão está conforme!")
+                st.info("🎉 Nenhum erro encontrado nesta análise.")
+
+            else:
+                st.error(f"❌ **{resposta}** - Esta dimensão apresenta problemas!")
+
+                # Mostrar detalhes se disponíveis
+                if not df_detalhes.empty:
+                    st.markdown("#### Registros com Problemas:")
+                    st.caption(f"Total de linhas (registros) com erro: **{len(df_detalhes)}**")
+
+                    # Limitar exibição a 100 linhas
+                    if len(df_detalhes) > 100:
+                        st.dataframe(df_detalhes.head(100), use_container_width=True, height=300)
+                        st.warning(f"⚠️ Exibindo apenas as primeiras 100 linhas de {len(df_detalhes)} registros.")
+                    else:
+                        st.dataframe(df_detalhes, use_container_width=True, height=300)
+
+                    # Botão de download
+                    csv_detalhes = df_detalhes.to_csv(index=False).encode('utf-8')
+                    st.download_button(
+                        f"📥 Baixar Erros {dimensao} (CSV)",
+                        data=csv_detalhes,
+                        file_name=f"{dimensao}_erros_{ENTE_FIXO}_{ano}_m{mes}.csv",
+                        mime="text/csv",
+                        key=f"btn_{dimensao}_{idx}"
+                    )
+                else:
+                    st.warning("⚠️ **Detalhes não disponíveis** - A análise detectou problemas, mas os registros detalhados não foram carregados.")
+                    st.info("💡 **Dica:** Os detalhes completos podem estar disponíveis através da análise via arquivo CSV ou consulta direta à API.")
+
+            # Footer do expander
+            st.caption(f"Dimensão: {dimensao} | Resposta: {resposta}")
 
 
 
