@@ -784,98 +784,6 @@ def dimensao_d1_00035(df_base, pc_estendido):
     return resultado, d1_00035_erros
 
 
-def dimensao_d1_00037(df_base):
-    """
-    D1_00037: Verifica se estados e municípios enviaram informações em fontes de recursos da União (de 000 a 499).
-
-    Args:
-        df_base: DataFrame com saldos invertidos
-
-    Returns:
-        Tuple (resultado, DataFrame com erros)
-    """
-    # Filtra ending_balance
-    msc_e = df_base[df_base['TIPO_VALOR'] == 'ending_balance'].copy()
-
-    # Verifica se existe a coluna IC3 (fonte de recursos)
-    if 'IC3' not in msc_e.columns:
-        return 'N/A', pd.DataFrame()
-
-    msc_e_local = msc_e.copy()
-    msc_e_local['IC3'] = msc_e_local['IC3'].astype(str)
-
-    # Extrai os últimos 3 dígitos da fonte de recursos
-    msc_e_local['fonte'] = msc_e_local['IC3'].str[-3:]
-    msc_e_local['fonte'] = pd.to_numeric(msc_e_local['fonte'], errors='coerce')
-
-    # Verifica se há fontes menores que 500 (fontes da União)
-    d1_00037_erros = msc_e_local[msc_e_local['fonte'] < 500].copy()
-
-    condicao_bool = (msc_e_local['fonte'] < 500).any()
-
-    if condicao_bool:
-        resultado = 'ERRO'
-    else:
-        resultado = 'OK'
-
-    return resultado, d1_00037_erros
-
-
-def dimensao_d1_00038(df_base, pc_estendido):
-    """
-    D1_00038: Verifica contas de classe 5 e 6 com natureza diferente do PCASP.
-
-    Args:
-        df_base: DataFrame com saldos invertidos
-        pc_estendido: DataFrame PCASP Estendido
-
-    Returns:
-        Tuple (resultado, DataFrame com erros)
-    """
-    # Filtra ending_balance
-    msc_e = df_base[df_base['TIPO_VALOR'] == 'ending_balance'].copy()
-
-    # Separar contas classe 5 e 6
-    c_5_msc = msc_e[msc_e['CONTA'].str.startswith('5')].copy()
-    c_6_msc = msc_e[msc_e['CONTA'].str.startswith('6')].copy()
-
-    c_5_pcasp = pc_estendido[pc_estendido['CONTA'].str.startswith('5')].copy()
-    c_6_pcasp = pc_estendido[pc_estendido['CONTA'].str.startswith('6')].copy()
-
-    # Merge classe 5
-    erro_5 = c_5_msc.merge(c_5_pcasp, left_on='CONTA', right_on='CONTA', how="left")
-    erro_5 = erro_5[erro_5['VALOR'] != 0]
-
-    # Merge classe 6
-    erro_6 = c_6_msc.merge(c_6_pcasp, left_on='CONTA', right_on='CONTA', how="left")
-    erro_6 = erro_6[erro_6['VALOR'] != 0]
-
-    # Criar chave de comparação
-    if not erro_5.empty and 'NATUREZA DO SALDO' in erro_5.columns:
-        erro_5['chave'] = erro_5['NATUREZA_VALOR'] + erro_5['NATUREZA DO SALDO']
-        erro_5_filtrado = erro_5[(erro_5['chave'] == 'CDevedora') | (erro_5['chave'] == 'DCredora')]
-    else:
-        erro_5_filtrado = pd.DataFrame()
-
-    if not erro_6.empty and 'NATUREZA DO SALDO' in erro_6.columns:
-        erro_6['chave'] = erro_6['NATUREZA_VALOR'] + erro_6['NATUREZA DO SALDO']
-        erro_6_filtrado = erro_6[(erro_6['chave'] == 'CDevedora') | (erro_6['chave'] == 'DCredora')]
-    else:
-        erro_6_filtrado = pd.DataFrame()
-
-    # Concatenar erros
-    d1_00038_erros = pd.concat([erro_5_filtrado, erro_6_filtrado], ignore_index=True)
-
-    condicao_total = len(erro_5_filtrado) + len(erro_6_filtrado)
-
-    if condicao_total > 0:
-        resultado = 'ERRO'
-    else:
-        resultado = 'OK'
-
-    return resultado, d1_00038_erros
-
-
 # ═══════════════════════════════════════════════════════════════
 # Interface do Usuário
 # ═══════════════════════════════════════════════════════════════
@@ -1056,8 +964,6 @@ if 'msc_base' in st.session_state:
         resultado_33, erros_33 = dimensao_d1_00033(msc_base)
         resultado_34, erros_34 = dimensao_d1_00034(msc_base, pc_estendido)
         resultado_35, erros_35 = dimensao_d1_00035(msc_base, pc_estendido)
-        resultado_37, erros_37 = dimensao_d1_00037(msc_base)
-        resultado_38, erros_38 = dimensao_d1_00038(msc_base, pc_estendido)
 
     # Montar resumo (1 erro por dimensão, não por linha)
     resultados_resumo = [
@@ -1080,8 +986,6 @@ if 'msc_base' in st.session_state:
         ('D1_00033', 'Contas 52/62 sem IC3', resultado_33, 1 if resultado_33 == 'ERRO' else 0),
         ('D1_00034', 'Natureza VPD', resultado_34, 1 if resultado_34 == 'ERRO' else 0),
         ('D1_00035', 'Natureza VPA', resultado_35, 1 if resultado_35 == 'ERRO' else 0),
-        ('D1_00037', 'Fontes União (000-499)', resultado_37, 1 if resultado_37 == 'ERRO' else 0),
-        ('D1_00038', 'Natureza Classes 5 e 6', resultado_38, 1 if resultado_38 == 'ERRO' else 0),
     ]
 
     # Mostrar resumo primeiro
@@ -1374,28 +1278,6 @@ if 'msc_base' in st.session_state:
             st.dataframe(erros_35, use_container_width=True, height=300)
             st.download_button("📥 Download Erros (Excel)", convert_df_to_excel(erros_35), "d1_00035_erros.xlsx", key="btn_35")
 
-    # D1_00037
-    with st.expander(format_expander_title("D1_00037", "Fontes de Recursos da União (000-499)", resultado_37)):
-        st.markdown("**Descrição:** Verifica se estados e municípios enviaram informações em fontes de recursos da União (de 000 a 499)")
-        if resultado_37 == 'N/A':
-            st.info("ℹ️ N/A - Coluna IC3 (Fonte de Recursos) não encontrada no arquivo")
-        elif resultado_37 == 'OK':
-            st.success(f"✅ {resultado_37} - Nenhuma fonte da União encontrada")
-        else:
-            st.error(f"❌ {resultado_37} - {len(erros_37)} registros com fontes da União")
-            st.dataframe(erros_37.head(100), use_container_width=True, height=300)
-            st.download_button("📥 Download Erros (Excel)", convert_df_to_excel(erros_37), "d1_00037_erros.xlsx", key="btn_37")
-
-    # D1_00038
-    with st.expander(format_expander_title("D1_00038", "Natureza Classes 5 e 6", resultado_38)):
-        st.markdown("**Descrição:** Verifica contas de classe 5 e 6 cujo saldo final está com natureza diferente do PCASP Estendido")
-        if resultado_38 == 'OK':
-            st.success(f"✅ {resultado_38} - Naturezas corretas")
-        else:
-            st.error(f"❌ {resultado_38} - {len(erros_38)} contas com natureza incorreta")
-            st.dataframe(erros_38.head(100), use_container_width=True, height=300)
-            st.download_button("📥 Download Erros (Excel)", convert_df_to_excel(erros_38), "d1_00038_erros.xlsx", key="btn_38")
-
 else:
     st.info("👆 Faça upload dos arquivos necessários para iniciar a análise.")
 
@@ -1410,7 +1292,7 @@ else:
     6. **Visualizar Resultados**: Expanda as dimensões para ver detalhes
     7. **Exportar**: Baixe os relatórios de erros quando necessário
 
-    ### 📊 Dimensões analisadas (21 dimensões D1):
+    ### 📊 Dimensões analisadas (19 dimensões D1):
 
     - **D1_00017**: Valores negativos na matriz
     - **D1_00018**: Consistência (SI + Movimentação = SF)
@@ -1431,8 +1313,6 @@ else:
     - **D1_00033**: Contas 5221/5222/6221/6222/6223 com IC3 (FR) preenchido
     - **D1_00034**: Natureza VPD (Variações Patrimoniais Diminutivas)
     - **D1_00035**: Natureza VPA (Variações Patrimoniais Aumentativas)
-    - **D1_00037**: Fontes de Recursos da União (000-499) - Estados/Municípios
-    - **D1_00038**: Natureza de saldo das Classes 5 e 6 conforme PCASP
     """)
 
 # Rodapé
