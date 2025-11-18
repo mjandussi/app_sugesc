@@ -94,15 +94,6 @@ def fetch_and_prepare(ente: str, ano: str, mes_selecionado: int):
     msc_orcam_orig = msc_orcam.copy()
     msc_ctr_orig = msc_ctr.copy()
 
-    # Verificar quais meses estão disponíveis nos dados retornados pela API
-    all_data = pd.concat([msc_patrimonial_orig, msc_orcam_orig, msc_ctr_orig], ignore_index=True)
-    if not all_data.empty and 'mes_referencia' in all_data.columns:
-        meses_disponiveis = sorted(all_data['mes_referencia'].unique())
-        max_mes_disponivel = max(meses_disponiveis) if meses_disponiveis else 0
-    else:
-        meses_disponiveis = []
-        max_mes_disponivel = 0
-
     def _ajusta_retificadoras(msc, prefixos, considerar_period_change=True):
         msc = msc.copy()
         msc["conta_contabil"] = msc["conta_contabil"].astype(str)
@@ -146,7 +137,6 @@ def fetch_and_prepare(ente: str, ano: str, mes_selecionado: int):
             "msc_orig_consolidada_e": msc_orig_consolidada_e,
             "msc_orig_consolidada_b": msc_orig_consolidada_b,
         }
-        return context, max_mes_disponivel, meses_disponiveis
     else:
         msc_patr_encerr, msc_orcam_encerr, msc_ctr_encerr = run_async(
             load_msc_all(ente, ano, [12], tipos_balanco, co_tipo_matriz="MSCE", concurrency=8, delay=0.05)
@@ -187,7 +177,7 @@ def fetch_and_prepare(ente: str, ano: str, mes_selecionado: int):
             "msc_original_e_b_p_13": msc_original_e_b_p_13,
         }
 
-    return context, max_mes_disponivel, meses_disponiveis
+    return context
 
 def load_layout_from_upload(uploaded_xlsx, ano: str):
     if uploaded_xlsx is None:
@@ -216,7 +206,7 @@ def load_layout_from_upload(uploaded_xlsx, ano: str):
 
 
 def compute_d1(ano: str, mes_selecionado: int, ente: str, po_stn: pd.DataFrame, pc_estendido: pd.DataFrame):
-    ctx, max_mes_disponivel, meses_disponiveis = fetch_and_prepare(ente, ano, mes_selecionado)
+    ctx = fetch_and_prepare(ente, ano, mes_selecionado)
     msc_consolidada = ctx["msc_consolidada"].copy()
     msc_orig_consolidada = ctx["msc_orig_consolidada"].copy()
     msc_consolidada_e = ctx["msc_consolidada_e"].copy()
@@ -708,7 +698,7 @@ def compute_d1(ano: str, mes_selecionado: int, ente: str, po_stn: pd.DataFrame, 
         'D1_00038': d1_00038_t,
     }
 
-    return d1, detalhes, max_mes_disponivel, meses_disponiveis
+    return d1, detalhes
 
 ########################################################################
 ########################################################################
@@ -736,9 +726,6 @@ with c2:
     mes = st.selectbox('Mes (1..13)', options=list(range(1, 14)), index=8)
     st.caption('Para Encerramento, selecione o mes 13')
 
-# Informação sobre validação
-st.info('ℹ️ **Importante**: Após executar a análise, o sistema verificará se os dados do mês selecionado estão disponíveis na API e informará caso haja inconsistências.')
-
 uploaded_layout = st.file_uploader('Leiaute da Portaria STN (xlsx)', type=['xlsx'])
 executar = st.button('Executar analises')
 
@@ -756,32 +743,12 @@ if executar:
             st.stop()
 
         try:
-            d1, detalhes, max_mes_disponivel, meses_disponiveis = compute_d1(ano=ano, mes_selecionado=int(mes), ente=ENTE_FIXO, po_stn=po_stn, pc_estendido=pc_estendido)
+            d1, detalhes = compute_d1(ano=ano, mes_selecionado=int(mes), ente=ENTE_FIXO, po_stn=po_stn, pc_estendido=pc_estendido)
         except Exception as e:
             st.exception(e)
             st.stop()
 
-    # Verificar se o mês selecionado tem dados na API
-    if max_mes_disponivel < int(mes):
-        st.error(f'❌ **DADOS INCOMPLETOS NA API**')
-        st.warning(f'⚠️ **Mês selecionado**: {mes}')
-        st.warning(f'⚠️ **Mês máximo disponível na API**: {max_mes_disponivel}')
-
-        if meses_disponiveis:
-            st.info(f'📅 **Meses disponíveis na API**: {", ".join(map(str, meses_disponiveis))}')
-
-            # Calcular meses faltantes
-            meses_solicitados = set(range(1, int(mes) + 1))
-            meses_faltantes = sorted(meses_solicitados - set(meses_disponiveis))
-            if meses_faltantes:
-                st.error(f'❌ **Meses faltantes na API**: {", ".join(map(str, meses_faltantes))}')
-
-        st.warning('⚠️ **IMPORTANTE**: Os resultados das análises podem estar incompletos ou incorretos, pois o mês solicitado não possui dados completos na API. Recomenda-se selecionar um mês que tenha dados disponíveis.')
-        st.divider()
-    else:
-        st.success(f'✅ Dados extraídos da API – Ente: {ENTE_FIXO} – Ano: {ano} – Mês selecionado: {mes}')
-        if meses_disponiveis:
-            st.info(f'📅 Todos os dados solicitados estão disponíveis. Meses na API: {", ".join(map(str, meses_disponiveis))}')
+    st.success(f'✅ Dados extraídos da API – Ente: {ENTE_FIXO} – Ano: {ano} – Mês: {mes}')
 
     # Resumo Geral
     st.markdown("### 📊 Resumo Geral das Análises")
