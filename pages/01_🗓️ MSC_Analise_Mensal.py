@@ -797,25 +797,63 @@ def dimensao_d1_00037(df_base):
     # Filtra ending_balance
     msc_e = df_base[df_base['TIPO_VALOR'] == 'ending_balance'].copy()
 
-    # Verifica se existe a coluna IC3 (fonte de recursos)
-    if 'IC3' not in msc_e.columns:
+    # Verifica se existem as colunas necessárias
+    colunas_necessarias = ['TIPO2', 'TIPO3', 'TIPO4', 'IC2', 'IC3', 'IC4']
+    if not all(col in msc_e.columns for col in colunas_necessarias):
         return 'N/A', pd.DataFrame()
 
     msc_e_local = msc_e.copy()
+
+    # Converter colunas para string
+    msc_e_local['TIPO2'] = msc_e_local['TIPO2'].astype(str)
+    msc_e_local['TIPO3'] = msc_e_local['TIPO3'].astype(str)
+    msc_e_local['TIPO4'] = msc_e_local['TIPO4'].astype(str)
+    msc_e_local['IC2'] = msc_e_local['IC2'].astype(str)
     msc_e_local['IC3'] = msc_e_local['IC3'].astype(str)
+    msc_e_local['IC4'] = msc_e_local['IC4'].astype(str)
 
-    # Extrai os últimos 3 dígitos da fonte de recursos
-    msc_e_local['fonte'] = msc_e_local['IC3'].str[-3:]
-    msc_e_local['fonte'] = pd.to_numeric(msc_e_local['fonte'], errors='coerce')
+    # Lista para armazenar os erros
+    erros_list = []
 
-    # Verifica se há fontes menores que 500 (fontes da União)
-    d1_00037_erros = msc_e_local[msc_e_local['fonte'] < 500].copy()
+    # Verificar TIPO2 = 'FR' -> verificar IC2
+    if (msc_e_local['TIPO2'] == 'FR').any():
+        mask_tipo2 = msc_e_local['TIPO2'] == 'FR'
+        df_tipo2 = msc_e_local[mask_tipo2].copy()
+        df_tipo2['fonte'] = df_tipo2['IC2'].str[-3:]
+        df_tipo2['fonte'] = pd.to_numeric(df_tipo2['fonte'], errors='coerce')
+        erros_tipo2 = df_tipo2[df_tipo2['fonte'] < 500].copy()
+        if not erros_tipo2.empty:
+            erros_tipo2['Origem_FR'] = 'TIPO2/IC2'
+            erros_list.append(erros_tipo2)
 
-    condicao_bool = (msc_e_local['fonte'] < 500).any()
+    # Verificar TIPO3 = 'FR' -> verificar IC3
+    if (msc_e_local['TIPO3'] == 'FR').any():
+        mask_tipo3 = msc_e_local['TIPO3'] == 'FR'
+        df_tipo3 = msc_e_local[mask_tipo3].copy()
+        df_tipo3['fonte'] = df_tipo3['IC3'].str[-3:]
+        df_tipo3['fonte'] = pd.to_numeric(df_tipo3['fonte'], errors='coerce')
+        erros_tipo3 = df_tipo3[df_tipo3['fonte'] < 500].copy()
+        if not erros_tipo3.empty:
+            erros_tipo3['Origem_FR'] = 'TIPO3/IC3'
+            erros_list.append(erros_tipo3)
 
-    if condicao_bool:
+    # Verificar TIPO4 = 'FR' -> verificar IC4
+    if (msc_e_local['TIPO4'] == 'FR').any():
+        mask_tipo4 = msc_e_local['TIPO4'] == 'FR'
+        df_tipo4 = msc_e_local[mask_tipo4].copy()
+        df_tipo4['fonte'] = df_tipo4['IC4'].str[-3:]
+        df_tipo4['fonte'] = pd.to_numeric(df_tipo4['fonte'], errors='coerce')
+        erros_tipo4 = df_tipo4[df_tipo4['fonte'] < 500].copy()
+        if not erros_tipo4.empty:
+            erros_tipo4['Origem_FR'] = 'TIPO4/IC4'
+            erros_list.append(erros_tipo4)
+
+    # Concatenar todos os erros encontrados
+    if erros_list:
+        d1_00037_erros = pd.concat(erros_list, ignore_index=True)
         resultado = 'ERRO'
     else:
+        d1_00037_erros = pd.DataFrame()
         resultado = 'OK'
 
     return resultado, d1_00037_erros
@@ -1377,12 +1415,18 @@ if 'msc_base' in st.session_state:
     # D1_00037
     with st.expander(format_expander_title("D1_00037", "Fontes de Recursos da União (000-499)", resultado_37)):
         st.markdown("**Descrição:** Verifica se estados e municípios enviaram informações em fontes de recursos da União (de 000 a 499)")
+        st.markdown("**Lógica:** Analisa as colunas TIPO2/IC2, TIPO3/IC3 e TIPO4/IC4. Quando TIPO = 'FR', verifica se os últimos 3 dígitos da fonte são < 500")
         if resultado_37 == 'N/A':
-            st.info("ℹ️ N/A - Coluna IC3 (Fonte de Recursos) não encontrada no arquivo")
+            st.info("ℹ️ N/A - Colunas necessárias (TIPO2, TIPO3, TIPO4, IC2, IC3, IC4) não encontradas no arquivo")
         elif resultado_37 == 'OK':
             st.success(f"✅ {resultado_37} - Nenhuma fonte da União encontrada")
         else:
             st.error(f"❌ {resultado_37} - {len(erros_37)} registros com fontes da União")
+            if 'Origem_FR' in erros_37.columns:
+                st.info(f"📊 Distribuição dos erros por origem:")
+                origem_counts = erros_37['Origem_FR'].value_counts()
+                for origem, count in origem_counts.items():
+                    st.write(f"   - {origem}: {count} registros")
             st.dataframe(erros_37.head(100), use_container_width=True, height=300)
             st.download_button("📥 Download Erros (Excel)", convert_df_to_excel(erros_37), "d1_00037_erros.xlsx", key="btn_37")
 
