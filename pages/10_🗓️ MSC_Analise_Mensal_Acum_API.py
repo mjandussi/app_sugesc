@@ -16,6 +16,13 @@ sidebar_menu(get_app_menu(), use_expanders=True, expanded=False)
 
 API_ROOT = "https://apidatalake.tesouro.gov.br/ords/siconfi/tt"
 
+
+##############################################################################
+##############################################################################
+################### Funções de Requisição à API do SICONFI ###################
+##############################################################################
+##############################################################################
+
 async def _request_json(client, url, params, sem, retries=3, backoff=0.5, timeout=120):
     for attempt in range(retries):
         if sem:
@@ -213,6 +220,14 @@ def load_layout_from_upload(uploaded_xlsx, ano: str):
         pc_estendido = pc_estendido.rename(columns={'T�?TULO.1': 'TÍTULO.1'})
     pc_estendido["CONTA"] = pc_estendido["CONTA"].astype(str)
     return po_stn, pc_estendido
+
+
+#####################################################################
+#####################################################################
+#####################################################################
+#####################################################################
+#####################################################################
+
 
 
 def compute_d1(ano: str, mes_selecionado: int, ente: str, po_stn: pd.DataFrame, pc_estendido: pd.DataFrame):
