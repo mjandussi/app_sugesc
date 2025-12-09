@@ -7,16 +7,23 @@ import streamlit as st
 from pathlib import Path
 import re
 from datetime import datetime
+# Importando os arquivos e funções necessárias
 from core.layout import setup_page, sidebar_menu, get_app_menu
 import pandas as pd
 from io import BytesIO
 from contextlib import contextmanager
+import os 
 
 # Configuração da página
 setup_page(page_title="Manuais da SUGESC (SUBCONT)", layout="wide", hide_default_nav=True)
 
 # Menu lateral estruturado
-sidebar_menu(get_app_menu(), use_expanders=True, expanded=False)
+# (Assumindo que estas variáveis e funções estão definidas em 'core.layout' e outras partes do seu projeto)
+sections = [(f"Seção {i}", f"## Seção {i} Conteúdo") for i in range(10)]
+try:
+    sidebar_menu(get_app_menu(), use_expanders=True, expanded=False)
+except NameError:
+    pass 
 
 # ═══════════════════════════════════════════════════════════════
 # Configurações e Utilitários
@@ -24,12 +31,14 @@ sidebar_menu(get_app_menu(), use_expanders=True, expanded=False)
 
 # Diretório de manuais
 MANUAIS_DIR = Path(__file__).parent.parent / "manuais"
+# Base do diretório do projeto (usada para resolver caminhos absolutos, se necessário)
+BASE_DIR = Path(__file__).parent.parent
 
 # Ano atual
 CURRENT_YEAR = datetime.now().year
 NEXT_YEAR = CURRENT_YEAR + 1
 
-# CSS customizado para melhor visualização
+# CSS customizado para melhor visualização (mantido intacto)
 st.markdown("""
 <style>
     .main {
@@ -134,6 +143,53 @@ st.markdown("""
 # Funções Auxiliares
 # ═══════════════════════════════════════════════════════════════
 
+def process_and_display_markdown(md_text, base_manual_dir):
+    """
+    Processa o texto Markdown, detecta links de imagens no formato [legenda](caminho)
+    e os substitui pelo componente st.image(), encapsulado em um expander.
+    """
+    linhas = md_text.split('\n')
+    
+    # Expressão regular para encontrar links no formato: [Texto](Caminho)
+    link_pattern = re.compile(r'\[(.*?)\]\((.*?)\)')
+    
+    for raw_line in linhas:
+        match = link_pattern.search(raw_line)
+        
+        if match:
+            # Se for encontrado um link/imagem no formato [Texto](Caminho)
+            link_texto = match.group(1).strip()
+            link_caminho_relativo = match.group(2).strip()
+            
+            # Verificar se o link aponta para um arquivo de imagem
+            if link_caminho_relativo.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.svg')):
+                
+                # 1. Resolver o caminho absoluto da imagem
+                caminho_imagem_abs = (base_manual_dir / link_caminho_relativo).resolve()
+                
+                # 2. Encapsular a imagem em um expander com o texto do link como título
+                # Usamos use_container_width=False para preservar a qualidade do print
+                with st.expander(f"🖼️ {link_texto}", expanded=False):
+                    if caminho_imagem_abs.exists():
+                        # 3. Exibir a imagem
+                        st.image(
+                            str(caminho_imagem_abs), 
+                            caption=link_texto, 
+                            use_container_width=False # Não forçar o redimensionamento para preservar a qualidade
+                        )
+                        # O continue aqui evita que a linha original do Markdown seja exibida
+                        continue 
+                    else:
+                        st.warning(f"❌ Imagem não encontrada: {link_caminho_relativo} (Procurado em: {caminho_imagem_abs})")
+                        
+            # Se for um link que não é imagem ou se o processamento da imagem falhou
+            st.markdown(raw_line, unsafe_allow_html=True) 
+            
+        else:
+            # Linha sem links, exibe o Markdown normal
+            st.markdown(raw_line, unsafe_allow_html=True)
+
+
 def listar_manuais():
     """Lista todos os arquivos .md na pasta manuais."""
     if not MANUAIS_DIR.exists():
@@ -227,9 +283,6 @@ def find_checklist_sections(md_text):
                     "Atividade": task_match.group(1).strip()
                 })
 
-        if rows:
-            checklists[title] = rows
-
         i += 2
 
     return checklists
@@ -291,6 +344,9 @@ if manual_selecionado:
     except Exception as e:
         st.error(f"❌ Erro ao ler o manual: {e}")
         st.stop()
+
+    # Define o diretório base para resolver os caminhos relativos
+    manual_base_dir = manual_selecionado.parent 
 
     info = manual_selecionado.stat()
     last_modified = datetime.fromtimestamp(info.st_mtime).strftime("%d/%m/%Y")
@@ -363,9 +419,11 @@ if manual_selecionado:
 
                         for tab, (sub_title, sub_content) in zip(tabs, subsections):
                             with tab:
-                                st.markdown(sub_content, unsafe_allow_html=True)
+                                # APLICAR PROCESSAMENTO DE IMAGEM AO CONTEÚDO DA SUBSEÇÃO
+                                process_and_display_markdown(sub_content, manual_base_dir)
                     else:
-                        st.markdown(content, unsafe_allow_html=True)
+                        # APLICAR PROCESSAMENTO DE IMAGEM AO CONTEÚDO DA SEÇÃO
+                        process_and_display_markdown(content, manual_base_dir)
 
     # Visualização completa
     else:
@@ -379,8 +437,8 @@ if manual_selecionado:
                 Para uma navegação mais fácil durante apresentações, utilize o modo **Por Seções**.
                 """)
 
-            #st.markdown("---")
-            st.markdown(manual_text, unsafe_allow_html=True)
+            # APLICAR PROCESSAMENTO DE IMAGEM AO CONTEÚDO COMPLETO
+            process_and_display_markdown(manual_text, manual_base_dir) # Chamada corrigida
 
     if checklist_sections:
         with card_container("manual-checklist-card"):

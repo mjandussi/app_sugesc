@@ -813,16 +813,17 @@ Essas situações ocorrem, por exemplo, quando uma **PD do exercício anterior �
 1. Ativar o **Bloqueio de Funcionalidade UG** com expressão de exceção específica.
 2. Impedir que PDs de exercícios anteriores sejam anuladas no banco de abertura.
 
-### 🧩 Exemplo Prático
+---
+
+#### 3.3.4 🧩 Importância dos Bloqueios 
 
 O caso abaixo demonstra a importância dos bloqueios descritos:
 
-* Uma **PD de 2024** foi **paga em 2025** (no banco do novo exercício).
-* Posteriormente, o usuário **anulou a PD no banco de 2024**, gerando um **saldo virado** negativo em 2025.
+* Uma **PD do Ano Anterior** foi **PAGA no banco do novo exercício**.
+* Posteriormente, o usuário **anulou esta PD no banco do Ano Anterior**, gerando um **saldo virado** negativo no banco do novo exercício.
 
-# Exemplo Real
-
-![Exemplo de Saldo Invertido](imagens/Exemplo Saldo Invertido.png)
+[Exemplo de Saldo Invertido](../imagens/Exemplo Saldo Invertido.png)
+[Procedimentos Corretos para a Correção de PDs](../imagens/Procedimentos Corretos para a Correção de PDs.png)
 
 ---
 
@@ -1244,6 +1245,7 @@ Referência operacional para a virada 2025→2026, com foco nas atividades que p
 **PASSO 1 – 26/12 – Criar o Banco 2026**
 
 - Criar o banco do exercício de 2026 e garantir a disponibilização de todas as estruturas necessárias no ambiente de banco de dados.
+- *Responsável indicado: Time SIAFE*
 
 ### 2. Retorno de OBs
 **PASSO 2 – 26/12 – Ajustar o “Retorno de Ordem Bancária”**
@@ -1255,13 +1257,18 @@ Referência operacional para a virada 2025→2026, com foco nas atividades que p
 **PASSO 3 – 29/12 – Ligar a Transferência Diária**
 
 - Ativar a Transferência Diária, garantindo que **os saldos das PDs não sejam migrados até o dia 31** (SUBCONT atualiza as contas afetadas).
-- Solicitar, ainda no dia **29/12**, a inclusão do **“novo ano”** nas opções de consulta do **Flexvision**.
+- Para que **os saldos das PDs não sejam migrados até o dia 31**, é preciso **desativar** a migração na funcionalidade do "DEPARA CONTÁBIL" ref. ao Controle de PDs do grupo 8991201XX.
+- OBS 1: As contas de Controle de PDs do grupo 8991201XX ficam sem o preenchimento da aba de "Encerramento" no Plano de Contas.
+- OBS 2: A SUNOT deve verificar o preenchimento da aba “Encerramento” no Plano de Contas para evitar erros de migração de Saldos e erros na Transferência Diária.
+- *Responsável indicado: SUGESC/SUBCONT*
 
 ### 4. Apontamento e views históricas
 **PASSO 4 – 29/12 – Views históricas e apontamento**
 
-1. Atualizar as **views históricas** em 29/12/2025.
-2. Realizar o **apontamento para o exercício de 2025**, aguardando a solicitação formal da SUBCONT antes da execução.
+1. Atualizar as **views históricas** (Cubo Saldos Contábeis Histórico - "hist") em 29/12/2025.
+2. Solicitar, ainda no dia **29/12**, a inclusão do **“novo ano”** nas opções de consulta do **Flexvision**.
+3. Realizar o **apontamento para o exercício o Ano de Abertura**, aguardando a solicitação formal da SUBCONT antes da execução.
+- *Responsável indicado: Time SIAFE*
 
 **Janela crítica de 31/12:** entre 7h e 8h da manhã a SUBCONT executa os processos de encerramento. Coordene qualquer intervenção junto ao time responsável antes desse período.
 
@@ -1270,13 +1277,16 @@ Referência operacional para a virada 2025→2026, com foco nas atividades que p
 
 1. Rodar o script (Time SIAFE) para **ativar os programas de trabalho** antes do processo (ambiente de banco de dados).
 2. Rodar o script (Time SIAFE) para **inativar os programas de trabalho** após a conclusão do processo (ambiente de banco de dados).
+- *Responsável indicado: Time SIAFE*
 
 ### 6. Migração de PDs no Depara Contábil
 **PASSO 6 – 31/12 (manhã) – Migração de PDs no Depara Contábil**
 
 - Ativar a migração de PDs no **Depara Contábil**, assegurando o correto carregamento dos documentos (SUBCONT).
+- *Responsável indicado: SUGESC/SUBCONT*
 
 ### 7. Cancelamento de RPs
 **PASSO 7 – 31/12 (manhã) – Cancelamento de RPs**
 
 - SUBCONT realiza o **cancelamento dos Restos a Pagar (RPs)** conforme orientações de encerramento.
+- *Responsável indicado: SUGESC/SUBCONT*
