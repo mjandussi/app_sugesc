@@ -713,7 +713,22 @@ Realizar os cancelamentos de Restos a Pagar, executar a Transferência Diária e
 
 ---
 
-#### 3.2.1 Ativar o Agendamento da Transferência Diária
+#### 3.2.1 Configurar o DEPARA Contábil (ou conferir se já está configurado)
+**Responsável:** SUGESC/ SUNOT
+
+**Procedimento:**
+1. Acessar: **Banco de Abertura >> Administração / Migração de Dados / DePara Contábil**
+2. Copiar o DEPARA existente do ano anterior (O ideal é já ter vistos nas fases de testes se a SUNOT irá precisar implantar alguma estratégia de reclassificação de saldos na virada do exercício)
+
+**Observações:**
+- O Depara contábil precisa estar alinhado com a configuração do Plano de Contas (com a informação no Plano de contas se a conta Transfere ou não saldo). Pois o Plano de conta é que manda na informação de transferência de Saldos, sendo o DEPARA apenas um dericionador caso precise mudar uma classificação de saldo.
+
+**IMPORTANTE**: para evitar a migração de PDs LIXO na primeira transferência diária (que geralmente colocamos para rodar antes do término do último dia de expediente bancário do exercício), é preciso alterar as contas de controle de PDs a Emitir e Emitidas para **"Não transferir Saldo"** (ALTERAR NO PLANO DE CONTAS DO BANCO DE ENCERRAMENTO!!). Somente após o término do último dia de expediente bancário do exercício é que voltamos estas contas para poder Transferir Saldos e assim desta forma os Saldos e as PD associadas a estes saldos serão migradas para o novo Exercício.
+
+---
+
+
+#### 3.2.2 Ativar o Agendamento da Transferência Diária
 **Responsável:** SUGESC
 
 **Procedimento:**
@@ -726,7 +741,7 @@ Realizar os cancelamentos de Restos a Pagar, executar a Transferência Diária e
 
 ---
 
-#### 3.2.2 Ativar Agendamento de Migração das Tabelas
+#### 3.2.3 Ativar Agendamento de Migração das Tabelas
 **Responsável:** SUGESC
 
 **Procedimento:**
@@ -738,7 +753,7 @@ Realizar os cancelamentos de Restos a Pagar, executar a Transferência Diária e
 
 ---
 
-#### 3.2.3 Conferir Saldos de Encerramento e Abertura
+#### 3.2.4 Conferir Saldos de Encerramento e Abertura
 **Responsável:** SUGESC
 
 **Procedimento:**
@@ -753,7 +768,7 @@ Realizar os cancelamentos de Restos a Pagar, executar a Transferência Diária e
 
 ---
 
-#### 3.2.4 Verificar Erros da Transferência Diária
+#### 3.2.5 Verificar Erros da Transferência Diária
 **Responsável:** SUGESC
 
 **Procedimento:**
@@ -810,8 +825,10 @@ Essas situações ocorrem, por exemplo, quando uma **PD do exercício anterior �
 
 **Procedimento:**
 
-1. Ativar o **Bloqueio de Funcionalidade UG** com expressão de exceção específica.
+1. Ativar o **Bloqueio de Funcionalidade UG** com expressão de exceção específica (Bloqueio 11).
 2. Impedir que PDs de exercícios anteriores sejam anuladas no banco de abertura.
+3. Na aba "Exceções do Bloqueio - Expressão" colocar a seguinte Regra: **"extrai ([NÚMERO DA PD].[CÓDIGO],7,4) = ANO_EXERCICIO"** (desta forma somente o ano corrente, e no caso é o ano de abertura, estará nas exceçõe se poderá ser anuladas. Já as PDs de anos anteriores não poderão ser anuladas - OK)
+OBS: UGs novas criadas ao longo do exercício precisam ser atualizadas na Regra
 
 ---
 
