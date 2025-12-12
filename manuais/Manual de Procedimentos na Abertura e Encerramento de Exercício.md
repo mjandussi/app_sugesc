@@ -490,6 +490,9 @@ Implementar os bloqueios do Decreto de Encerramento e criar o banco de produçã
 
 **Responsável:** TI / LOGUS / SUGESC
 
+**Observações:**
+- A definição da data para a criação do Banco do Exercício Seguinte, em dezembro, deve considerar a necessidade de personalização das configurações. Caso existam mudanças estruturais a serem implementadas, recomenda-se a criação antecipada do novo ambiente. Por outro lado, se não houver necessidade de ajustes prévios, sugere-se postergar a criação para o momento mais próximo possível do fechamento. Essa estratégia evita o retrabalho, visto que quaisquer alterações realizadas no banco de origem após a virada não são migradas automaticamente, exigindo replicação manual no banco de destino..
+
 ---
 
 #### 2.2.1 Criar o Banco de Produção
@@ -720,10 +723,14 @@ Realizar os cancelamentos de Restos a Pagar, executar a Transferência Diária e
 1. Acessar: **Banco de Abertura >> Administração / Migração de Dados / DePara Contábil**
 2. Copiar o DEPARA existente do ano anterior (O ideal é já ter vistos nas fases de testes se a SUNOT irá precisar implantar alguma estratégia de reclassificação de saldos na virada do exercício)
 
+[Configurar o DEPARA Contábil ](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/3.2.1_Configurar o DEPARA Contábil.png)
+
 **Observações:**
 - O Depara contábil precisa estar alinhado com a configuração do Plano de Contas (com a informação no Plano de contas se a conta Transfere ou não saldo). Pois o Plano de conta é que manda na informação de transferência de Saldos, sendo o DEPARA apenas um dericionador caso precise mudar uma classificação de saldo.
 
-**IMPORTANTE**: para evitar a migração de PDs LIXO na primeira transferência diária (que geralmente colocamos para rodar antes do término do último dia de expediente bancário do exercício), é preciso alterar as contas de controle de PDs a Emitir e Emitidas para **"Não transferir Saldo"** (ALTERAR NO PLANO DE CONTAS DO BANCO DE ENCERRAMENTO!!). Somente após o término do último dia de expediente bancário do exercício é que voltamos estas contas para poder Transferir Saldos e assim desta forma os Saldos e as PD associadas a estes saldos serão migradas para o novo Exercício.
+**IMPORTANTE**: para evitar a migração de PDs LIXO na primeira transferência diária (que geralmente colocamos para rodar antes do término do último dia de expediente bancário do exercício), é preciso alterar as contas de controle de PDs Emitidas para **"Não transferir Saldo"** (ALTERAR NO PLANO DE CONTAS DO BANCO DE ENCERRAMENTO!!). Somente após o término do último dia de expediente bancário do exercício é que voltamos estas contas para poder Transferir Saldos e assim desta forma os Saldos e as PD associadas a estes saldos serão migradas para o novo Exercício.
+
+[Configurar o Plano de Contas para não passar PDs](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/3.2.1_Configurar o Plano de Contas para não passar PDs.png)
 
 ---
 
@@ -733,10 +740,12 @@ Realizar os cancelamentos de Restos a Pagar, executar a Transferência Diária e
 
 **Procedimento:**
 1. Acessar: **Banco de Abertura >> Administração / Agendamento / Transferência Diária**
-2. Ativar o agendamento para as **22:00h do dia 30/12** (ou antes)
+2. Ativar o agendamento para as **22:00h do dia escolhido para o início** 
+
+[Ativar o Agendamento da Transferência Diária](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/3.2.2_Ativar o Agendamento da Transferência Diária.png)
 
 **Observações:**
-- O ideal é agendar o mais próximo possível da virada para carregar o mínimo possível de "PDs Lixo"
+- O ideal é agendar o mais próximo possível da virada para carregar o mínimo possível de "PDs Lixo" (mas usamos atualmente a estratégia de só deixar passar as PDs após o último dia de expediente bancário, colocando o parâmetro do Plano de Contas para não passar saldos nas contas 899120103 e 899120104)
 - Este é o momento crítico onde inicia-se a operação simultânea dos dois bancos
 
 ---
@@ -747,6 +756,8 @@ Realizar os cancelamentos de Restos a Pagar, executar a Transferência Diária e
 **Procedimento:**
 1. Acessar: **Banco de Abertura >> Administração / Agendamento / Agendamento Genérico**
 2. Ativar: **"Atualizar Dados Cadastrais - Migração de Tabelas (início do dia)"**
+
+[Ativar Agendamento de Migração das Tabelas](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/3.2.3_Ativar Agendamento de Migração das Tabelas.png)
 
 **Observações:**
 - Este agendamento mantém as tabelas cadastrais atualizadas entre os bancos
@@ -817,6 +828,8 @@ Essas situações ocorrem, por exemplo, quando uma **PD do exercício anterior �
 * Atualmente configurada como **“AVISAR”**; deve ser alterada para **“IMPEDIR”**.
 * Evita que ajustes indevidos de PDs impactem o saldo do exercício anterior.
 
+[Impedir PDs e OBs de REGULARIZAÇÃO no Banco de Abertura](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/3.3.2_Impedir PDs e OBs de REGULARIZAÇÃO no Banco de Abertura.png)
+
 ---
 
 #### 3.3.3 Impedir Anulação de PDs de Anos Anteriores no Banco de Abertura
@@ -830,6 +843,8 @@ Essas situações ocorrem, por exemplo, quando uma **PD do exercício anterior �
 3. Na aba "Exceções do Bloqueio - Expressão" colocar a seguinte Regra: **"extrai ([NÚMERO DA PD].[CÓDIGO],7,4) = ANO_EXERCICIO"** (desta forma somente o ano corrente, e no caso é o ano de abertura, estará nas exceçõe se poderá ser anuladas. Já as PDs de anos anteriores não poderão ser anuladas - OK)
 OBS: UGs novas criadas ao longo do exercício precisam ser atualizadas na Regra
 
+[Não permite anular PDs de Anos anteriores no Banco de abertura](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/3.3.3_Não permite anular PDs de Anos anteriores no Banco de abertura.png)
+
 ---
 
 #### 3.3.4 🧩 Importância dos Bloqueios 
@@ -839,8 +854,8 @@ O caso abaixo demonstra a importância dos bloqueios descritos:
 * Uma **PD do Ano Anterior** foi **PAGA no banco do novo exercício**.
 * Posteriormente, o usuário **anulou esta PD no banco do Ano Anterior**, gerando um **saldo virado** negativo no banco do novo exercício.
 
-[Exemplo de Saldo Invertido](../imagens/Exemplo Saldo Invertido.png)
-[Procedimentos Corretos para a Correção de PDs](../imagens/Procedimentos Corretos para a Correção de PDs.png)
+[Exemplo de Saldo Invertido de PDs](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/3.3.4_Exemplo Saldo Invertido de PDs.png)
+[Procedimentos Corretos para a Correção de PDs](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/3.3.4_Procedimentos Corretos para a Correção de PDs.png)
 
 ---
 
@@ -1307,3 +1322,64 @@ Referência operacional para a virada 2025→2026, com foco nas atividades que p
 
 - SUBCONT realiza o **cancelamento dos Restos a Pagar (RPs)** conforme orientações de encerramento.
 - *Responsável indicado: SUGESC/SUBCONT*
+
+
+---
+
+
+## Bloqueios Funcionalidades Usuários
+
+### Visão Geral
+
+Parte do Manual com o objetivo de centralizar os Bloqueios de Funcionalidades que devem ser realizados em determinados momentos do fechamento e abertura do exercício no SIAFERIO.
+
+### 11.1. ANTES DA VIRADA
+
+|-----------------------------------------------------------|
+| **Banco de Encerramento** >> Não Bloqueia Nada          |
+| **Banco de Abertura**     >> Bloqueia praticamente tudo | 
+|-----------------------------------------------------------|
+
+
+**>> Bloqueios a serem realizados no "Banco de Abertura"**
+
+- Libera apenas as funcionalidades de Configuração e do Órgão central (como SUBCONT ou TESOURO). 
+[Liberar Funcionalidades de Configuração e do Órgão central](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/11.1_Antes da Virada_Funcionalidades de Configuração e do Órgão central.png)
+
+- E também libera todas as funcionalidades de visualização e as funcionalidades de emitir relatórios.
+[Liberar Funcionalidades de visualização e funcionalidades de emitir relatórios](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/11.1_Antes da Virada_Funcionalidades de de visualização e funcionalidades de emitir relatórios.png)
+
+- E NÃO BLOQUEIA OS USUÁRIOS >> usuários admins e nem os usuários de sistema ou de agendamentos
+[Não bloquear os usuários de sistema e de agendamentos](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/11.1_Antes da Virada_Não bloquear os usuários de sistema e de agendamentos.png)
+
+### 11.2. APÓS A VIRADA
+
+|-----------------------------------------------------------|
+| **Banco de Encerramento** >> Bloqueia as Funcionalidades relacionadas os Pagamentos (Execução Financeira)          |
+| **Banco de Abertura**     >> Bloqueia as Funcionalidades relacionadas aos itens que estão configurados para serem cadastrados no Banco de Encerramento até a inscrição do RP | 
+|-----------------------------------------------------------|
+
+**>> Bloqueios a serem realizados no "Banco de Encerramento"**
+
+- Bloqueia as funcionalidades relacionadas os Pagamentos e a parte de Execução Financeira, pois os pagamentos seguem a data corrente (ou seja, devem ser processados no banco de abertura)
+[Encerramento Bloquear Funcionalidades de Execução Financeira](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/11.2_Após a Virada_Bloquear as funcionalidades de Execução Financeira.png)
+
+**>> Bloqueios a serem realizados no "Banco de Abertura"**
+
+- Bloqueia as funcionalidades relacionadas aos itens que estão configurados para serem cadastrados no Banco de Encerramento até a inscrição do RP. 
+[Abertura Bloquear as Funcionalidades que estão nas Migração de Tabelas e Comunica](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/11.2_Após a Virada_Bloquear as funcionalidades no Banco de Abertura.png)
+
+### 11.3. APÓS FECHAMENTO DO MÊS 12
+**Banco de Encerramento >> Bloqueia muitas funcionalidades, principalmente para não permitindo mais execuções orçamentárias no Banco de Encerramento**
+
+**Banco de Abertura >> Libera quase todas as Funcionalidades, mas ainda Bloqueia as Funcionalidades relacionadas aos itens que estão configurados para serem cadastrados no Banco de Encerramento**
+
+### 11.4. APÓS A INSCRIÇÃO DO RP
+**Banco de Encerramento >> Bloqueia quase tudo, não permitindo mais execuções orçamentárias no Banco de Encerramento**
+
+**Banco de Abertura >> Libera todas as Funcionalidades**
+
+### 11.5. APÓS O FECHAMENTO DO MÊS 14
+**Banco de Encerramento >> Bloqueia tudo**
+
+**Banco de Abertura >> Libera todas as Funcionalidades**
