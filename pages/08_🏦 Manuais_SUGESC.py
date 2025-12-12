@@ -140,13 +140,74 @@ st.markdown("""
 
 
 # ═══════════════════════════════════════════════════════════════
-# Funções Auxiliares
+# Funções Auxiliares DE EXPORTAÇÃO (NOVAS)
 # ═══════════════════════════════════════════════════════════════
 
-def process_and_display_markdown(md_text, base_manual_dir):
+def to_excel_buffer(df: pd.DataFrame, sheet_name: str = 'Dados'):
     """
-    Processa o texto Markdown, detecta links de imagens no formato [legenda](caminho)
-    e os substitui pelo componente st.image(), encapsulado em um expander.
+    Converte um Pandas DataFrame para um buffer BytesIO no formato XLSX.
+    Retorna o buffer no início para o download.
+    """
+    buffer = BytesIO()
+    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+        # Garante que o nome da aba não exceda 31 caracteres
+        sheet_name_safe = sheet_name[:31] 
+        df.to_excel(writer, sheet_name=sheet_name_safe, index=False)
+    buffer.seek(0)
+    return buffer
+
+def download_data_as_xlsx(df: pd.DataFrame, file_name: str, button_label: str = "⬇️ Exportar para Excel"):
+    """
+    Exibe um botão de download para exportar um DataFrame como XLSX.
+    """
+    file_name_safe = file_name if file_name.lower().endswith(".xlsx") else f"{file_name}.xlsx"
+    excel_buffer = to_excel_buffer(df, sheet_name=file_name_safe.replace(".xlsx", "")[:31])
+    
+    st.download_button(
+        label=button_label,
+        data=excel_buffer.getvalue(),
+        file_name=file_name_safe,
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key=f"download_xlsx_{file_name_safe.replace('.', '_')}" 
+    )
+
+# --- Geradores de Dados de Exemplo (Simulação) ---
+
+def gerar_df_bloqueios_siaferio():
+    """Gera um DataFrame com a tabela de bloqueios (exemplo do usuário)."""
+    data = {
+        'Etapa': ['Antes da Virada', 'Antes da Virada', 'Após a Virada', 'Após a Virada'],
+        'Contexto': ['Banco de Abertura', 'Banco de Abertura', 'Banco de Encerramento', 'Banco de Abertura'],
+        'Ação': [
+            'Liberar Funcionalidades de Configuração e Órgão Central', 
+            'Liberar Funcionalidades de Visualização/Relatórios', 
+            'Bloqueia Pagamentos/Execução Financeira', 
+            'Bloqueia Itens de Cadastro para Encerramento (até inscrição RP)'
+        ],
+        'Observação': [
+            'Usuários admins e centrais (SUBCONT/TESOURO)', 
+            'Para consulta', 
+            'Pagamentos seguem a data corrente (Banco de Abertura)', 
+            'Itens configurados para cadastro no Banco de Encerramento'
+        ]
+    }
+    return pd.DataFrame(data)
+
+# Mapeamento: O 'path' do link no MD é a chave, o gerador de DataFrame é o valor.
+EXPORTABLE_DATA_SOURCES = {
+    "DATA_BLOQUEIOS_SIAFERIO": gerar_df_bloqueios_siaferio,
+    # Adicione outros mapeamentos de dados aqui, se necessário.
+}
+
+# ═══════════════════════════════════════════════════════════════
+# Funções Auxiliares EXISTENTES (MODIFICADA)
+# ═══════════════════════════════════════════════════════════════
+
+# A função agora recebe um novo argumento: exportable_data_map
+def process_and_display_markdown(md_text, base_manual_dir, exportable_data_map):
+    """
+    Processa o texto Markdown, detecta links de imagens e exportação de dados, 
+    substituindo-os por st.expander apropriados.
     """
     linhas = md_text.split('\n')
     
@@ -157,32 +218,62 @@ def process_and_display_markdown(md_text, base_manual_dir):
         match = link_pattern.search(raw_line)
         
         if match:
-            # Se for encontrado um link/imagem no formato [Texto](Caminho)
             link_texto = match.group(1).strip()
             link_caminho_relativo = match.group(2).strip()
-            
-            # Verificar se o link aponta para um arquivo de imagem
-            if link_caminho_relativo.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.svg')):
+
+            # -----------------------------------------------------------------
+            # Lógica para Exportação de Dados (XLSX)
+            # -----------------------------------------------------------------
+            if link_caminho_relativo in exportable_data_map:
+                data_generator = exportable_data_map[link_caminho_relativo]
+                
+                # Encapsula a exportação em um Expander
+                with st.expander(f"📊 {link_texto} (Exportar para Excel)", expanded=False):
+                    try:
+                        df_to_export = data_generator() # Chama a função para gerar o DF
+                        
+                        st.info(f"O arquivo Excel **'{link_texto}'** contém {len(df_to_export)} linhas. Visualize e baixe abaixo.")
+                        
+                        # Mostra um preview do DataFrame
+                        st.dataframe(df_to_export, use_container_width=True, hide_index=True)
+
+                        # Chamar a função de download
+                        download_data_as_xlsx(
+                            df=df_to_export,
+                            file_name=f"{link_texto.replace(' ', '_')}_{CURRENT_YEAR}.xlsx",
+                            button_label=f"⬇️ Baixar {link_texto}.xlsx"
+                        )
+                        
+                    except Exception as e:
+                        st.error(f"❌ Erro ao gerar dados para exportação '{link_caminho_relativo}': {e}")
+                
+                continue # Evita que o link cru seja exibido no Markdown
+
+            # -----------------------------------------------------------------
+            # Lógica Existente para Imagens (.png, .jpg, etc.)
+            # -----------------------------------------------------------------
+            elif link_caminho_relativo.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.svg')):
                 
                 # 1. Resolver o caminho absoluto da imagem
                 caminho_imagem_abs = (base_manual_dir / link_caminho_relativo).resolve()
                 
                 # 2. Encapsular a imagem em um expander com o texto do link como título
-                # Usamos use_container_width=False para preservar a qualidade do print
                 with st.expander(f"🖼️ {link_texto}", expanded=False):
                     if caminho_imagem_abs.exists():
                         # 3. Exibir a imagem
                         st.image(
                             str(caminho_imagem_abs), 
                             caption=link_texto, 
-                            use_container_width=False # Não forçar o redimensionamento para preservar a qualidade
+                            use_container_width=False
                         )
-                        # O continue aqui evita que a linha original do Markdown seja exibida
-                        continue 
+                        continue # O continue aqui evita que a linha original do Markdown seja exibida
                     else:
                         st.warning(f"❌ Imagem não encontrada: {link_caminho_relativo} (Procurado em: {caminho_imagem_abs})")
                         
-            # Se for um link que não é imagem ou se o processamento da imagem falhou
+            # -----------------------------------------------------------------
+            # Lógica para Outros Links
+            # -----------------------------------------------------------------
+            # Se for um link que não é imagem, nem exportação de dados, exibe a linha original do Markdown
             st.markdown(raw_line, unsafe_allow_html=True) 
             
         else:
@@ -241,11 +332,13 @@ def split_subsections(content):
     return subsections
 
 
+
 def find_checklist_sections(md_text):
     """
     Identifica todas as seções (H3) que contenham checklists no formato Markdown (- [ ]) e
-    retorna um dicionário {titulo_secao: [ {Etapa, Atividade}, ... ]}.
+    retorna um dicionário {titulo_secao: [ {Anexo/Manual, Etapa, Atividade}, ... ]}.
     """
+    # Divide o manual por títulos H3
     pattern = r"(^###\s+.+?$)"
     parts = re.split(pattern, md_text, flags=re.MULTILINE)
     checklists = {}
@@ -257,13 +350,14 @@ def find_checklist_sections(md_text):
     while i < len(parts):
         heading = parts[i].strip()
         body = parts[i+1] if (i+1) < len(parts) else ""
-        title = heading.lstrip("#").strip()
+        title = heading.lstrip("#").strip() # Título H3 principal (Ex: "Bloqueios Funcionalidades Usuários...")
 
         if "- [" not in body:
             i += 2
             continue
 
-        current_stage = title
+        # current_stage guarda o título em negrito (**...**) ou o título H3 se não houver **
+        current_stage = title 
         rows = []
 
         for raw_line in body.splitlines():
@@ -271,17 +365,26 @@ def find_checklist_sections(md_text):
             if not line:
                 continue
 
-            stage_match = re.match(r"^\*\*(.+?)\*\*:?$", line)
+            # 1. Lógica para capturar as etapas em negrito: **Banco de Abertura**
+            # TORNANDO ESTE REGEX MAIS TOLERANTE A ESPAÇOS E CARACTERES NO FINAL DA LINHA
+            stage_match = re.match(r"^\s*\*\*(.+?)\*\*\s*:?\s*$", line)
             if stage_match:
                 current_stage = stage_match.group(1).strip()
                 continue
 
+            # 2. Lógica para capturar o item do checklist: - [ ] Alterar Credor Genérico
             task_match = re.match(r"^-\s*\[(?: |x|X)\]\s*(.+)$", line)
             if task_match:
+                # ADICIONANDO A TERCEIRA INFORMAÇÃO: O título da seção (Anexo/Manual)
                 rows.append({
+                    "Anexo/Manual": title, 
                     "Etapa": current_stage,
                     "Atividade": task_match.group(1).strip()
                 })
+
+        # Somente adiciona se houver linhas
+        if rows:
+             checklists[title] = rows
 
         i += 2
 
@@ -322,6 +425,10 @@ if not manuais:
     2. Use formatação Markdown padrão
     3. Use `## Título` para seções principais
     4. Use `### Subtítulo` para subseções
+    
+    **NOVO: Adicione exportação de dados com links:**
+    - `[Título do Relatório](DATA_ID_DA_FONTE)`
+    - O `DATA_ID_DA_FONTE` deve ser mapeado na variável `EXPORTABLE_DATA_SOURCES`.
     """)
     st.stop()
 
@@ -419,11 +526,11 @@ if manual_selecionado:
 
                         for tab, (sub_title, sub_content) in zip(tabs, subsections):
                             with tab:
-                                # APLICAR PROCESSAMENTO DE IMAGEM AO CONTEÚDO DA SUBSEÇÃO
-                                process_and_display_markdown(sub_content, manual_base_dir)
+                                # APLICAR PROCESSAMENTO DE IMAGEM/EXPORTAÇÃO AO CONTEÚDO DA SUBSEÇÃO
+                                process_and_display_markdown(sub_content, manual_base_dir, EXPORTABLE_DATA_SOURCES)
                     else:
-                        # APLICAR PROCESSAMENTO DE IMAGEM AO CONTEÚDO DA SEÇÃO
-                        process_and_display_markdown(content, manual_base_dir)
+                        # APLICAR PROCESSAMENTO DE IMAGEM/EXPORTAÇÃO AO CONTEÚDO DA SEÇÃO
+                        process_and_display_markdown(content, manual_base_dir, EXPORTABLE_DATA_SOURCES)
 
     # Visualização completa
     else:
@@ -437,16 +544,20 @@ if manual_selecionado:
                 Para uma navegação mais fácil durante apresentações, utilize o modo **Por Seções**.
                 """)
 
-            # APLICAR PROCESSAMENTO DE IMAGEM AO CONTEÚDO COMPLETO
-            process_and_display_markdown(manual_text, manual_base_dir) # Chamada corrigida
+            # APLICAR PROCESSAMENTO DE IMAGEM/EXPORTAÇÃO AO CONTEÚDO COMPLETO
+            process_and_display_markdown(manual_text, manual_base_dir, EXPORTABLE_DATA_SOURCES)
 
+    # ═══════════════════════════════════════════════════════════════
+    # Bloco de Checklist (AJUSTADO PARA USAR NOVAS FUNÇÕES)
+    # ═══════════════════════════════════════════════════════════════
     if checklist_sections:
         with card_container("manual-checklist-card"):
-            st.markdown("### ✅ Checklists dos Anexos")
-            with st.expander("Opcional: visualizar ou exportar checklists (Anexos)", expanded=False):
+            st.markdown("### ✅ Itens do Manual que podem ser Exportados")
+            # Agora este expander apenas gerencia a seleção
+            with st.expander("Opcional: visualizar ou exportar dados", expanded=False):
                 checklist_titles = list(checklist_sections.keys())
                 selected_title = st.selectbox(
-                    "Selecione o anexo:",
+                    "Selecione o dado a ser analisado:",
                     options=checklist_titles,
                     format_func=lambda x: x
                 )
@@ -455,18 +566,15 @@ if manual_selecionado:
                 checklist_df = pd.DataFrame(selected_rows)
                 st.dataframe(checklist_df, use_container_width=True, hide_index=True)
 
-                buffer = BytesIO()
-                with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-                    checklist_df.to_excel(writer, sheet_name=selected_title[:31], index=False)
-                buffer.seek(0)
-
-                st.download_button(
-                    "⬇️ Exportar checklist para Excel",
-                    data=buffer.getvalue(),
-                    file_name=f"{selected_title.replace(' ', '_')}_{CURRENT_YEAR}_{NEXT_YEAR}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    key=f"download_{manual_selecionado.stem}"
-                )
+                # Novo Expander para o Download (consistente com a abordagem de links)
+                with st.expander("📥 Exportar Dados para Excel", expanded=False):
+                    file_name = f"{selected_title.replace(' ', '_')}_Checklist_{CURRENT_YEAR}_{NEXT_YEAR}"
+                    
+                    download_data_as_xlsx(
+                        df=checklist_df, 
+                        file_name=file_name,
+                        button_label=f"⬇️ Baixar {selected_title} Dados.xlsx ({len(checklist_df)} itens)"
+                    )
 
 
 # Rodapé

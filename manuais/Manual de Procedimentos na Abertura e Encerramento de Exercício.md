@@ -1352,6 +1352,54 @@ Parte do Manual com o objetivo de centralizar os Bloqueios de Funcionalidades qu
 - E NÃO BLOQUEIA OS USUÁRIOS >> usuários admins e nem os usuários de sistema ou de agendamentos
 [Não bloquear os usuários de sistema e de agendamentos](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/11.1_Antes da Virada_Não bloquear os usuários de sistema e de agendamentos.png)
 
+
+### 11.1 - Bloqueios Funcionalidades Usuários - ANTES DA VIRADA
+
+**Banco de Encerramento**
+- [ ] Não Bloqueia Nada
+
+**Banco de Abertura**
+- [ ] Alteração Especial de Convênio
+- [ ] Alterar Credor Genérico
+- [ ] Alterar Pessoa Física
+- [ ] Alterar Pessoa Jurídica
+- [ ] Alterar Regra de Compatibilidade
+- [ ] Cadastrar Agendamento de Execucão de Consultas
+- [ ] Cadastrar Conta Contábil
+- [ ] Cadastrar Evento
+- [ ] Cadastrar Item Patrimonial
+- [ ] Cadastrar Natureza da Despesa
+- [ ] Cadastrar Natureza da Receita
+- [ ] Cadastrar Operação Patrimonial
+- [ ] Cadastrar Regra de Compatibilidade
+- [ ] Cadastrar Regra de Dedução
+- [ ] Cadastrar Regra de Mapeamento
+- [ ] Cadastrar Tipo de Item Patrimonial
+- [ ] Cadastrar Tipo de Retenção
+- [ ] Cadastrar Unidade Gestora
+- [ ] Editar Contrato
+- [ ] Emitir Balancete
+- [ ] Emitir Balancete Geral
+- [ ] Emitir Balanços
+- [ ] Emitir Detalhamento Conta Contábil
+- [ ] Emitir Razão
+- [ ] Emitir relatórios da LRF
+- [ ] Emitir relatórios Gerenciais
+- [ ] E todas as funcionalidades de "VISUALIZAR" (OBS: digitar nome contém visualizar para filtrar)
+
+**Usuários Não Bloqueados**
+- [ ] admin
+- [ ] CECIERJ
+- [ ] CONTROLE - CGE
+- [ ] converj
+- [ ] quartz
+- [ ] ARR
+- [ ] SISGRE
+- [ ] siga
+- [ ] SIPLAG
+- [ ] seeduc
+
+
 ### 11.2. APÓS A VIRADA
 
 |-----------------------------------------------------------|
@@ -1362,12 +1410,50 @@ Parte do Manual com o objetivo de centralizar os Bloqueios de Funcionalidades qu
 **>> Bloqueios a serem realizados no "Banco de Encerramento"**
 
 - Bloqueia as funcionalidades relacionadas os Pagamentos e a parte de Execução Financeira, pois os pagamentos seguem a data corrente (ou seja, devem ser processados no banco de abertura)
-[Encerramento Bloquear Funcionalidades de Execução Financeira](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/11.2_Após a Virada_Bloquear as funcionalidades de Execução Financeira.png)
+[banco de Encerramento deve Bloquear as Funcionalidades de Execução Financeira](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/11.2_Após a Virada_Bloquear as funcionalidades de Execução Financeira.png)
 
 **>> Bloqueios a serem realizados no "Banco de Abertura"**
 
 - Bloqueia as funcionalidades relacionadas aos itens que estão configurados para serem cadastrados no Banco de Encerramento até a inscrição do RP. 
-[Abertura Bloquear as Funcionalidades que estão nas Migração de Tabelas e Comunica](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/11.2_Após a Virada_Bloquear as funcionalidades no Banco de Abertura.png)
+[Banco de Abertura deve Bloquear as Funcionalidades que estão nas Migração de Tabelas e Comunica](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/11.2_Após a Virada_Bloquear as funcionalidades no Banco de Abertura.png)
+
+### 11.2 - Bloqueios Funcionalidades Usuários - APÓS A VIRADA
+
+**Banco de Encerramento**
+- [ ] Alterar Código de Barras
+- [ ] Alterar o retorno da OB de Sucesso para Erro
+- [ ] Anular Registro de Envio
+- [ ] Ativar e Desativar o Tipo de Documento Fiscal
+- [ ] Cadastrar Código de Barras
+- [ ] Cadastrar Código de Receita
+- [ ] Cadastrar Configuração de Envio de Arquivo
+- [ ] Cadastrar lista favorecido OB
+- [ ] Cadastrar Retorno de OB
+- [ ] Gerar RE (Registro de Envio)
+- [ ] Importar Receita (OBS: A Arrecadação precisa para justes ainda no Banco anterior até 10 JAN)
+- [ ] Transmitir Arquivo de Ordem Bancária
+
+**Banco de Abertura**
+- [ ] Cadastrar Concessionária
+- [ ] Cadastrar Contrato
+- [ ] Cadastrar Convênio
+- [ ] Cadastrar Credor Genérico
+- [ ] Cadastrar Domicílio Bancário da UG
+- [ ] Cadastrar Inscrição Genérica
+- [ ] Cadastrar Pessoa Física
+- [ ] Cadastrar Pessoa Jurídica
+- [ ] Contabilizar Despesa Exercício Anterior
+- [ ] Editar Contrato
+- [ ] Enviar mensagem pelo Comunica
+- [ ] Importar Credor Genérico
+- [ ] Incluir Domicílio Bancário de Pessoa Física
+- [ ] Incluir Domicílio Bancário de Pessoa Jurídica
+- [ ] Incluir Pessoa Física
+- [ ] Incluir Pessoa Físíca e Procedimento de Pagamento
+- [ ] Incluir Pessoa Jurídica
+- [ ] Incluir Pessoa Jurídica e Procedimento de Pagamento
+- [ ] Marcar uma mensagem como lida do Comunica
+
 
 ### 11.3. APÓS FECHAMENTO DO MÊS 12
 **Banco de Encerramento >> Bloqueia muitas funcionalidades, principalmente para não permitindo mais execuções orçamentárias no Banco de Encerramento**
