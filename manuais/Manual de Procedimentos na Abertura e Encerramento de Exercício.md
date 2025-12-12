@@ -2,20 +2,6 @@
 
 ---
 
-## Sumário
-
-1. [Introdução](#introdução)
-2. [Visão Geral do Processo](#visão-geral-do-processo)
-3. [Fase 1: Início dos Testes](#fase-1-início-dos-testes)
-4. [Fase 2: Pré-Fechamento](#fase-2-pré-fechamento)
-5. [Fase 3: Pré-Virada](#fase-3-pré-virada)
-6. [Fase 4: Pós-Virada](#fase-4-pós-virada)
-7. [Glossário](#glossário)
-8. [Anexos](#anexos)
-9. [Cronograma de Encerramento com a SATI](#cronograma-de-encerramento-com-a-sati)
-
----
-
 ## Introdução
 
 ### Sobre este Manual
