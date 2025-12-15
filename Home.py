@@ -36,6 +36,7 @@ st.markdown(
       <li><strong>📑 Extratos de Homologações</strong>: Consulta sobre os demonstrativos homologados no portal do SICONFI.</li>
       <li><strong>⚖️ Análise Novas Dimensões</strong>: Comparação do desempenho dos estados em relação às novas verificações do Ranking Siconfi.</li>
       <li><strong>🚨 Acerto de Fontes em Banco</strong>: Permite o acerto dos dados de Ativos F sem Fonte de Recursos na MSC.</li>
+      <li><strong>✔️ Conferência entre Matriz e Layout da STN</strong>: Permite realizar a conferência entre a estrutura da Matriz e Layout da STN.</li>
     </ul>
   </div>
   <div class="home-section">
