@@ -1202,8 +1202,8 @@ Atributo da conta contábil que determina como seus saldos devem ser tratados no
   - [ ] RC 361 (Execução de PDs de RPP antes da inscrição)
   - [ ] RC 296 (Impedir pagamento de RPP cancelado por prescrição)
   - [ ] RC 360 (Impedir PDs e OBs de Regularização)
-- [ ] Bloqueios de funcionalidade usuários configurados (com os usuários de sistema liberados)
-- [ ] Bloqueio geral de contabilizações está ativo
+- [ ] Bloqueio de Funcionalidade Usuários configurados (com os usuários de sistema liberados)
+- [ ] Bloqueio Funcionalidade UG (Bloqueio geral de contabilizações está ativo e será liberado após conferir os saldos)
 - [ ] FlexVision com views históricas atualizadas (ainda não apontado para o novo exercício)
 
 **Conferências:**
