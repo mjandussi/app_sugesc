@@ -1185,25 +1185,26 @@ Atributo da conta contábil que determina como seus saldos devem ser tratados no
 ### Anexo B - Checklist de Conferência Pré-Virada
 
 **Banco de Encerramento:**
-- [ ] Todos os bloqueios do Decreto estão ativados
-- [ ] RPP Prescrito de 5 anos está cancelado
-- [ ] RPNP dos Poderes está cancelado
+- [ ] Todos os bloqueios do Decreto estão ativados no Banco de Encerramento
+- [ ] RPP Prescrito de 5 anos está cancelado (Rodar o script para ativar os programas de trabalho)
+- [ ] RPNP dos Poderes está cancelado (verificar se terão pedidos de excessões)
 - [ ] PDs de RPP canceladas estão anuladas
-- [ ] Bloqueio geral de contabilizações está ativo
+- [ ] Script para remover a opção **“gerar GD”** da funcionalidade **“Retorno de Ordem Bancária”** no exercício de encerramento (impedir contabilização de GDs)
 
 **Banco de Abertura:**
 - [ ] Tabelas de apoio inicializadas
 - [ ] DEPARA Contábil configurado
 - [ ] Tipo de Encerramento no Plano de Contas conferido
 - [ ] Tabelas de Ação e Programa carregadas
-- [ ] Agendamento da Transferência Diária ativado (22h do dia 30/12)
-- [ ] Agendamento de Migração de Tabelas ativado
+- [ ] Agendamento da Transferência Diária ativado (22h do dia escolhido para início)
+- [ ] Agendamento de Migração de Tabelas ativado (para rodar antes da Transf.diária)
 - [ ] Regras de compatibilidade ativadas:
   - [ ] RC 361 (Execução de PDs de RPP antes da inscrição)
   - [ ] RC 296 (Impedir pagamento de RPP cancelado por prescrição)
   - [ ] RC 360 (Impedir PDs e OBs de Regularização)
-- [ ] Bloqueios de funcionalidade configurados
-- [ ] FlexVision com views históricas atualizadas (ainda não apontado)
+- [ ] Bloqueios de funcionalidade usuários configurados (com os usuários de sistema liberados)
+- [ ] Bloqueio geral de contabilizações está ativo
+- [ ] FlexVision com views históricas atualizadas (ainda não apontado para o novo exercício)
 
 **Conferências:**
 - [ ] Saldos contábeis conferidos (Encerramento x Abertura)
@@ -1214,7 +1215,7 @@ Atributo da conta contábil que determina como seus saldos devem ser tratados no
 ### Anexo C - Checklist Pós-Virada
 
 **Dia 02 de Janeiro:**
-- [ ] FlexVision apontado para o novo exercício
+- [ ] FlexVision apontado para o novo exercício (ver a melhor data)
 - [ ] Bloqueios específicos do exercício de encerramento ativados:
   - [ ] Bloquetos e Faturas
   - [ ] DOMBANS
@@ -1225,8 +1226,7 @@ Atributo da conta contábil que determina como seus saldos devem ser tratados no
   - [ ] Credores
   - [ ] Convênios
   - [ ] Contratos
-- [ ] Script de GDs executado
-- [ ] Operações financeiras do novo exercício iniciadas
+
 
 **Durante o Período de Inscrição de RP (até conclusão):**
 - [ ] Acompanhamento diário das operações simultâneas
@@ -1234,7 +1234,7 @@ Atributo da conta contábil que determina como seus saldos devem ser tratados no
 - [ ] Suporte aos órgãos para dúvidas e problemas
 
 **Após Conclusão da Inscrição de RP:**
-- [ ] Banco de encerramento praticamente fechado (sem ajustes orçamentários pendentes)
+- [ ] Banco de encerramento praticamente fechado (sem ajustes orçamentários)
 
 ### Anexo D - Checklist Cronograma SATI 2025/2026
 
@@ -1271,7 +1271,7 @@ Referência operacional para a virada 2025→2026, com foco nas atividades que p
 ### 2. Retorno de OBs
 **PASSO 2 – 26/12 – Ajustar o “Retorno de Ordem Bancária”**
 
-- Remover a opção **“gerar GD”** da funcionalidade **“Retorno de Ordem Bancária”** no exercício de 2025, logo após a inicialização das tabelas desse exercício.
+- Remover a opção **“gerar GD”** da funcionalidade **“Retorno de Ordem Bancária”** no exercício de encerramento, logo após a inicialização das tabelas desse exercício.
 - *Responsável indicado: Time SIAFE (execução via script no banco de dados).*
 
 ### 3. Transferência Diária
