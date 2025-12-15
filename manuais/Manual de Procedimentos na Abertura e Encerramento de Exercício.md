@@ -1182,6 +1182,8 @@ Atributo da conta contábil que determina como seus saldos devem ser tratados no
 | **31 de Dezembro → 01 de Janeiro** | Virada | Operação simultânea dos dois bancos |
 | **02 de Janeiro em diante** | Pós-Virada | Ajustes finais, início das operações do novo exercício |
 
+
+
 ### Anexo B - Checklist de Conferência Pré-Virada
 
 **Banco de Encerramento:**
@@ -1236,6 +1238,7 @@ Atributo da conta contábil que determina como seus saldos devem ser tratados no
 **Após Conclusão da Inscrição de RP:**
 - [ ] Banco de encerramento praticamente fechado (sem ajustes orçamentários)
 
+
 ### Anexo D - Checklist Cronograma SATI 2025/2026
 
 **26/12 – Preparação Inicial (TI/SATI & SUBCONT)**
@@ -1253,6 +1256,8 @@ Atributo da conta contábil que determina como seus saldos devem ser tratados no
 - [ ] Rodar o script para inativar os programas de trabalho após os processos.
 - [ ] Ativar a migração de PDs no Depara Contábil e carregar os documentos necessários.
 - [ ] SUBCONT confirmar o cancelamento dos Restos a Pagar conforme comunicado.
+
+
 
 ---
 
