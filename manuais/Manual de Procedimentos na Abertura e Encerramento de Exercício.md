@@ -797,6 +797,7 @@ Essas situações ocorrem, por exemplo, quando uma **PD do exercício anterior �
 
 * O bloqueio entra em vigor automaticamente após a virada de ano (**01/01**).
 * Como os pagamentos financeiros estão ocorrendo no banco de abertura, no banco de encerramento as emissões de PDs devem ser obrigatoriamente de regularização.
+* Como forma de **backup** deve-se ativar a Regra de Compatibilidade 399 no Banco de Encerramento para impedir a emissão de PDs que não sejam do tipo “REGULARIZAÇÃO”.
 
 ---
 
