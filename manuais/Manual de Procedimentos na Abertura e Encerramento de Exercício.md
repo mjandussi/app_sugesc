@@ -812,7 +812,7 @@ Essas situações ocorrem, por exemplo, quando uma **PD do exercício anterior �
 
 **Observações:**
 
-* Atualmente configurada como **“AVISAR”**; deve ser alterada para **“IMPEDIR”**.
+* Atualmente configurada como **“AVISAR”** (pode ser uma boa estratégia apenas alertar, mas deixar o usuário fazer);  pode ser alterada para **“IMPEDIR”** (caso queria de fato bloquear e não correr "riscos").
 * Evita que ajustes indevidos de PDs impactem o saldo do exercício anterior.
 
 [Impedir PDs e OBs de REGULARIZAÇÃO no Banco de Abertura](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/3.3.2_Impedir PDs e OBs de REGULARIZAÇÃO no Banco de Abertura.png)
