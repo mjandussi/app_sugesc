@@ -54,6 +54,8 @@ st.markdown(
     <h4>🧩 Outras Análises</h4>
     <ul>
       <li><strong>🧩 Encerramento de Disponibilidades</strong>: Regras e verificações para processar o encerramento das disponibilidades financeiras por fonte.</li>
+      <li><strong>🧾 Análise dos Arquivos SIG</strong>: Página para realizar as análises dos arquivos SIG em relação aos dados do SIAFERIO/Flexvision.</li>
+      <li><strong>✅ Conferência do Plano de Contas</strong>: Página para realizar a conferência Do Plano de Contas em Relação ao Processo de Encerramento.</li>
     </ul>
     <h4 style="margin-top:1.1rem;">🏦 Manuais</h4>
     <ul>

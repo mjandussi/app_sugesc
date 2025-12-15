@@ -27,6 +27,7 @@ APP_MENU = {
     "Outras Análises": [
         {"path": "pages/07_🧩 Encerramento_Disponibilidades.py", "label": "Encerramento de Disponibilidades Financeiras", "icon": "🧩"},
         {"path": "pages/12_🧾 Analise_Arquivos_SIG.py", "label": "Análise dos Arquivos SIG", "icon": "🧾"},
+        {"path": "pages/14_✅ Plano_de_Contas_Processo_de Encerramento.py", "label": "Análise do Plano de Contas", "icon": "✅"},
     ],
     "Manuais": [
         {"path": "pages/08_🏦 Manuais_SUGESC.py", "label": "Manuais SUGESC (SUBCONT)", "icon": "🏦"},
