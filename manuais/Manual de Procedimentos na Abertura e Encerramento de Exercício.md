@@ -714,7 +714,7 @@ Realizar os cancelamentos de Restos a Pagar, executar a Transferência Diária e
 **Observações:**
 - O Depara contábil precisa estar alinhado com a configuração do Plano de Contas (com a informação no Plano de contas se a conta Transfere ou não saldo). Pois o Plano de conta é que manda na informação de transferência de Saldos, sendo o DEPARA apenas um dericionador caso precise mudar uma classificação de saldo.
 
-**IMPORTANTE**: para evitar a migração de PDs LIXO na primeira transferência diária (que geralmente colocamos para rodar antes do término do último dia de expediente bancário do exercício), é preciso alterar as contas de controle de PDs Emitidas para **"Não transferir Saldo"** (ALTERAR NO PLANO DE CONTAS DO BANCO DE ENCERRAMENTO!!). Somente após o término do último dia de expediente bancário do exercício é que voltamos estas contas para poder Transferir Saldos e assim desta forma os Saldos e as PD associadas a estes saldos serão migradas para o novo Exercício.
+**IMPORTANTE**: para evitar a migração de PDs LIXO na primeira transferência diária (que geralmente colocamos para rodar antes do término do último dia de expediente bancário do exercício), é preciso alterar as contas de controle de PDs Emitidas para **"Não transferir Saldo"** (ALTERAR NO PLANO DE CONTAS DO BANCO DE ENCERRAMENTO!!). Somente após o término do último dia de expediente bancário do exercício é que voltamos estas contas para poder Transferir Saldos e assim desta forma os Saldos e as PD associadas a estes saldos serão migradas para o novo Exercício. Além do Controle de PDs, adotamos a não migração do Saldo da Conta 622130301 - LIQUIDADO A PAGAR (e que migra para o RPP no DEPARA)
 
 [Configurar o Plano de Contas para não passar PDs](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/3.2.1_Configurar o Plano de Contas para não passar PDs.png)
 
@@ -740,7 +740,7 @@ Realizar os cancelamentos de Restos a Pagar, executar a Transferência Diária e
 **Responsável:** SUGESC
 
 **Procedimento:**
-1. Acessar: **Banco de Abertura >> Administração / Agendamento / Agendamento Genérico**
+1. Acessar: **Banco de Abertura >> Administração / Agendamento / Agendamento Genérico (NO BANCO DE ENCERRAMENTO)**
 2. Ativar: **"Atualizar Dados Cadastrais - Migração de Tabelas (início do dia)"**
 
 [Ativar Agendamento de Migração das Tabelas](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/3.2.3_Ativar Agendamento de Migração das Tabelas.png)
