@@ -19,6 +19,15 @@ col1, col2 = st.columns(2)
 
 with col1:
     st.markdown("**1. Plano de Contas (SIAFERIO)**")
+
+    st.markdown("""
+    ### Instruções:
+    1. Acesse o **Siaferio**, depois acesse a funcionalidade "Plano de Contas" (Obs: pode digitar por Plano de Contas na opção de Acesso Rápido para achar)
+    2. Selecione o botão Imprimir (para exportar o Plano de Contas)
+    3. Exporte o Arquivo para o Formato XLS
+    4. E depois salve o arquivo no Computador mas com fomato XLSX
+    """)
+
     file_pc = st.file_uploader(
         "Arquivo Excel (.xlsx)", 
         type=["xlsx"],
@@ -27,6 +36,15 @@ with col1:
 
 with col2:
     st.markdown("**2. Conta Contábil - Encerramento (Flex)**")
+
+    st.markdown("""
+        ### Instruções:
+        1. Acesse o **Flexvision**, depois acesse a pasta de "Outros usuários" e pesquise pelo número da Consulta: `017642`
+        2. Local da consulta no Flex (diretório): `MARCELO JANDUSSI` (OBS: ou copie a consulta para sua pasta e utilize de lá para gerar a consulta!)
+        3. Nome da Consulta: `SUNOT - Conta Contábil - Encerramento`
+        4. Gere a consulta e **exporte para XLS**
+        5. E depois salve o arquivo no Computador mas com fomato XLSX
+        """)
     file_flex = st.file_uploader(
         "Arquivo Excel (.xlsx)", 
         type=["xlsx"],
@@ -97,10 +115,10 @@ if file_pc and file_flex:
         
         # Criação das Abas para organizar as 4 análises
         tab1, tab2, tab3, tab4 = st.tabs([
-            "1. Ativo/Passivo s/ Saldo", 
-            "2. VPD/VPA c/ Saldo", 
-            "3. Orçamentárias c/ Saldo",
-            "4. Encerramento (Flex)"
+            "1. Ativo/Passivo não transfere Saldo", 
+            "2. VPD/VPA transfere Saldo", 
+            "3. Orçamentárias transfere Saldo",
+            "4. VPD/VPA sem Conta de Encerramento"
         ])
 
         # Função auxiliar para mostrar tabela e botão de download
@@ -122,11 +140,11 @@ if file_pc and file_flex:
 
         with tab1:
             st.markdown("**Regra:** Contas dos Grupos 1 e 2 **devem** passar saldo (Transf. = Sim). Abaixo estão as que **NÃO** estão passando.")
-            mostrar_resultado(df1, "erros_ativo_passivo_sem_saldo", "Todas as contas de Ativo/Passivo estão transferindo saldo corretamente.")
+            mostrar_resultado(df1, "erros_ativo_passivo_nao_transfere_saldo", "Todas as contas de Ativo/Passivo estão transferindo saldo corretamente.")
 
         with tab2:
             st.markdown("**Regra:** Contas dos Grupos 3 e 4 **NÃO devem** passar saldo (Transf. = Não). Abaixo estão as que **ESTÃO** passando.")
-            mostrar_resultado(df2, "erros_vpd_vpa_com_saldo", "Nenhuma conta de VPA/VPD está transferindo saldo indevidamente.")
+            mostrar_resultado(df2, "erros_vpd_vpa_transfere_saldo", "Nenhuma conta de VPA/VPD está transferindo saldo indevidamente.")
 
         with tab3:
             st.markdown("**Regra:** Contas Orçamentárias (5 e 6) geralmente não transferem saldo. Abaixo estão as que **ESTÃO** passando.")
