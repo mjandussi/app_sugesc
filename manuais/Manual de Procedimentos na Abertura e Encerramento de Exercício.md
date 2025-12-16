@@ -878,6 +878,25 @@ Esta seção detalha os procedimentos necessários para garantir a disponibilida
     * Pendente
 * **Importante:** A cópia deve ser feita antes da virada do ano. Após o encerramento, não é possível acessar o banco de 2025 para copiar listas, exigindo redigitação manual completa em 2026.
 
+
+**COMUNICA EXEMPLO de 2025:**
+
+Prezados usuários do SIAFE-Rio,
+
+Com a aproximação do encerramento do exercício financeiro de 2025, algumas orientações precisam ser repassadas para conhecimento e ciência das Unidades Gestoras.
+
+Aos órgãos que possuem Listas de Favorecidos para OB com grande número de beneficiários, informamos que somente serão transferidas para o exercício seguinte as listas que, em 2025, estejam com status "Associado a PD" ou "Finalizado"  .
+
+Dessa forma, como medida preventiva para evitar que essas listas precisem ser refeitas integralmente em 2026, recomenda-se a realização de uma cópia das listas no SIAFE-Rio 2025, sem a sua utilização. Esse procedimento permitirá que a lista seja migrada automaticamente para o SIAFE-Rio 2026, possibilitando sua posterior cópia e reaproveitamento para fins de pagamento.
+
+ATENÇÃO: Após a virada do exercício, não será possível realizar cópias de listas antigas no exercício de 2025. Caso a cópia não seja realizada previamente, a lista deverá ser cadastrada manualmente do zero em 2026. Alternativamente, se houver template previamente estruturado, este poderá ser importado.
+ 
+
+Atenciosamente,
+
+CISSC/SUGESC
+
+
 ---
 
 #### 3.4.2 Evitar Erros de Lista na Transferência Diária (30/12)
@@ -897,7 +916,9 @@ Esta seção detalha os procedimentos necessários para garantir a disponibilida
 * **Causa Técnica do Erro:** A primeira transferência diária roda no dia 29, levando as listas como "Finalizado". Se no dia 30 o usuário associa a lista a uma PD, o status muda para "Associado a PD". Isso cria uma divergência entre o status no banco local (Associado) e o status já migrado (Finalizado).
 * Se houver listas "Associadas a PD" no dia 30 que não foram pagas nem canceladas, a Unidade Gestora apresentará **ERRO NA TRANSFERÊNCIA DIÁRIA**, impedindo a migração de saldos e documentos da UG.
 
-
+**REGRA DE COMPATIBILIDADE**
+- A regra XXX com a seguinte condição: se_não_existe ([TIPO PAGAMENTO ORDEM BANCÁRIA].[CÓDIGO], '0') = '11'
+- em por objetivo impedir que, após o último dia de expediente bancário no banco de encerramento, haja listas migradas com status de "FINALIZADO" associadas a PDs, e a consequente divergência de status de Lista e erro na transferência diária.
 ---
 
 ## Fase 4: Pós-Virada
