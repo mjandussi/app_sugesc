@@ -846,6 +846,58 @@ O caso abaixo demonstra a importância dos bloqueios descritos:
 [Exemplo de Saldo Invertido de PDs](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/3.3.4_Exemplo Saldo Invertido de PDs.png)
 [Procedimentos Corretos para a Correção de PDs](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/3.3.4_Procedimentos Corretos para a Correção de PDs.png)
 
+
+---
+
+### 3.4 Migração das Listas de Favorecidos
+
+Esta seção detalha os procedimentos necessários para garantir a disponibilidade das Listas de Favorecidos no exercício seguinte e evitar erros na transferência diária em relação a Listas.
+
+---
+
+#### 3.4.1 Copiar Listas para Reutilização no Exercício Seguinte
+
+**Responsável:** Unidades Gestoras (Usuários do SIAFERIO)
+
+**Procedimento:**
+
+1. Identificar as Listas de Favorecidos utilizadas em 2025 que serão necessárias (recorrentes) em 2026.
+2. Verificar o status atual dessas listas.
+3. Caso a lista esteja em um status **não-migrável** (ver observações), executar a função **COPIAR LISTA** ainda no banco de 2025.
+4. Certificar-se de que a nova cópia gerada esteja com o status **"Finalizado"**.
+
+**Observações:**
+
+* A rotina automática só migra para 2026 listas com status **"Associado a PD"** ou **"Finalizado"**.
+* Listas com os seguintes status **NÃO MIGRARÃO** automaticamente e exigem a cópia manual:
+    * Pago
+    * Parcialmente Pago
+    * Enviado ao Banco
+    * Associado a OB
+    * Aguardando Envio
+    * Pendente
+* **Importante:** A cópia deve ser feita antes da virada do ano. Após o encerramento, não é possível acessar o banco de 2025 para copiar listas, exigindo redigitação manual completa em 2026.
+
+---
+
+#### 3.4.2 Evitar Erros de Lista na Transferência Diária (30/12)
+
+**Responsável:** Unidades Gestoras (Usuários do SIAFERIO)
+
+**Procedimento:**
+
+1. Monitorar as Listas de Favorecidos no dia **30/12** (último dia de expediente bancário).
+2. Caso uma lista seja associada a uma PD neste dia, o gestor deve obrigatoriamente tomar uma das duas ações antes das 22:00h:
+    * **Opção A (Pagar):** Executar efetivamente o pagamento da PD dentro do horário bancário.
+    * **Opção B (Cancelar):** Caso o pagamento não ocorra, **cancelar a PD**. Isso desassociará a lista e retornará seu status para "Finalizado".
+3. Para a Opção B, a PD deverá ser reemitida no Banco de 2026.
+
+**Observações:**
+
+* **Causa Técnica do Erro:** A primeira transferência diária roda no dia 29, levando as listas como "Finalizado". Se no dia 30 o usuário associa a lista a uma PD, o status muda para "Associado a PD". Isso cria uma divergência entre o status no banco local (Associado) e o status já migrado (Finalizado).
+* Se houver listas "Associadas a PD" no dia 30 que não foram pagas nem canceladas, a Unidade Gestora apresentará **ERRO NA TRANSFERÊNCIA DIÁRIA**, impedindo a migração de saldos e documentos da UG.
+
+
 ---
 
 ## Fase 4: Pós-Virada
