@@ -29,7 +29,7 @@ APP_MENU = {
         {"path": "pages/07_🧩 Encerramento_Disponibilidades.py", "label": "Encerramento de Disponibilidades Financeiras", "icon": "🧩"},
         {"path": "pages/12_🧾 Analise_Arquivos_SIG.py", "label": "Análise dos Arquivos SIG", "icon": "🧾"},
         {"path": "pages/14_✅ Plano_de_Contas_Processo_de Encerramento.py", "label": "Análise do Plano de Contas", "icon": "✅"},
-        {"path": "pages/16_❌ Conferencia_PTs.py", "label": "Conferêdncia dos PTs e Saldos de RPP", "icon": "❌"},
+        {"path": "pages/16_❌ Conferencia_PTs.py", "label": "Conferência dos PTs e Saldos de RPP", "icon": "❌"},
     ],
     "Manuais": [
         {"path": "pages/08_🏦 Manuais_SUGESC.py", "label": "Manuais SUGESC (SUBCONT)", "icon": "🏦"},

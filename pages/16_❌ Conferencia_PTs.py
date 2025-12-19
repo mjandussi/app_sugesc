@@ -36,12 +36,16 @@ col1, col2 = st.columns(2)
 
 with col1:
     st.markdown("### 1. Base dos PTs (SIAFERIO)")
-    st.caption("Caminho: Planejamento >> Plano Plurianual >> Ação (Exportar XLS)")
+    st.markdown("###### Caminho: Planejamento >> Plano Plurianual >> Ação")
+    st.markdown("###### Imprimir a Tabela, Exportar para formato XLS e Depois Salvar em Formato XLSX no computador")
+    #st.caption("Caminho: Planejamento >> Plano Plurianual >> Ação (Imprimir a Yabela e Exportar para formatoXLS)")
     file_pt = st.file_uploader("Upload Base PTs (.xlsx)", type=["xlsx"], key="upload_pt")
 
 with col2:
-    st.markdown("### 2. Saldos RP (Flexvision)")
-    st.caption("Consulta Flexvision: 079062 (Conta 632110101)")
+    st.markdown("### 2. Saldos RPP (Flexvision)")
+    st.markdown("###### Consulta Flexvision: 079062 (LISUGSALDO 632110101 na Pasta do Usuário Marcelo Jandussi e na pasta RP)")
+    st.markdown("###### Exportar a consulta para formato Excel e Depois Salvar em Formato XLSX no computador")
+    #st.caption("Consulta Flexvision: 079062 (LISUGSALDO 632110101)")
     file_rp = st.file_uploader("Upload Saldo RP (.xlsx)", type=["xlsx"], key="upload_rp")
 
 st.divider()
@@ -163,7 +167,7 @@ if file_pt and file_rp:
             # --- Preparação para Download ---
             # Streamlit precisa de um buffer de bytes para baixar Excel gerado via Pandas
             output = io.BytesIO()
-            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
                 df_final.to_excel(writer, index=False, sheet_name='PTs_Sem_Cadastro')
             
             # Resetar ponteiro do buffer para o início
