@@ -292,7 +292,7 @@ Paralelamente, um segundo banco de dados é configurado para atender às necessi
 **Procedimento:**
 1. Acessar: **PROCESSO "Atualizar Dados Cadastrais"**
 2. Configurar: `logus.siplag.agendamento.job.ExecutarMigracaoTabelaJob`
-3. Parâmetros exemplo: `SIAFE_RIO2_2024 / 2024 / 00001 >> SIAFE_RIO2_2025 / 2025 / 00001`
+3. Parâmetros exemplo (sempre ano de encerramento e ano de abertura): `SIAFE_RIO2_2024 / 2024 / 00001 >> SIAFE_RIO2_2025 / 2025 / 00001`
 
 **Observações:**
 - Este agendamento evita inconsistências que geram erros na Transferência Diária, impactando por consequência as migrações de Saldos Contábeis e de Documentos. O problema surge quando a rotina busca em tabelas dados que ainda não existem no banco de dados do novo exercício.
@@ -310,6 +310,9 @@ Paralelamente, um segundo banco de dados é configurado para atender às necessi
 **Observações:**
 - A Transferência Diária é um agendamento, mas podem ser feitos testes manuais
 - Realizar análises pontuais de UGs específicas que apresentem erros
+
+**ERROS COMUNS NO BETA**
+- No Banco Beta, nos testes de transferência diária, geralmente a primeira tarsnferência (no mesmo dia da criação e inicialização do banco de abertura) ocorre sem erros. nas transferências seguintes começam a ocorrer erros de Listas de Favorecidos e Códigos de Barras. Isto ocorre pois o Beta de Encerramento está sendo atualizado diáriamente e o Beta Abertura está estático, e os dados de Listas e Codbarras estão sendo modificados (no caso, associados as PDs) e no Banco de Abertura provavelmente foram migradas as Listas e Codbarras com os status de "Finalizada" ou "Liberada" (respectivamente). Para passar sem erro é necessária a anulação da PD e rodar uma nova transferência.
 
 ---
 
@@ -746,7 +749,7 @@ Realizar os cancelamentos de Restos a Pagar, executar a Transferência Diária e
 [Ativar Agendamento de Migração das Tabelas](../imagens/Imagens do Manual de Procedimentos na Abertura e Encerramento de Exercício/3.2.3_Ativar Agendamento de Migração das Tabelas.png)
 
 **Observações:**
-- Este agendamento mantém as tabelas cadastrais atualizadas entre os bancos
+- Este agendamento mantém as tabelas cadastrais atualizadas entre os bancos. Faz por padrão no Banco de Encerramento (apenas adoção), mas funciona o processo em qualquer um dos bancos (pode ser no de Abertura)
 
 ---
 
@@ -759,6 +762,9 @@ Realizar os cancelamentos de Restos a Pagar, executar a Transferência Diária e
    - Banco de Abertura
 2. Conferir a Migração das Tabelas (Ex: listas de favorecidos)
 3. Conferir a Migração dos Documentos (Ex: PDs)
+
+**Observação**
+- Existe consulta no Flex configurada para esta análise (verificar com o Celso). Em Ugs "pequenas" conseguimos analisar exportando o balancete para excel dos 2 exercícios e comparando os saldos de abertura e encerramento.
 
 **IMPORTANTE:**
 - O **Bloqueio Geral de Contabilizações** deve estar travando toda e qualquer contabilização (até a liberação - OK)
@@ -849,9 +855,9 @@ O caso abaixo demonstra a importância dos bloqueios descritos:
 
 ---
 
-### 3.4 Migração das Listas de Favorecidos
+### 3.4 Migração das Listas de Favorecidos e Códigos de Barras
 
-Esta seção detalha os procedimentos necessários para garantir a disponibilidade das Listas de Favorecidos no exercício seguinte e evitar erros na transferência diária em relação a Listas.
+Esta seção detalha os procedimentos necessários para garantir a cópia das Listas de Favorecidos no exercício seguinte e evitar erros na transferência diária em relação a Listas e aos Códigos de Barras.
 
 ---
 
@@ -899,26 +905,74 @@ CISSC/SUGESC
 
 ---
 
-#### 3.4.2 Evitar Erros de Lista na Transferência Diária (30/12)
+#### 3.4.2 Evitar Erros de Lista e Códigos de Barras na Transferência Diária (30/12)
 
 **Responsável:** Unidades Gestoras (Usuários do SIAFERIO)
 
 **Procedimento:**
 
-1. Monitorar as Listas de Favorecidos no dia **30/12** (último dia de expediente bancário).
-2. Caso uma lista seja associada a uma PD neste dia, o gestor deve obrigatoriamente tomar uma das duas ações antes das 22:00h:
+1. Monitorar as Listas de Favorecidose os Códigos de Barras no dia **30/12** (último dia de expediente bancário).
+2. Caso uma lista ou código de barras seja associado a uma PD neste dia, o usuário deve obrigatoriamente tomar uma das duas ações antes das 22:00h:
     * **Opção A (Pagar):** Executar efetivamente o pagamento da PD dentro do horário bancário.
-    * **Opção B (Cancelar):** Caso o pagamento não ocorra, **cancelar a PD**. Isso desassociará a lista e retornará seu status para "Finalizado".
+    * **Opção B (Cancelar):** Caso o pagamento não ocorra, **cancelar a PD**. Isso desassociará a lista ou o código de e retornará seu status para "Finalizado" (LISTA) ou "Liberado"(CODBARRAS).
 3. Para a Opção B, a PD deverá ser reemitida no Banco de 2026.
 
 **Observações:**
 
-* **Causa Técnica do Erro:** A primeira transferência diária roda no dia 29, levando as listas como "Finalizado". Se no dia 30 o usuário associa a lista a uma PD, o status muda para "Associado a PD". Isso cria uma divergência entre o status no banco local (Associado) e o status já migrado (Finalizado).
-* Se houver listas "Associadas a PD" no dia 30 que não foram pagas nem canceladas, a Unidade Gestora apresentará **ERRO NA TRANSFERÊNCIA DIÁRIA**, impedindo a migração de saldos e documentos da UG.
+* **Causa Técnica do Erro:** A primeira transferência diária roda no dia 29, levando as listas como "Finalizado" e os códigos de barras como "Liberado". Se no dia 30 o usuário associa a lista ou o código de barras a uma PD, o status muda para "Associado a PD". Isso cria uma divergência entre o status no banco local (Associado) e o status já migrado (Finalizado ou Liberado).
+* Se houver listas e códigos de barras "Associadas a PD" no dia 30 que não foram pagas nem canceladas, a Unidade Gestora apresentará **ERRO NA TRANSFERÊNCIA DIÁRIA**, impedindo a migração de saldos e documentos da UG.
 
-**REGRA DE COMPATIBILIDADE**
-- A regra XXX com a seguinte condição: se_não_existe ([TIPO PAGAMENTO ORDEM BANCÁRIA].[CÓDIGO], '0') = '11'
-- em por objetivo impedir que, após o último dia de expediente bancário no banco de encerramento, haja listas migradas com status de "FINALIZADO" associadas a PDs, e a consequente divergência de status de Lista e erro na transferência diária.
+
+**>> Caso precise Anular PDs para Conseguir Rodar a Transferência Dária sem Erro**
+1. Usar um usuário genérico ou sistêmico (seria o melhor), como o COAI, ou o admin...
+2. Texto para a anulação: "PD anulada por erro na Transferência Diária (Associação de Lista/Barras no último dia útil sem o respectivo pagamento). Emitir novo documento no próximo exercício financeiro."
+
+**>> COMUNICA DE AVISO**
+
+
+**>> OBS: possibilidade de criar uma REGRA DE COMPATIBILIDADE**
+- A regra XXX teria a seguinte condição: "se_não_existe ([TIPO PAGAMENTO ORDEM BANCÁRIA].[CÓDIGO], '0') = '11'"
+- E teria por objetivo impedir que, após o último dia de expediente bancário no banco de encerramento, associação de Listas à PDs, e a consequente divergência de status de Lista e erro na transferência diária. Porém, após a virada do exercício, as PDs no Banco de Encerramento obrigatoriamente são de Regularização, inviabilizando a pretenção de associações e pagamentos no banco de encerramento (execuções financeiras de fatos ficam impedidas) e com os usuários procedendo apenas possíveis regularizações contábeis de execução orçamentária.
+
+---
+
+### 3.5 Impedir o Retorno de OBs no Banco de Encerramento
+
+Esta seção descreve os procedimentos necessários para impedir o retorno de Ordens Bancárias (OBs) no Banco de Encerramento após o término do último dia de expediente bancário (OBs pagas no exercício e devolvidas no exercício seguinte.)
+
+Anteriormente, o processo consistia no 'Bloqueio de Funcionalidade da UG', restringindo a funcionalidade GD no Banco de Encerramento. Isso impedia tanto o agendamento quanto a contabilização de GDs pelo usuário quartz.
+
+Para regularizações e acertos contábeis excepcionais, era necessário o envio de um 'Comunica' à SUGESC (UG 200299) solicitando a liberação pontual da funcionalidade para a UG e o CPF do usuário solicitante.
+
+Atualmente, foi adotada uma solução proposta pela LOGUS para garantir a integridade do sistema de forma otimizada, conforme descrito a seguir.
+
+**PASSO em 31/12 – Ajustar o “Retorno de Ordem Bancária”**
+
+- Remover a opção **“gerar GD”** da funcionalidade **“Retorno de Ordem Bancária”** no exercício de encerramento, logo após a inicialização das tabelas desse exercício.
+- *Responsável indicado: Time SIAFE (execução via script no banco de dados).*
+---
+
+**DEMANDA ABERTA**
+
+RJSD-880 >> Tirar GD da funcionalidade do Exercício de 2025 em 31/12/2025.
+
+Prezados, boa tarde! 
+
+Conforme alinhado na reunião realizada em 09/12/2025, solicito, por gentileza, a abertura de demanda para retirada da funcionalidade GD no exercício de 2025, na data de 31/12/2025. 
+
+A ideia é que o script seja rodado após a última devolutiva do banco no dia 31/12/2025, que ocorre na parte da manhã.  
+
+A solicitação tem como objetivo que após a virada do ano, ocorra alguma GD, não seja lançado no exercício de encerramento. O intuito é deixar o registro formalizado para eventuais consultas futuras e procedimentos adotados no atendimento. 
+
+
+**Procedimento:**
+1. Tratar OBs pagas no exercício e devolvidas no exercício seguinte (e impedir que seja contabilizada uma GD no banco de encerramento)
+2. Executar **Script para retirar a contabilização de GDs** (no Banco de Encerramento)
+3. Utilizar a funcionalidade: **"Conciliação de OBs"**
+
+**Observações:**
+- Este procedimento evita inconsistências contábeis com GDs (Guias de Devolução) que atravessam a virada do exercício
+
 ---
 
 ## Fase 4: Pós-Virada
@@ -1146,19 +1200,7 @@ Apenas funcionalidades essenciais para o fechamento contábil:
 | **APÓS A VIRADA**<br>(02/01 até inscr. RP) | 🔒 **Bloqueio FINANCEIRO**<br>~12 funcionalidades bloqueadas<br>(Bloquetos, DOMBANS, Listas)<br>✅ Permite ajustes orçamentários | 🔶 **Bloqueio CADASTRAL**<br>Bloqueados: Cadastros de Apoio<br>✅ Execução financeira liberada | ~3 a 4 semanas |
 | **APÓS INSCRIÇÃO RP**<br>(final Jan/Fev) | 🔒 **BLOQUEIO MASSIVO**<br>~313 funcionalidades bloqueadas<br>Bloqueados: TODOS usuários<br>Liberadas: apenas relatórios | ✅ **TUDO LIBERADO**<br>Operação plena | Permanente |
 
----
 
-### 4.5 Impedir GDs no Banco de Abertura
-
-**Responsável:** TI / LOGUS / SUGESC
-
-**Procedimento:**
-1. Tratar OBs pagas no exercício e devolvidas no exercício seguinte
-2. Executar **Script para retirar a contabilização de GDs** (no Banco de Encerramento)
-3. Utilizar a funcionalidade: **"Conciliação de OBs"**
-
-**Observações:**
-- Este procedimento evita inconsistências contábeis com GDs (Guias de Devolução) que atravessam a virada do exercício
 
 ---
 
@@ -1346,14 +1388,8 @@ Referência operacional para a virada 2025→2026, com foco nas atividades que p
 - Criar o banco do exercício de 2026 e garantir a disponibilização de todas as estruturas necessárias no ambiente de banco de dados.
 - *Responsável indicado: Time SIAFE*
 
-### 2. Retorno de OBs
-**PASSO 2 – 26/12 – Ajustar o “Retorno de Ordem Bancária”**
-
-- Remover a opção **“gerar GD”** da funcionalidade **“Retorno de Ordem Bancária”** no exercício de encerramento, logo após a inicialização das tabelas desse exercício.
-- *Responsável indicado: Time SIAFE (execução via script no banco de dados).*
-
-### 3. Transferência Diária
-**PASSO 3 – 29/12 – Ligar a Transferência Diária**
+### 2. Transferência Diária
+**PASSO 2 – 29/12 – Ligar a Transferência Diária**
 
 - Ativar a Transferência Diária, garantindo que **os saldos das PDs não sejam migrados até o dia 31** (SUBCONT atualiza as contas afetadas).
 - Para que **os saldos das PDs não sejam migrados até o dia 31**, é preciso **desativar** a migração na funcionalidade do "DEPARA CONTÁBIL" ref. ao Controle de PDs do grupo 8991201XX.
@@ -1361,15 +1397,20 @@ Referência operacional para a virada 2025→2026, com foco nas atividades que p
 - OBS 2: A SUNOT deve verificar o preenchimento da aba “Encerramento” no Plano de Contas para evitar erros de migração de Saldos e erros na Transferência Diária.
 - *Responsável indicado: SUGESC/SUBCONT*
 
-### 4. Apontamento e views históricas
-**PASSO 4 – 29/12 – Views históricas e apontamento**
+### 3. Views históricas
+**PASSO 3 – 29/12 – Criação das Views históricas**
 
 1. Atualizar as **views históricas** (Cubo Saldos Contábeis Histórico - "hist") em 29/12/2025.
 2. Solicitar, ainda no dia **29/12**, a inclusão do **“novo ano”** nas opções de consulta do **Flexvision**.
-3. Realizar o **apontamento para o exercício o Ano de Abertura**, aguardando a solicitação formal da SUBCONT antes da execução.
 - *Responsável indicado: Time SIAFE*
 
 **Janela crítica de 31/12:** entre 7h e 8h da manhã a SUBCONT executa os processos de encerramento. Coordene qualquer intervenção junto ao time responsável antes desse período.
+
+### 4. Retorno de OBs
+**PASSO 4 – 31/12 – Ajustar o “Retorno de Ordem Bancária”**
+
+- Remover a opção **“gerar GD”** da funcionalidade **“Retorno de Ordem Bancária”** no exercício de encerramento, logo após a inicialização das tabelas desse exercício.
+- *Responsável indicado: Time SIAFE (execução via script no banco de dados).*
 
 ### 5. Scripts para programas de trabalho
 **PASSO 5 – 31/12 (manhã) – Scripts para programas de trabalho**
@@ -1390,6 +1431,11 @@ Referência operacional para a virada 2025→2026, com foco nas atividades que p
 - SUBCONT realiza o **cancelamento dos Restos a Pagar (RPs)** conforme orientações de encerramento.
 - *Responsável indicado: SUGESC/SUBCONT*
 
+### 8. Apontamento do Flexvision
+**PASSO 8 – 05/01 (OBS: qunado o Tesouro solicitar) – Apontamento do FLEX**
+
+1. Realizar o **apontamento para o exercício o Ano de Abertura**, aguardando a solicitação formal da SUBCONT(TESOURO) antes da execução.
+- *Responsável indicado: Time SIAFE*
 
 ---
 
