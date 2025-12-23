@@ -16,6 +16,7 @@ APP_MENU = {
         {"path": "pages/09_⚖️ Analise_Novas_Dimensões.py", "label": "Análise das Novas Dimensões", "icon": "⚖️"},
         {"path": "pages/11_🚨 MSC_Acertos_Fonte_Banco.py", "label": "Acerto de Fontes em Banco", "icon": "🚨"},
         {"path": "pages/13_✔️ MSC_Conferencia_com_Layout_STN.py", "label": "Conferência entre Matriz e Layout da STN", "icon": "✔️"},
+        {"path": "pages/15_🔍 Analisar_Tabela_de_Dimensoes_Ranking.py", "label": "Analisar a Tabela das Dimensões do Ranking", "icon": "🔍"},
     ],
     "Dashboards": [
         {"path": "pages/04_📊 Dashboard_RREO.py", "label": "Dashboard RREO", "icon": "📊"},
@@ -28,6 +29,7 @@ APP_MENU = {
         {"path": "pages/07_🧩 Encerramento_Disponibilidades.py", "label": "Encerramento de Disponibilidades Financeiras", "icon": "🧩"},
         {"path": "pages/12_🧾 Analise_Arquivos_SIG.py", "label": "Análise dos Arquivos SIG", "icon": "🧾"},
         {"path": "pages/14_✅ Plano_de_Contas_Processo_de Encerramento.py", "label": "Análise do Plano de Contas", "icon": "✅"},
+        {"path": "pages/16_❌ Conferencia_PTs.py", "label": "Conferência dos PTs e Saldos de RPP", "icon": "❌"},
     ],
     "Manuais": [
         {"path": "pages/08_🏦 Manuais_SUGESC.py", "label": "Manuais SUGESC (SUBCONT)", "icon": "🏦"},
