@@ -833,7 +833,7 @@ Essas situações ocorrem, por exemplo, quando uma **PD do exercício anterior �
 
 **Procedimento:**
 
-1. Ativar o **Bloqueio de Funcionalidade UG** com expressão de exceção específica (Bloqueio 11).
+1. Ativar o **  ** com expressão de exceção específica (Bloqueio 11).
 2. Impedir que PDs de exercícios anteriores sejam anuladas no banco de abertura.
 3. Na aba "Exceções do Bloqueio - Expressão" colocar a seguinte Regra: **"extrai ([NÚMERO DA PD].[CÓDIGO],7,4) = ANO_EXERCICIO"** (desta forma somente o ano corrente, e no caso é o ano de abertura, estará nas exceçõe se poderá ser anuladas. Já as PDs de anos anteriores não poderão ser anuladas - OK)
 OBS: UGs novas criadas ao longo do exercício precisam ser atualizadas na Regra
@@ -973,6 +973,24 @@ A solicitação tem como objetivo que após a virada do ano, ocorra alguma GD, n
 **Observações:**
 - Este procedimento evita inconsistências contábeis com GDs (Guias de Devolução) que atravessam a virada do exercício
 
+
+### 3.6 Importação da Receita e Geração das OBs de Dedução (de Repasse)
+
+Nos dias que antecedem o encerramento do exercício financeiro, ocorrem arrecadações de impostos cujos Repasses Constitucionais possuem data programada para o exercício seguinte. Isso gera uma divergência temporal, visto que o último expediente bancário ocorre em um ano (ex: 2025), mas o repasse efetivo ocorrerá no próximo (ex: 2026).
+
+Exemplo: Para arrecadações ocorridas em 29/12/2025, a data de repasse está agendada para 02/01/2026. Se o sistema registrasse a Importação da Receita de 29/12/2025, haveria uma incoerência cronológica ao gerar as OBs de Dedução de 2026 no Banco de 2025.
+
+Regra do Sistema: Para solucionar essa inconsistência, o sistema adota como padrão o registro das Arrecadações pela Data do Repasse. No exemplo citado, tanto a Importação da Receita quanto as OBs de Dedução serão registradas no Banco de Abertura do exercício seguinte (2026).
+
+Observações:
+
+1.	Processamento: As arrecadações dos dias finais (ex: 29 e 30 de dezembro) ficam acumuladas no sistema e só serão registradas mediante a ativação do agendamento genérico de Importação da Receita, iniciando-se em 02 de janeiro.
+
+2.	Incidente (29/12/2025): Houve uma falha na Importação da Receita nesta data. Como a inicialização do Banco de Dados de 2026 ocorreu apenas no final do dia, o agendamento matinal resultou em erro (crítica) devido à ausência das tabelas de Municípios e de UG no novo banco.
+
+
+
+
 ---
 
 ## Fase 4: Pós-Virada
@@ -1092,13 +1110,25 @@ Durante este período, os seguintes usuários **NÃO são bloqueados** no Banco 
 
 **Duração:** Até a conclusão da inscrição de Restos a Pagar (geralmente meados de janeiro).
 
+
 **Usuários NÃO Bloqueados no Banco de Abertura (após a virada):**
-- `admin` 
-- `SISGRE` 
-- `ARR` 
-- `quartz` 
-- `CONTROLE - CGE`
-- `SIGA` (DEVE SER BLOQUEADO no Banco de Abertura enquanto não há orçamento carregado)
+- `ACERTOS SUNOT`
+- `admin`
+- `Admin Tesouro`
+- `admin2`
+- `ARR`
+- `ARR_WS`
+- `CECIERJ`
+- `CONTROLE – CGE`
+- `converj`
+- `fluxo.caixa`
+- `quartz`
+- `seeduc`
+- `SIAFE_WS`
+- `siga` (OBS: ver se deve BLOQUEAR no Banco de Abertura enquanto não há orçamento carregado)
+- `sigaseplag`
+- `SIPLAG`
+- `SISGRE`
 
 ---
 
@@ -1476,7 +1506,7 @@ Parte do Manual com o objetivo de centralizar os Bloqueios de Funcionalidades qu
 - [ ] Alterar Pessoa Física
 - [ ] Alterar Pessoa Jurídica
 - [ ] Alterar Regra de Compatibilidade
-- [ ] Cadastrar Agendamento de Execucão de Consultas
+- [ ] Cadastrar Agendamento de Execução de Consultas
 - [ ] Cadastrar Conta Contábil
 - [ ] Cadastrar Evento
 - [ ] Cadastrar Item Patrimonial
@@ -1510,7 +1540,7 @@ Parte do Manual com o objetivo de centralizar os Bloqueios de Funcionalidades qu
 - [ ] siga
 - [ ] SIPLAG
 - [ ] seeduc
-
+- [ ] FAPERJ
 
 ### 11.2. Bloqueios Funcionalidades Usuários - APÓS A VIRADA
 
@@ -1756,3 +1786,17 @@ Parte do Manual com o objetivo de centralizar os Bloqueios de Funcionalidades qu
 
 **Banco de Abertura**
 - [ ] Não Bloqueia Nada
+
+---
+
+**ATENÇÃO**
+OBS: Após a término em definitivo do Banco, deixar apenas as funcionalidades de "consultas" LIBERADAS.
+
+VERBOS para deixar LIBERADOS!! (Colocar no filtro “Código >> contém”)
+Emitir
+Consultar
+Conciliar
+Filtrar
+Visualizar
+
+E marcar a Flag de Bloquear Todos os usuários (importante para não deixar que novos usuários do sistema entrem desbloqueados na funcionalidade)
