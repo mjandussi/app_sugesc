@@ -10,20 +10,17 @@ setup_page(page_title="Conferência de Saldos e PCASP", layout="wide", hide_defa
 sidebar_menu(get_app_menu(), use_expanders=True, expanded=False)
 
 st.title("⚖️ Conferência de Saldos - Virada do Exercício")
-st.markdown("Reconciliação entre exercícios e validação de migração conforme as regras do **Plano de Contas**.")
 
 # --- SELEÇÃO DE ORIGEM ---
 st.subheader("⚙️ Configuração da Origem")
 opcao_origem = st.radio(
     "Selecione a origem dos arquivos de Balancete:",
     ("SIAFERIO (Imprimir Balancetes)", "FLEXVISION (Consultas 079124 e 079125)"),
-    horizontal=True,
-    help="Define como o sistema deve tratar o cabeçalho e rodapé dos arquivos Excel."
+    horizontal=True
 )
 
 st.info("📂 **Área de Importação de Arquivos**")
 
-# Layout de 3 colunas para os uploads
 col1, col2, col3 = st.columns(3)
 with col1:
     st.markdown("### 1. Exercício Anterior")
@@ -42,120 +39,102 @@ st.divider()
 # ============================================================================
 @st.cache_data(show_spinner=False)
 def processar_virada_exercicio(arq_ant, arq_prox, arq_pc, origem):
-    # --- 1. Leitura e Limpeza baseada na Origem ---
-    if origem == "SIAFERIO (Imprimir)":
-        # Pula cabeçalho SIAFERIO (8) e corta rodapé (3 linhas)
-        df_ant = pd.read_excel(arq_ant, header=8).iloc[1:-3]
-        df_prox = pd.read_excel(arq_prox, header=8).iloc[1:-3]
+    # --- 1. Leitura e Limpeza Dinâmica baseada na Origem ---
+    if "SIAFERIO" in origem:
+        h_val = 8 # Header específico para SIAFERIO
+        f_cut = -3 # Corte de rodapé para SIAFERIO
     else:
-        # Lógica Flexvision: cabeçalho menor (3) e rodapé maior (7)
-        df_ant = pd.read_excel(arq_ant, header=3).iloc[:-7]
-        df_ant = df_ant[~df_ant['Conta Contábil'].astype(str).str.contains(r'^[-\s]+$', regex=True)]
-        
-        df_prox = pd.read_excel(arq_prox, header=3).iloc[:-7]
-        df_prox = df_prox[~df_prox['Conta Contábil'].astype(str).str.contains(r'^[-\s]+$', regex=True)]
+        h_val = 3 # Header para FLEXVISION
+        f_cut = -7 # Corte de rodapé para FLEXVISION
 
-    # --- 2. Preparação do Plano de Contas ---
-    # Filtra apenas contas analíticas
+    df_ant = pd.read_excel(arq_ant, header=h_val).iloc[1:f_cut]
+    df_prox = pd.read_excel(arq_prox, header=h_val).iloc[1:f_cut]
+    
+    # Limpeza de espaços nos nomes das colunas para evitar erros de busca
+    df_ant.columns = df_ant.columns.str.strip()
+    df_prox.columns = df_prox.columns.str.strip()
+
+    # Filtro específico para FLEXVISION para remover linhas inválidas
+    if "FLEXVISION" in origem:
+        df_ant = df_ant[~df_ant['Conta Contábil'].astype(str).str.contains(r'^[-\s]+$')]
+        df_prox = df_prox[~df_prox['Conta Contábil'].astype(str).str.contains(r'^[-\s]+$')]
+
+    # Leitura do Plano de Contas
     pc_data = pd.read_excel(arq_pc, header=3).iloc[1:-3]
+    pc_data.columns = pc_data.columns.str.strip()
     pc_data = pc_data.query('`A/S` == "A"')
 
-    # --- 3. União e Cálculo da Diferença linha a linha ---
-    # Merge com sufixos genéricos para independência de ano
+    # --- 2. União e Cálculo da Diferença ---
     df_comp = pd.merge(
         df_ant[['Conta Contábil', 'Saldo Atual']], 
         df_prox[['Conta Contábil', 'Saldo Atual']], 
-        on='Conta Contábil', 
-        how='left', 
-        suffixes=('_Anterior', '_Seguinte')
+        on='Conta Contábil', how='left', suffixes=('_Anterior', '_Seguinte')
     ).fillna(0)
 
-    # Coluna de Diferença de fato (Variação)
     df_comp['Diferença'] = df_comp['Saldo Atual_Seguinte'] - df_comp['Saldo Atual_Anterior']
     df_comp['Conta_Base'] = df_comp['Conta Contábil'].astype(str).str.strip().str[:9]
     
-    # Identificar regra de transferência
+    # Aplicação da regra de transferência do Plano de Contas
     contas_transf_sim = set(pc_data.query("`Transf.` == 'Sim'")['Conta'].astype(str).str.strip())
     df_comp['Regra_Transf'] = df_comp['Conta_Base'].apply(lambda x: 'Sim' if x in contas_transf_sim else 'Não')
 
-    # --- 4. Resumo Consolidado por Classe ---
+    # --- 3. Resumo Consolidado por Classe (1 a 8) ---
     resumo_saldos = []
     analise_transf = df_comp.query("Regra_Transf == 'Sim'").copy()
-    
-    for g in ['1', '2', '3', '4', '5', '6', '7', '8']:
+    for g in ['1','2','3','4','5','6','7','8']:
         f_grupo = analise_transf[analise_transf['Conta_Base'].str.startswith(g)]
         s_ant = f_grupo['Saldo Atual_Anterior'].sum()
         s_prox = f_grupo['Saldo Atual_Seguinte'].sum()
         resumo_saldos.append({
-            'Classe': g,
-            'Saldo Exerc. Anterior (Sim)': s_ant,
-            'Saldo Exerc. Seguinte': s_prox,
+            'Classe': g, 
+            'Saldo Anterior (Sim)': s_ant, 
+            'Saldo Seguinte': s_prox, 
             'Diferença Variação': s_prox - s_ant
         })
 
-    # --- 5. Análise de Mudanças na Estrutura de Contas ---
-    detalhes = []
-    for g in ['1', '2', '3', '4', '5', '6', '7', '8']:
+    # --- 4. Análise de Alterações de Estrutura ---
+    div = []
+    for g in ['1','2','3','4','5','6','7','8']:
         c_ant = set(df_ant['Conta Contábil'].astype(str).str.strip())
         c_prox = set(df_prox['Conta Contábil'].astype(str).str.strip())
-        
-        # Filtra apenas as contas do grupo atual para o detalhamento
-        novas = [c for c in (c_prox - c_ant) if c.startswith(g)]
-        saíram = [c for c in (c_ant - c_prox) if c.startswith(g)]
-        
-        for c in novas: detalhes.append({'Classe': g, 'Conta': c, 'Status': 'Nova no Exerc. Seguinte'})
-        for c in saíram: detalhes.append({'Classe': g, 'Conta': c, 'Status': 'Encerrada no Exerc. Anterior'})
+        for c in (c_prox - c_ant): div.append({'Classe': g, 'Conta': c, 'Status': 'Nova'})
+        for c in (c_ant - c_prox): div.append({'Classe': g, 'Conta': c, 'Status': 'Encerrada'})
 
-    return pd.DataFrame(resumo_saldos), df_comp, pd.DataFrame(detalhes)
+    return pd.DataFrame(resumo_saldos), df_comp, pd.DataFrame(div)
 
 # ============================================================================
-# EXECUÇÃO PRINCIPAL
+# EXECUÇÃO E EXPORTAÇÃO
 # ============================================================================
 if file_ant and file_prox and file_pc:
     try:
-        with st.spinner(f"Analisando virada via {opcao_origem}..."):
-            df_resumo, df_base, df_div = processar_virada_exercicio(file_ant, file_prox, file_pc, opcao_origem)
+        with st.spinner("Analisando virada..."):
+            df_res, df_base, df_div = processar_virada_exercicio(file_ant, file_prox, file_pc, opcao_origem)
         
-        # --- EXIBIÇÃO ---
-        st.subheader("📋 Resumo por Classe Contábil")
-        st.dataframe(df_resumo.style.format({
-            'Saldo Exerc. Anterior (Sim)': 'R$ {:,.2f}',
-            'Saldo Exerc. Seguinte': 'R$ {:,.2f}',
-            'Diferença Variação': 'R$ {:,.2f}'
-        }), use_container_width=True)
+        st.subheader("📋 Resumo por Classe (Contas que Transferem Saldo)")
+        st.dataframe(df_res.style.format(precision=2, thousands=".", decimal=","), use_container_width=True)
 
-        tab1, tab2 = st.tabs(["🔍 Detalhes por Conta", "⚠️ Alterações de Estrutura"])
-        with tab1:
+        t1, t2 = st.tabs(["🔍 Detalhes por Conta", "⚠️ Alterações de Estrutura"])
+        with t1: 
             st.write("Base completa confrontada com coluna de Diferença:")
-            st.dataframe(df_base.style.format({
-                'Saldo Atual_Anterior': '{:,.2f}',
-                'Saldo Atual_Seguinte': '{:,.2f}',
-                'Diferença': '{:,.2f}'
-            }), use_container_width=True)
-            
-        with tab2:
-            st.write("Divergências na existência das contas entre os exercícios:")
+            st.dataframe(df_base, use_container_width=True)
+        with t2: 
             st.dataframe(df_div, use_container_width=True)
 
-        # --- EXPORTAÇÃO COMPLETA (3 ABAS) ---
-        st.divider()
+        # Exportação para Excel com 3 abas
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df_resumo.to_excel(writer, index=False, sheet_name='Resumo_Classes')
-            df_base.to_excel(writer, index=False, sheet_name='Base_Comparativa')
+            df_res.to_excel(writer, index=False, sheet_name='Resumo_Classes')
+            df_base.to_excel(writer, index=False, sheet_name='Detalhes_Conta_Diferenca')
             df_div.to_excel(writer, index=False, sheet_name='Alteracoes_Estrutura')
         
-        output.seek(0)
-        
         st.download_button(
-            label="📥 Baixar Relatório de Auditoria Completo (Excel)", 
-            data=output, 
-            file_name="Auditoria_Virada_Completa.xlsx", 
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            label="📥 Baixar Relatório Completo", 
+            data=output.getvalue(), 
+            file_name="Relatorio_Virada_Completo.xlsx", 
             type="primary"
         )
 
     except Exception as e:
-        st.error(f"❌ Erro ao processar os arquivos. Certifique-se de que a origem selecionada corresponde ao arquivo.\nDetalhe: {e}")
+        st.error(f"❌ Erro ao processar: {e}")
 else:
-    st.info("Aguardando upload dos três arquivos para processar a análise.")
+    st.info("Aguardando upload dos arquivos para processar a análise.")
