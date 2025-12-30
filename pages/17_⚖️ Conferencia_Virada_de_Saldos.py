@@ -16,7 +16,7 @@ st.markdown("Reconciliação entre exercícios e validação de migração confo
 st.subheader("⚙️ Configuração da Origem")
 opcao_origem = st.radio(
     "Selecione a origem dos arquivos de Balancete:",
-    ("SIAFERIO (Imprimir)", "FLEXVISION (Consulta/Agendamento)"),
+    ("SIAFERIO (Imprimir Balancetes)", "FLEXVISION (Consultas 079124 e 079125)"),
     horizontal=True,
     help="Define como o sistema deve tratar o cabeçalho e rodapé dos arquivos Excel."
 )
