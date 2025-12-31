@@ -1472,9 +1472,9 @@ Referência operacional para a virada 2025→2026, com foco nas atividades que p
 
 ## Cronograma Pré-Virada (Ações e Acompanhamento - Marcelo)
 
-### Dia 26 - Criação do Banco
+### Dia 29 – Criação e Inicialização do Banco
 
-### Dia 29 – Inicialização do Banco (ao final do dia)
+OBS: fazer ambas etapas juntas ano que vem (no mesmo dia e ao final do dia)
 
 **No Banco de Encerramento**
 
