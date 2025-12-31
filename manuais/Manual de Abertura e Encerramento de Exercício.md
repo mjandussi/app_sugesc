@@ -1470,6 +1470,65 @@ Referência operacional para a virada 2025→2026, com foco nas atividades que p
 ---
 
 
+## Cronograma Pré-Virada
+
+### Dia 26 - Criação do Banco
+
+### Dia 29 – Inicialização do Banco (ao final do dia)
+
+**No Banco de Encerramento**
+
+- Alterar no Plano de Contas a opção para ”Não Transferir Saldo” para as contas:
+899120101
+899120102
+899120103
+899120104
+622130301
+OBS: colocar para passar apenas na Transferencia do dia 31 (não carregar lixo dos cancelamentos de RP)
+
+- Ativar agendamento genérico de Migração de Tabelas
+
+**No Banco de Abertura**
+
+- Bloquear todas as contabilizacões em Bloqueio Geral No 10 em “Bloqueio Funcionalidade UG (verificar de colocar todas as UGs para o lado caso não estejam selecionadas algumas novas criadas ao longo do ano)
+
+- Impedir Anulação de PDs de Anos Anteriores (Bloqueio de Funcionalidade UG No.11)
+
+- Bloquear as funcionalidades (deixando apenas alguns usuários liberados...principalmente não bloquear o usuário quartz responsável pelo disparo dos agendamentos)
+
+- Ativar a regra 361 das exceções do RPP (atualizado o ano da regra para não impedir OBs do ano de abertura e limpando as regras de liberações por UG e PD)
+
+- Ativar agendamento de Transferência Diária
+
+- Configurar o DePara Contábil
+
+- Ativar regra 360 que "Avisa" sobre PDs de regularização (colocamos com Impedir neste início...e podemos colocar ao longo do fechamento para o status de “Avisar”)
+
+### Dia 30 – Conferência da Transferência Diária
+
+- Verificar se tiveram erros
+
+- Verificar a migração de Saldos
+
+- Verificar a migração dos dados (Documentos, Listas, CODBARRAS)
+
+### Dia 31 – Mudança das Contas para passar Saldos
+
+**No Banco de Encerramento**
+
+- Alterar no Plano de Contas a opção para ”Transferir Saldo” para as contas:
+899120101
+899120102
+899120103
+899120104
+622130301
+
+- Ativar a Regra de Compatibilidade 399 ao final do dia como forma de backup as sistemática de só permitir PDs/OBs de Regularização no Banco de Encerramento
+
+
+---
+
+
 ## Bloqueios Funcionalidades Usuários
 
 ### Visão Geral
