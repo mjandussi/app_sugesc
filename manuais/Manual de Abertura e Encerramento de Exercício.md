@@ -1470,7 +1470,7 @@ Referência operacional para a virada 2025→2026, com foco nas atividades que p
 ---
 
 
-## Cronograma Pré-Virada
+## Cronograma Pré-Virada (Ações e Acompanhamento - Marcelo)
 
 ### Dia 26 - Criação do Banco
 
