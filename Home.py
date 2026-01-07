@@ -56,9 +56,9 @@ st.markdown(
     <ul>
       <li><strong>🧩 Encerramento de Disponibilidades</strong>: Regras e verificações para processar o encerramento das disponibilidades financeiras por fonte.</li>
       <li><strong>🧾 Análise dos Arquivos SIG</strong>: Página para realizar as análises dos arquivos SIG em relação aos dados do SIAFERIO/Flexvision.</li>
-      <li><strong>✅ Conferência do Plano de Contas</strong>: Página para realizar a conferência Do Plano de Contas em Relação ao Processo de Encerramento.</li>
-      <li><strong>❌ Conferência dos Programas de Trabalho e os Saldos de RPP</strong>: Página para realizar a Conferência dos Programas de Trabalho e os Saldos de RPP.</li>
-      <li><strong>⚖️ Conferência Migração de Saldos</strong>: Página para realizar a Conferência dos Saldos entre Exercícios pela Transferência Diária.</li>
+      <li><strong>✅ Conferência do Plano de Contas</strong>: Página voltada para o processo de encerramento, analisa a integridade das contas contábeis e identifica possíveis falhas na configuração do Plano de Contas e suas regras de transferência (casos em que a conta deveria transferir saldo e não está configurada, e vice-versa).</li>
+      <li><strong>❌ Conferência dos Programas de Trabalho e os Saldos de RPP</strong>: Página que permite identificar quais Programas de Trabalho possuem saldos nas contas de Restos a Pagar, mas não estão cadastrados nas tabelas de apoio do SIAFERIO.</li>
+      <li><strong>⚖️ Conferência Migração de Saldos</strong>: Página destinada à verificação da Transferência Diária, esta ferramenta valida se o balancete de encerramento está em conformidade com o de abertura, respeitando as regras de transferência de cada conta no Plano de Contas.</li>
     </ul>
     <h4 style="margin-top:1.1rem;">🏦 Manuais</h4>
     <ul>
