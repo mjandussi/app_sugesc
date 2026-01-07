@@ -861,7 +861,7 @@ Esta seção detalha os procedimentos necessários para garantir a cópia das Li
 
 ---
 
-#### 3.4.1 Copiar Listas para Reutilização no Exercício Seguinte
+#### 3.4.1 Listas para Reutilização no Exercício Seguinte
 
 **Responsável:** Unidades Gestoras (Usuários do SIAFERIO)
 
@@ -905,7 +905,7 @@ CISSC/SUGESC
 
 ---
 
-#### 3.4.2 Evitar Erros de Lista e Códigos de Barras na Transferência Diária (30/12)
+#### 3.4.2 Erros de Lista e Códigos de Barras na Transferência Diária (30/12)
 
 **Responsável:** Unidades Gestoras (Usuários do SIAFERIO)
 
@@ -936,7 +936,7 @@ CISSC/SUGESC
 
 ---
 
-### 3.5 Impedir o Retorno de OBs no Banco de Encerramento
+### 3.5 Retorno de OBs no Banco de Encerramento
 
 Esta seção descreve os procedimentos necessários para impedir o retorno de Ordens Bancárias (OBs) no Banco de Encerramento após o término do último dia de expediente bancário (OBs pagas no exercício e devolvidas no exercício seguinte.)
 
@@ -991,6 +991,9 @@ Observações:
 
 
 
+
+
+
 ---
 
 ## Fase 4: Pós-Virada
@@ -1041,7 +1044,7 @@ Este período crítico se estende **até a conclusão da inscrição definitiva 
 
 ---
 
-### 4.2 Realizar o Bloqueio de Funcionalidades (Pós-Virada)
+### 4.2 Bloqueio de Funcionalidades (Pós-Virada)
 
 **Responsável:** SUGESC
 
@@ -1130,18 +1133,40 @@ Durante este período, os seguintes usuários **NÃO são bloqueados** no Banco 
 - `SIPLAG`
 - `SISGRE`
 
+
+### 4.3 Parametrização da Receita
+
+**Parâmetro de Sistema 609**
+
+Define a data de a partir de quando as receitas de anos anteriores serão inseridas no exercício atual ao invés do exercício anterior. Essa data significa de quando o ano anterior já foi fechado para inserção de lançamentos.
+
+Ação: Na virada do exercício colocar a data para ser após o encerramento da inscrição do RPP!!
+
+
+### 4.4 Agendamentos Genéricos
+
+**Responsável:** SATI
+
+Verificar a Ativação dos Agendamentos Genéricos com a SATI no Banco de Abertura.
+
+
+
+
 ---
 
-### 4.3 Bloqueios Após a Inscrição de RP (Fechamento Final)
+
+
+## Fase 5: Pós-Inscrição de RP
+
+Bloqueios Após a Inscrição de RP (Fechamento Final)
 
 **Responsável:** SUGESC
 
 **Contexto:**
 Após a conclusão da inscrição definitiva de Restos a Pagar (geralmente final de janeiro/início de fevereiro), o Banco de Encerramento entra em sua fase final de fechamento, onde **não são mais permitidos ajustes de natureza orçamentária**.
 
----
 
-#### 4.3.1 Bloqueio MASSIVO no Banco de Encerramento
+### 5.1 Bloqueio MASSIVO no Banco de Encerramento
 
 **Objetivo:** Fechar praticamente todo o sistema no Banco de Encerramento para:
 - Apuração do resultado do exercício
@@ -1201,9 +1226,9 @@ Apenas funcionalidades essenciais para o fechamento contábil:
 
 **Total Bloqueado:** Aproximadamente **313 funcionalidades** de um total de 607.
 
----
 
-#### 4.3.2 Liberação TOTAL no Banco de Abertura
+
+### 5.2 Liberação TOTAL no Banco de Abertura
 
 **Objetivo:** O Banco de Abertura passa a operar em **plena capacidade**, sem restrições.
 
@@ -1222,13 +1247,7 @@ Apenas funcionalidades essenciais para o fechamento contábil:
 
 ---
 
-### 4.4 Quadro Resumo de Bloqueios por Fase
 
-| Fase | Banco de Encerramento | Banco de Abertura | Duração |
-|------|----------------------|-------------------|---------|
-| **ANTES DA VIRADA**<br>(até 31/12) | ✅ **TUDO LIBERADO**<br>Operação normal | 🔒 **QUASE TUDO BLOQUEADO**<br>~366 funcionalidades bloqueadas<br>Liberadas: configurações e visualizações | Até 31/12 23:59 |
-| **APÓS A VIRADA**<br>(02/01 até inscr. RP) | 🔒 **Bloqueio FINANCEIRO**<br>~12 funcionalidades bloqueadas<br>(Bloquetos, DOMBANS, Listas)<br>✅ Permite ajustes orçamentários | 🔶 **Bloqueio CADASTRAL**<br>Bloqueados: Cadastros de Apoio<br>✅ Execução financeira liberada | ~3 a 4 semanas |
-| **APÓS INSCRIÇÃO RP**<br>(final Jan/Fev) | 🔒 **BLOQUEIO MASSIVO**<br>~313 funcionalidades bloqueadas<br>Bloqueados: TODOS usuários<br>Liberadas: apenas relatórios | ✅ **TUDO LIBERADO**<br>Operação plena | Permanente |
 
 
 
@@ -1313,6 +1332,9 @@ Processo automatizado que migra saldos, documentos e informações do banco de e
 Atributo da conta contábil que determina como seus saldos devem ser tratados no processo de encerramento do exercício.
 
 ---
+
+
+
 
 ## Anexos
 
@@ -1401,6 +1423,16 @@ Atributo da conta contábil que determina como seus saldos devem ser tratados no
 - [ ] Rodar o script para inativar os programas de trabalho após os processos.
 - [ ] Ativar a migração de PDs no Depara Contábil e carregar os documentos necessários.
 - [ ] SUBCONT confirmar o cancelamento dos Restos a Pagar conforme comunicado.
+
+
+
+### Anexo E - Quadro Resumo de Bloqueios por Fase
+
+| Fase | Banco de Encerramento | Banco de Abertura | Duração |
+|------|----------------------|-------------------|---------|
+| **ANTES DA VIRADA**<br>(até 31/12) | ✅ **TUDO LIBERADO**<br>Operação normal | 🔒 **QUASE TUDO BLOQUEADO**<br>~366 funcionalidades bloqueadas<br>Liberadas: configurações e visualizações | Até 31/12 23:59 |
+| **APÓS A VIRADA**<br>(02/01 até inscr. RP) | 🔒 **Bloqueio FINANCEIRO**<br>~12 funcionalidades bloqueadas<br>(Bloquetos, DOMBANS, Listas)<br>✅ Permite ajustes orçamentários | 🔶 **Bloqueio CADASTRAL**<br>Bloqueados: Cadastros de Apoio<br>✅ Execução financeira liberada | ~3 a 4 semanas |
+| **APÓS INSCRIÇÃO RP**<br>(final Jan/Fev) | 🔒 **BLOQUEIO MASSIVO**<br>~313 funcionalidades bloqueadas<br>Bloqueados: TODOS usuários<br>Liberadas: apenas relatórios | ✅ **TUDO LIBERADO**<br>Operação plena | Permanente |
 
 
 
