@@ -6,14 +6,13 @@ from core.layout import setup_page, sidebar_menu, get_app_menu
 # ============================================================================
 # CONFIGURAÇÃO DA PÁGINA
 # ============================================================================
-setup_page(page_title="Conferência de Saldos e PCASP", layout="wide", hide_default_nav=True)
+setup_page(page_title="Conferência Carga da Receita", layout="wide", hide_default_nav=True)
 sidebar_menu(get_app_menu(), use_expanders=True, expanded=False)
 
 st.title("✔️ Conferência da Carga da Receita da LOA no Siaferio")
 
-# Configuração da página
-st.set_page_config(page_title="Auditoria de Receita", layout="wide")
 
+### Funções ###
 def processar_extracao(file, nome_origem):
     """Processa os arquivos Excel de extração"""
     df = pd.read_excel(file, dtype=str)
