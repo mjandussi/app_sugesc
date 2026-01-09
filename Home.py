@@ -45,10 +45,11 @@ st.markdown(
     <ul>
       <li><strong>📈 Dashboard RREO</strong>: Visualização dos demonstrativos fiscais do SICONFI com filtros interativos.</li>
     </ul>
-    <h4 style="margin-top:1.1rem;">🧮 Análises LME</h4>
+    <h4 style="margin-top:1.1rem;">🧮 Análises Carga da LOA</h4>
     <ul>
       <li><strong>📊 Conferência de Saldos de LME</strong>: Análises dos saldos e integridade do Controle de LME.</li>
       <li><strong>🧮 Análise dos TXT de LME</strong>: Tratamento dos arquivos TXT de LME para detectar diferenças após mudanças na Regra de LME.</li>
+      <li><strong>✔️ Conferência da Carga da Receita da LOA no Siaferio</strong>: Análises para a conferência da Carga da Receita da LOA no Siaferio, comparando os dados entre o arquivo de importação e os saldos contabilizados no sistema.</li>
     </ul>
   </div>
   <div class="home-section">

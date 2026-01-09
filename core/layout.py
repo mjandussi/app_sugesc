@@ -21,9 +21,10 @@ APP_MENU = {
     "Dashboards": [
         {"path": "pages/04_📊 Dashboard_RREO.py", "label": "Dashboard RREO", "icon": "📊"},
     ],
-    "Análises LME": [
+    "Análises Carga da LOA": [
         {"path": "pages/05_📊 LME_Conferencias_Saldos.py", "label": "Conferência de Saldos de LME", "icon": "📊"},
-        {"path": "pages/06_🧮 LME_Analise_TXT.py", "label": "Análise dos TXT de LME", "icon": "🧮"},
+        {"path": "pages/06_🧮 LME_Analise_TXT.py", "label": "Análise dos TXT de LME", "icon": "🧮"}, 
+        {"path": "pages/18_✔️ Conferencia_Carga_Receita.py", "label": "Conferência da Carga da Receita da LOA no Siaferio", "icon": "✔️"},
     ],
     "Outras Análises": [
         {"path": "pages/07_🧩 Encerramento_Disponibilidades.py", "label": "Encerramento de Disponibilidades Financeiras", "icon": "🧩"},
