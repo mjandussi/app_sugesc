@@ -1175,7 +1175,7 @@ Bloqueios Após a Inscrição de RP (Fechamento Final)
 **Responsável:** SUGESC
 
 **Contexto:**
-Após a conclusão da inscrição definitiva de Restos a Pagar (geralmente final de janeiro/início de fevereiro), o Banco de Encerramento entra em sua fase final de fechamento, onde **não são mais permitidos ajustes de natureza orçamentária**.
+Após a conclusão da inscrição definitiva de Restos a Pagar (geralmente meados e final de janeiro), o Banco de Encerramento entra em sua fase final de fechamento, onde **não são mais permitidos ajustes de natureza orçamentária e financeira**.
 
 
 ### 5.1 Bloqueio MASSIVO no Banco de Encerramento
@@ -1186,57 +1186,9 @@ Após a conclusão da inscrição definitiva de Restos a Pagar (geralmente final
 - Preparação para auditoria e prestação de contas
 
 **Procedimento:**
-1. Executar **Bloqueio Funcionalidade Usuário** no Banco de Encerramento
-2. **BLOQUEAR aproximadamente 313 funcionalidades**
-3. Aplicar bloqueio para **TODOS os usuários** (sem exceções)
+1. Executar **Bloqueio Funcionalidade UG** ativando o Bloqueio No 8 para deixar apenas a Contabilização por NOTA DE SISTEMA
+2. Executar **Bloqueio Funcionalidade Usuário** no Banco de  >> **BLOQUEAR aproximadamente 313 funcionalidades (vide anexo ao final com a relação)** e Aplicar bloqueio para **TODOS os usuários** (sem exceções)
 
-**📋 CATEGORIAS DE FUNCIONALIDADES BLOQUEADAS:**
-
-**🚫 Documentos Orçamentários:**
-- Anular Nota de Empenho
-- Anular Nota de Empenho em Lote
-- Anular Nota de Liquidação
-- Anular Nota Patrimonial
-- Cadastrar Ação (Despesa Orçamento)
-- Qualquer operação com documentos orçamentários
-
-**Justificativa Técnica:** O bloqueio funcionalidade UG **NÃO trava o botão anular** (trava apenas o botão contabilizar). Por isso, é necessário bloquear explicitamente estas funcionalidades através do Bloqueio Funcionalidade Usuário.
-
-**🚫 Cadastros de Pessoas:**
-- Alterar Pessoa Física
-- Alterar Pessoa Jurídica
-- Ativar/Desativar Pessoa Física
-- Ativar/Desativar Pessoa Jurídica
-- Bloquear/Desbloquear Pessoa Física
-- Bloquear/Desbloquear Pessoa Jurídica
-
-**🚫 Contratos e Convênios:**
-- Todas as funcionalidades relacionadas a contratos
-- Todas as funcionalidades relacionadas a convênios
-
-**🚫 Importações e Cargas:**
-- Cadastrar/Importar quaisquer dados
-- Agendamentos de processos
-
-**🔍 Método de Busca para Bloqueio:**
-Utilizar as seguintes **palavras-chave** para identificar funcionalidades a serem bloqueadas:
-- `pessoa`
-- `contrato`
-- `convênios`
-- `comunica`
-- `despesa exercí`
-- `cadastrar`
-- `importar`
-
-**✅ Funcionalidades que PERMANECEM LIBERADAS:**
-Apenas funcionalidades essenciais para o fechamento contábil:
-- Alterar Regra de Compatibilidade
-- Alterar Relatórios da LRF
-- Alterar Relatórios do Balanço
-- Alterar Relatórios Gerenciais
-- Funcionalidades de consulta e visualização
-
-**Total Bloqueado:** Aproximadamente **313 funcionalidades** de um total de 607.
 
 
 
@@ -1246,104 +1198,21 @@ Apenas funcionalidades essenciais para o fechamento contábil:
 
 **Procedimento:**
 1. **REMOVER todos os bloqueios** de funcionalidades do Banco de Abertura
-2. **LIBERAR todos os usuários** no Banco de Abertura
-3. Permitir:
-   - Cadastros de Apoio (Credores, Convênios, Contratos)
-   - Comunicas (todos os tipos)
-   - Inscrições Genéricas
-   - Todas as funcionalidades de execução orçamentária e financeira
 
 **Observações:**
-- A partir deste momento, **TODA a operação do Estado** ocorre exclusivamente no Banco de Abertura
-- O Banco de Encerramento fica congelado para apurações contábeis finais
+- Geralmente é solicitada no Banco de Abertura o Bloqueio da Funcionalidade de "Emitir Balanço" por conta de ajustes nos relatórios.
+
+2. **LIBERAR todos os usuários** no Banco de Abertura
+
+
+
+
+
+
+
 
 ---
 
-
-
-
-
----
-
-## Glossário
-
-### Siglas e Abreviações
-
-- **DEPARA**: Tabela de correspondência contábil entre contas
-- **DPGE**: Defensoria Pública Geral do Estado
-- **FR**: Fonte de Recursos
-- **GD**: Guia de Devolução
-- **LOA**: Lei Orçamentária Anual
-- **LME**: Limite de Movimentação e Empenho
-- **MP**: Ministério Público
-- **ND**: Nota de Dotação
-- **NE**: Nota de Empenho
-- **OB**: Ordem Bancária
-- **PD**: Programação de Desembolso
-- **PGE**: Procuradoria Geral do Estado
-- **RP**: Restos a Pagar
-- **RPNP**: Restos a Pagar Não Processados
-- **RPP**: Restos a Pagar Processados
-- **SEPLAG**: Secretaria de Estado de Planejamento e Gestão
-- **SIAFE-Rio**: Sistema Integrado de Administração Financeira do Estado do Rio de Janeiro
-- **SIPLAG**: Sistema de Planejamento
-- **SUBPLO**: Subsecretaria de Planejamento Orçamentário
-- **SUDEC**: Superintendência de Descentralização
-- **SUGESC**: Superintendência de Gestão do Sistema Contábil
-- **SUNOT**: Superintendência de Normas Técnicas
-- **UG**: Unidade Gestora
-
-### Termos Técnicos
-
-**Agendamento Genérico**
-Funcionalidade que permite agendar a execução automática de processos do sistema em horários específicos.
-
-**Banco de Abertura**
-Esquema de banco de dados correspondente ao exercício que está se iniciando, onde ocorrem as execuções financeiras do novo exercício.
-
-**Banco de Encerramento**
-Esquema de banco de dados correspondente ao exercício que está se encerrando, onde ocorrem os ajustes contábeis e a inscrição de Restos a Pagar.
-
-**Bloqueio de Funcionalidade UG**
-Restrição aplicada a uma ou mais Unidades Gestoras que impede a execução de determinadas funcionalidades do sistema.
-
-**Bloqueio de Funcionalidade Usuário**
-Restrição aplicada a usuários específicos ou grupos de usuários que impede a execução de determinadas funcionalidades do sistema.
-
-**Contingenciamento**
-Limitação de empenho e movimentação financeira estabelecida para garantir o cumprimento das metas fiscais.
-
-**Decreto de Encerramento**
-Ato normativo que estabelece os prazos e procedimentos para o encerramento do exercício financeiro.
-
-**FlexVision**
-Ferramenta de Business Intelligence utilizada para análise de dados contábeis e financeiros do SIAFE-Rio.
-
-**Migração de Tabelas**
-Processo de transferência das tabelas cadastrais básicas do banco de encerramento para o banco de abertura.
-
-**PD Lixo**
-Programações de Desembolso criadas no final do exercício que não deveriam ser migradas para o exercício seguinte.
-
-**Prescrição de RP**
-Perda da exigibilidade de Restos a Pagar após o prazo de 5 anos, conforme legislação vigente.
-
-**Regra de Compatibilidade**
-Validação parametrizável no sistema que pode AVISAR, IMPEDIR ou PERMITIR determinadas operações conforme regras de negócio.
-
-**Regularização (PD)**
-Tipo específico de Programação de Desembolso utilizada para ajustes e correções de lançamentos.
-
-**Saldo Virado**
-Situação indevida onde saldos ou documentos do exercício anterior contaminam o novo exercício.
-
-**Transferência Diária**
-Processo automatizado que migra saldos, documentos e informações do banco de encerramento para o banco de abertura.
-
-**Tipo de Encerramento**
-Atributo da conta contábil que determina como seus saldos devem ser tratados no processo de encerramento do exercício.
-
----
 
 
 
@@ -1722,10 +1591,7 @@ Parte do Manual com o objetivo de centralizar os Bloqueios de Funcionalidades qu
 - [ ] Cadastrar Evento
 - [ ] Cadastrar Item Patrimonial
 - [ ] Cadastrar Mensagens de Alerta
-- [ ] Cadastrar Nota de Aplicação e Resgate
-- [ ] Cadastrar Nota de Evento
 - [ ] Cadastrar Nota de Sistema
-- [ ] Cadastrar Nota Patrimonial
 - [ ] Cadastrar o Responsável pela Contabilidade
 - [ ] Cadastrar o Responsável pelos Cheques
 - [ ] Cadastrar Operação Patrimonial
@@ -1902,3 +1768,85 @@ Filtrar
 Visualizar
 
 E marcar a Flag de Bloquear Todos os usuários (importante para não deixar que novos usuários do sistema entrem desbloqueados na funcionalidade)
+
+
+---
+
+
+## Glossário
+
+### Siglas e Abreviações
+
+- **DEPARA**: Tabela de correspondência contábil entre contas
+- **DPGE**: Defensoria Pública Geral do Estado
+- **FR**: Fonte de Recursos
+- **GD**: Guia de Devolução
+- **LOA**: Lei Orçamentária Anual
+- **LME**: Limite de Movimentação e Empenho
+- **MP**: Ministério Público
+- **ND**: Nota de Dotação
+- **NE**: Nota de Empenho
+- **OB**: Ordem Bancária
+- **PD**: Programação de Desembolso
+- **PGE**: Procuradoria Geral do Estado
+- **RP**: Restos a Pagar
+- **RPNP**: Restos a Pagar Não Processados
+- **RPP**: Restos a Pagar Processados
+- **SEPLAG**: Secretaria de Estado de Planejamento e Gestão
+- **SIAFE-Rio**: Sistema Integrado de Administração Financeira do Estado do Rio de Janeiro
+- **SIPLAG**: Sistema de Planejamento
+- **SUBPLO**: Subsecretaria de Planejamento Orçamentário
+- **SUDEC**: Superintendência de Descentralização
+- **SUGESC**: Superintendência de Gestão do Sistema Contábil
+- **SUNOT**: Superintendência de Normas Técnicas
+- **UG**: Unidade Gestora
+
+### Termos Técnicos
+
+**Agendamento Genérico**
+Funcionalidade que permite agendar a execução automática de processos do sistema em horários específicos.
+
+**Banco de Abertura**
+Esquema de banco de dados correspondente ao exercício que está se iniciando, onde ocorrem as execuções financeiras do novo exercício.
+
+**Banco de Encerramento**
+Esquema de banco de dados correspondente ao exercício que está se encerrando, onde ocorrem os ajustes contábeis e a inscrição de Restos a Pagar.
+
+**Bloqueio de Funcionalidade UG**
+Restrição aplicada a uma ou mais Unidades Gestoras que impede a execução de determinadas funcionalidades do sistema.
+
+**Bloqueio de Funcionalidade Usuário**
+Restrição aplicada a usuários específicos ou grupos de usuários que impede a execução de determinadas funcionalidades do sistema.
+
+**Contingenciamento**
+Limitação de empenho e movimentação financeira estabelecida para garantir o cumprimento das metas fiscais.
+
+**Decreto de Encerramento**
+Ato normativo que estabelece os prazos e procedimentos para o encerramento do exercício financeiro.
+
+**FlexVision**
+Ferramenta de Business Intelligence utilizada para análise de dados contábeis e financeiros do SIAFE-Rio.
+
+**Migração de Tabelas**
+Processo de transferência das tabelas cadastrais básicas do banco de encerramento para o banco de abertura.
+
+**PD Lixo**
+Programações de Desembolso criadas no final do exercício que não deveriam ser migradas para o exercício seguinte.
+
+**Prescrição de RP**
+Perda da exigibilidade de Restos a Pagar após o prazo de 5 anos, conforme legislação vigente.
+
+**Regra de Compatibilidade**
+Validação parametrizável no sistema que pode AVISAR, IMPEDIR ou PERMITIR determinadas operações conforme regras de negócio.
+
+**Regularização (PD)**
+Tipo específico de Programação de Desembolso utilizada para ajustes e correções de lançamentos.
+
+**Saldo Virado**
+Situação indevida onde saldos ou documentos do exercício anterior contaminam o novo exercício.
+
+**Transferência Diária**
+Processo automatizado que migra saldos, documentos e informações do banco de encerramento para o banco de abertura.
+
+**Tipo de Encerramento**
+Atributo da conta contábil que determina como seus saldos devem ser tratados no processo de encerramento do exercício.
