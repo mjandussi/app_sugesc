@@ -999,7 +999,19 @@ Observações:
 ## Fase 4: Pós-Virada
 
 ### Objetivo
-Realizar os ajustes finais, apontar o FlexVision para o novo exercício e implementar os bloqueios específicos pós-virada.
+Realizar os ajustes após a virada no sistema, como implementar os bloqueios específicos, apontar o FlexVision para o novo exercício, etc.
+
+Assuntos a serem enviados por comunica quando da virada de cada exercício:
+
+1 - Comunica informando da flag para emissão de PD de RP no exercício seguinte;
+2 - No exercício que se encerra só é possível emitir PDs de Regularização:
+3 - Somente após a Inscrição "contábil" dos Restos a Pagar é que será liberado o módulo comunica no exercício seguinte;
+4 - Pagamento de RP Processados antes da inscrição definitiva dos RP, somente os que constam nas exceções do decreto de encerramento;
+5 - Os empenhos do exercício que se encerra (que não foram liquidados no exercício que se encerra), somente passam para o exercício seguinte como RPNP após a inscrição contábil dos Restos a Pagar. Os únicos RPNPs que são transferidos para o exercício seguinte neste período são os já existentes; 
+6 - Os registros efetuados no exercício que se encerra são transferidos para o exercício seguinte à noite através da Transferência Diária (evento automático e sistêmico)
+7 - As PDS que encontram-se como disponíveis em 2026 e que foram anuladas em 2025 devem ser desconsideradas, pois tratam-se de PDs "lixo" e nossa TI irá removê-las do banco de dados oportunamente.
+
+
 
 ### ⚠️ ATENÇÃO: Período Mais Crítico
 
@@ -1674,7 +1686,6 @@ Parte do Manual com o objetivo de centralizar os Bloqueios de Funcionalidades qu
 - [ ] Cadastrar Inscrição Genérica
 - [ ] Cadastrar Pessoa Física
 - [ ] Cadastrar Pessoa Jurídica
-- [ ] Contabilizar Despesa Exercício Anterior
 - [ ] Editar Contrato
 - [ ] Enviar mensagem pelo Comunica
 - [ ] Importar Credor Genérico
