@@ -251,7 +251,7 @@ def processar_csv_disponibilidade(arquivo: bytes | str) -> tuple[pd.DataFrame, p
 
 
 st.markdown("""
-    ### Instruções:
+    ### Instruções para GERAR a CONSULTA e Realizar a Análise:
     1. Acesse o **Flexvision**, depois acesse a pasta de "Outros usuários" e pesquise pelo número da Consulta: `077682`
     2. Local da consula no Flex (diretório): `MARCELO JANDUSSI / Analise Disponibilidade de Fonte` (OBS: ou copie a consulta para sua pasta e utilize de lá para gerar o CSV!)
     3. Nome da Consulta: `Diferenças entre C/C 72111 x 82114 e 82115` 
@@ -259,6 +259,14 @@ st.markdown("""
     5. Faça o **upload do arquivo CSV** abaixo
     """)
 
+st.markdown("""
+    ### Instruções para Encerrar os Saldos no SIAFERIO:
+    1. Acesse o **SIAFERIO**, depois acesse a funcionalidade "Processo Contábil".
+    2. Primeiro deverá ser encerrado o Saldo das Contas do Grupo 82115 e depois os do Grupo 82114
+    3. Alterar o Processo Contábil e incluir a
+    4. Gere a consulta **por UG** e **exporte para CSV**
+    5. Faça o **upload do arquivo CSV** abaixo
+    """)
 
 col1, col2 = st.columns([3, 1])
 with col1:
