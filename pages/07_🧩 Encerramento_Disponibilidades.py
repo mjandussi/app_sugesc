@@ -330,19 +330,19 @@ def processar_csv_disponibilidade(arquivo: bytes | str) -> tuple[pd.DataFrame, p
 
 st.markdown("""
     ### Instruções para GERAR a CONSULTA e Realizar a Análise:
-    1. Acesse o **Flexvision**, depois acesse a pasta de "Outros usuários" e pesquise pelo número da Consulta: `077682`
+    1. Acesse o **Flexvision**, depois acesse a pasta de "Outros usuários" e pesquise pelo número da Consulta: `079277`
     2. Local da consula no Flex (diretório): `MARCELO JANDUSSI / Analise Disponibilidade de Fonte` (OBS: ou copie a consulta para sua pasta e utilize de lá para gerar o CSV!)
-    3. Nome da Consulta: `Diferenças entre C/C 72111 x 82114 e 82115` 
+    3. Nome da Consulta: `Diferenças entre C/C 72111 x 82114 e 82115 TODAS UGs` 
     4. Gere a consulta **por UG** e **exporte para CSV**
     5. Faça o **upload do arquivo CSV** abaixo
+    6. Gere as análises e exporte o TXT para preencher nas Regras dos Processos Contábeis 92 (contas 82115) e 94 (contas 82114) 
     """)
 
 st.markdown("""
     ### Instruções para Encerrar os Saldos no SIAFERIO:
     1. Acesse o **SIAFERIO**, depois acesse a funcionalidade "Processo Contábil".
-    2. Primeiro deverá ser encerrado o Saldo das Contas do Grupo 82115 e depois os do Grupo 82114
-    3. Alterar o Processo Contábil e incluir a expressão gerada
-    4. As regras estão agrupadas por UG, facilitando a aplicação por Unidade Gestora
+    2. Primeiro deverá ser encerrado o Saldo das Contas do Grupo 82115 e depois os do Grupo 82114, desta forma, deverá executar os Processos Contábeis 90, 92, 93 e 94 em ordem
+    3. As regras geradas em TXT dos Processos 92 (contas 82115) e 94 (contas 82114) deverão ser preenchidas em linhas dos Eventos 872192 configuradas na "regra de Compatibilidade"
     """)
 
 col1, col2 = st.columns([3, 1])
