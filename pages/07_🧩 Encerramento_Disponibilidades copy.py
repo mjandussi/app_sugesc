@@ -1,5 +1,5 @@
 # ┌───────────────────────────────────────────────────────────────
-# │ pages/01_Encerramento_Disponibilidades.py - VERSÃO COM UG
+# │ pages/01_Encerramento_Disponibilidades.py
 # └───────────────────────────────────────────────────────────────
 
 import streamlit as st
@@ -32,38 +32,32 @@ def _iterar_pedacos(dets: list[str], max_terms: int | None):
 
 
 def montar_regras_por_ug(df: pd.DataFrame, max_terms_por_expressao: int | None = None) -> pd.DataFrame:
-    """Gera regras básicas por UG/ano/fonte a partir do DataFrame processado."""
+    """Gera regras básicas por ano/fonte a partir do DataFrame processado."""
     regras = []
-    gcols = ["ug", "ano_fonte", "FONTE_STN"]
+    gcols = ["ano_fonte", "FONTE_STN"]
 
     if df.empty:
-        return pd.DataFrame(columns=["ug", "ano_fonte", "FONTE_STN", "parte", "expressao"])
+        return pd.DataFrame(columns=["ano_fonte", "FONTE_STN", "parte", "expressao"])
 
-    for (ug, ano, fonte), dfg in df.groupby(gcols, dropna=False):
-        ug_str = str(ug).strip()
+    for (ano, fonte), dfg in df.groupby(gcols, dropna=False):
         fonte_stn = str(fonte).strip()
-        
-        if not ug_str or not fonte_stn:
+        if not fonte_stn:
             continue
-            
         dets = sorted(dfg["detalhamento"].dropna().astype(str).unique().tolist())
         if not dets:
             continue
-            
         for parte, pedaco in enumerate(_iterar_pedacos(dets, max_terms_por_expressao), start=1):
             det_join = ",".join(pedaco)
             regra = (
-                f"([UNIDADE GESTORA EMITENTE].[CÓDIGO] = {ug_str} e "
-                f"[IDENTIFICADOR EXERCÍCIO FONTE].[CÓDIGO] = {int(ano)} e "
-                f"[FONTE].[CÓDIGO] = {fonte_stn} e "
-                f"não extrai([DETALHAMENTO DE FONTE].[CÓDIGO], 7, 6) pertence ({det_join}))"
+                f"[IDENTIFICADOR EXERCÍCIO FONTE].[CÓDIGO] = {int(ano)} "
+                f"e extrai([FONTE].[CÓDIGO] , 1, 3) pertence ({fonte_stn}) "
+                f"e não extrai([DETALHAMENTO DE FONTE].[CÓDIGO], 7, 6) pertence ({det_join}) "
             )
             try:
                 ano_val = int(str(ano))
             except (TypeError, ValueError):
                 ano_val = str(ano)
             regras.append({
-                "ug": ug_str,
                 "ano_fonte": ano_val,
                 "FONTE_STN": fonte_stn,
                 "parte": parte,
@@ -71,21 +65,21 @@ def montar_regras_por_ug(df: pd.DataFrame, max_terms_por_expressao: int | None =
             })
 
     return pd.DataFrame(regras).sort_values(
-        ["ug", "ano_fonte", "FONTE_STN", "parte"]
+        ["ano_fonte", "FONTE_STN", "parte"]
     ).reset_index(drop=True)
 
 
 def combinar_regras_com_limite(df_regras: pd.DataFrame, max_chars_por_regra: int = 3500) -> pd.DataFrame:
     """
-    Agrupa regras por UG/ano/fonte, unindo-as com 'OU' e quebrando em partes
+    Agrupa regras por ano/fonte, unindo-as com 'OU' e quebrando em partes
     quando o tamanho excede max_chars_por_regra.
     """
 
     if df_regras.empty:
-        return pd.DataFrame(columns=["ug", "ano_fonte", "FONTE_STN", "parte", "tamanho", "expressao_combinada"])
+        return pd.DataFrame(columns=["ano_fonte", "FONTE_STN", "parte", "tamanho", "expressao_combinada"])
 
     saidas = []
-    for (ug, ano, fonte), grupo in df_regras.groupby(["ug", "ano_fonte", "FONTE_STN"], dropna=False):
+    for (ano, fonte), grupo in df_regras.groupby(["ano_fonte", "FONTE_STN"], dropna=False):
         exprs = grupo["expressao"].astype(str).tolist()
         parte, buffer = 1, []
 
@@ -93,11 +87,9 @@ def combinar_regras_com_limite(df_regras: pd.DataFrame, max_chars_por_regra: int
             nonlocal parte, buffer
             if not buffer:
                 return
-            # Cada expressão já vem com parênteses, então só precisamos juntar com OU
-            ou_txt = " OU ".join(buffer)
+            ou_txt = " OU ".join(f"({e})" for e in buffer)
             regra_final = f"({ou_txt})"
             saidas.append({
-                "ug": str(ug),
                 "ano_fonte": ano,
                 "FONTE_STN": str(fonte),
                 "parte": parte,
@@ -109,17 +101,17 @@ def combinar_regras_com_limite(df_regras: pd.DataFrame, max_chars_por_regra: int
 
         for expr in exprs:
             temp = buffer + [expr]
-            teste = f"({' OU '.join(temp)})"
+            teste = f"({' OU '.join(f'({x})' for x in temp)})"
             if buffer and len(teste) > max_chars_por_regra:
                 fecha()
                 temp = [expr]
-                teste = f"({' OU '.join(temp)})"
+                teste = f"({' OU '.join(f'({x})' for x in temp)})"
             buffer.append(expr)
             if len(teste) > max_chars_por_regra:
                 fecha()
         fecha()
 
-    return pd.DataFrame(saidas).sort_values(["ug", "ano_fonte", "FONTE_STN", "parte"]).reset_index(drop=True)
+    return pd.DataFrame(saidas).sort_values(["ano_fonte", "FONTE_STN", "parte"]).reset_index(drop=True)
 
 
 def gerar_regras(df_negativos: pd.DataFrame, max_chars: int) -> pd.DataFrame:
@@ -148,10 +140,7 @@ def _extrair_negativos(df: pd.DataFrame, coluna_processo: str) -> pd.DataFrame:
 
     negativos = df[df[coluna_processo] < 0].copy()
     if negativos.empty:
-        return pd.DataFrame(columns=["ug", "ano_fonte", "FONTE_STN", "detalhamento"])
-
-    # Adicionar a coluna UG ao resultado
-    negativos["ug"] = negativos["ug_original"].astype(str).str.strip()
+        return pd.DataFrame(columns=["ano_fonte", "FONTE_STN", "detalhamento"])
 
     conta_limpa = (
         negativos["conta_corrente"]
@@ -171,10 +160,10 @@ def _extrair_negativos(df: pd.DataFrame, coluna_processo: str) -> pd.DataFrame:
     negativos = negativos[negativos["ano_fonte"].str.isdigit()]
 
     resultado = (
-        negativos[["ug", "ano_fonte", "FONTE_STN", "detalhamento"]]
+        negativos[["ano_fonte", "FONTE_STN", "detalhamento"]]
         .dropna()
         .drop_duplicates()
-        .sort_values(["ug", "ano_fonte", "FONTE_STN", "detalhamento"])
+        .sort_values(["ano_fonte", "FONTE_STN", "detalhamento"])
         .reset_index(drop=True)
     )
 
@@ -184,7 +173,7 @@ def _extrair_negativos(df: pd.DataFrame, coluna_processo: str) -> pd.DataFrame:
     return resultado
 
 
-def processar_csv_disponibilidade(arquivo: bytes | str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def processar_csv_disponibilidade(arquivo: bytes | str) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Extrai dataframes de detalhamentos negativos para os processos 82115 e 82114."""
 
     if isinstance(arquivo, bytes):
@@ -202,11 +191,8 @@ def processar_csv_disponibilidade(arquivo: bytes | str) -> tuple[pd.DataFrame, p
     )
 
     df.columns = [col.strip() for col in df.columns]
-    
-    # Mapear a coluna de Unidade Gestora
     rename_map = {
-        "Unidade Gestora": "ug_original",
-        "Conta Corrente": "conta_corrente",
+        "Unidade Gestora / Conta Corrente": "conta_corrente",
         "Conta 721110101 (A)": "conta_721",
         "Contas 82114 (B)": "conta_82114",
         "Contas 82115 (C)": "conta_82115",
@@ -216,13 +202,12 @@ def processar_csv_disponibilidade(arquivo: bytes | str) -> tuple[pd.DataFrame, p
         rename_map[diff_col] = "dif_dispon"
     df = df.rename(columns=rename_map)
 
-    required_cols = {"ug_original", "conta_corrente", "conta_721", "conta_82114", "conta_82115", "dif_dispon"}
+    required_cols = {"conta_corrente", "conta_721", "conta_82114", "conta_82115", "dif_dispon"}
     missing = required_cols - set(df.columns)
     if missing:
         raise ValueError(f"Colunas obrigatórias ausentes no CSV: {', '.join(sorted(missing))}")
 
-    # Preencher UG para baixo (forward fill) - cada linha já tem a UG
-    # Não é necessário forward fill neste caso pois cada linha tem sua UG
+    df = df.iloc[1:].copy()
 
     def to_float_ptbr(series: pd.Series) -> pd.Series:
         return (
@@ -278,8 +263,9 @@ st.markdown("""
     ### Instruções para Encerrar os Saldos no SIAFERIO:
     1. Acesse o **SIAFERIO**, depois acesse a funcionalidade "Processo Contábil".
     2. Primeiro deverá ser encerrado o Saldo das Contas do Grupo 82115 e depois os do Grupo 82114
-    3. Alterar o Processo Contábil e incluir a expressão gerada
-    4. As regras estão agrupadas por UG, facilitando a aplicação por Unidade Gestora
+    3. Alterar o Processo Contábil e incluir a
+    4. Gere a consulta **por UG** e **exporte para CSV**
+    5. Faça o **upload do arquivo CSV** abaixo
     """)
 
 col1, col2 = st.columns([3, 1])
@@ -314,19 +300,8 @@ if uploaded_file is not None:
                 st.warning("\n".join(mensagens))
             else:
                 st.success("✅ Regras dos processos 82115 e 82114 geradas com sucesso!")
-                
-                # Mostrar estatísticas
-                if not regras_82115.empty:
-                    n_ugs_82115 = regras_82115["ug"].nunique()
-                    st.info(f"📊 Processo 82115: {len(regras_82115)} regras geradas para {n_ugs_82115} UGs")
-                if not regras_82114.empty:
-                    n_ugs_82114 = regras_82114["ug"].nunique()
-                    st.info(f"📊 Processo 82114: {len(regras_82114)} regras geradas para {n_ugs_82114} UGs")
-                    
         except Exception as e:
             st.error(f"❌ Erro: {e}")
-            import traceback
-            st.code(traceback.format_exc())
 
 regras_82115 = st.session_state.get("regras_82115")
 regras_82114 = st.session_state.get("regras_82114")
@@ -336,16 +311,7 @@ if regras_82115 is not None or regras_82114 is not None:
     if regras_82115 is None or regras_82115.empty:
         st.info("Nenhuma regra gerada para o processo 82115.")
     else:
-        # Opção de filtrar por UG
-        ugs_disponiveis = ["Todas"] + sorted(regras_82115["ug"].unique().tolist())
-        ug_selecionada = st.selectbox("Filtrar por UG (82115):", ugs_disponiveis, key="ug_82115")
-        
-        if ug_selecionada == "Todas":
-            df_exibir = regras_82115
-        else:
-            df_exibir = regras_82115[regras_82115["ug"] == ug_selecionada]
-        
-        st.dataframe(df_exibir, use_container_width=True, height=400)
+        st.dataframe(regras_82115, use_container_width=True, height=400)
         st.download_button(
             "📥 Download Regras 82115",
             convert_df_to_csv_com_zfill(regras_82115),
@@ -358,16 +324,7 @@ if regras_82115 is not None or regras_82114 is not None:
     if regras_82114 is None or regras_82114.empty:
         st.info("Nenhuma regra gerada para o processo 82114.")
     else:
-        # Opção de filtrar por UG
-        ugs_disponiveis = ["Todas"] + sorted(regras_82114["ug"].unique().tolist())
-        ug_selecionada = st.selectbox("Filtrar por UG (82114):", ugs_disponiveis, key="ug_82114")
-        
-        if ug_selecionada == "Todas":
-            df_exibir = regras_82114
-        else:
-            df_exibir = regras_82114[regras_82114["ug"] == ug_selecionada]
-        
-        st.dataframe(df_exibir, use_container_width=True, height=400)
+        st.dataframe(regras_82114, use_container_width=True, height=400)
         st.download_button(
             "📥 Download Regras 82114",
             convert_df_to_csv_com_zfill(regras_82114),
@@ -392,20 +349,15 @@ if uploaded_file is not None:
         
     st.info(f"**Total de registros:** {len(df)} | **Colunas:** {len(df.columns)}")
 
-    # Filtro por UG
-    ugs_unicas = sorted(df["ug_original"].dropna().unique().tolist())
-    ug_filtro = st.selectbox("Filtrar por Unidade Gestora:", ["Todas"] + ugs_unicas)
+    # Exibir dataframe formatado
+    #st.dataframe(df, use_container_width=True, height=500)
 
-    if ug_filtro != "Todas":
-        df = df[df["ug_original"] == ug_filtro]
-
-    # Filtro por conta-corrente
     opcoes_contas = (
-        df["conta_corrente"]
-        .dropna()
-        .astype(str)
-        .unique()
-        .tolist()
+    df["conta_corrente"]
+    .dropna()
+    .astype(str)
+    .unique()
+    .tolist()
     )
     opcoes_contas = sorted(opcoes_contas)
 
@@ -437,6 +389,9 @@ if uploaded_file is not None:
 
     st.dataframe(df_filtrado, use_container_width=True, height=500)
 
+
+
+    
 
 # Rodapé
 st.markdown("---")
