@@ -13,7 +13,7 @@ from core.layout import setup_page, sidebar_menu, get_app_menu
 setup_page(page_title="Encerramento de Disponibilidades", layout="wide", hide_default_nav=True)
 sidebar_menu(get_app_menu(), use_expanders=True, expanded=False)
 
-st.title("🧩 Análise Para Encerramento de Disponibilidades Financeiras no SiafeRio")
+st.title("🧩 Análise Para Encerramento do Controle das Disponibilidades Financeiras (DDRs) no SiafeRio")
 st.markdown("---")
 
 # ═══════════════════════════════════════════════════════════════
