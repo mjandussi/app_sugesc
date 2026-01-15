@@ -32,18 +32,18 @@ def _iterar_pedacos(dets: list[str], max_terms: int | None):
 
 
 def montar_regras_por_ug(df: pd.DataFrame, max_terms_por_expressao: int | None = None) -> pd.DataFrame:
-    """Gera regras básicas por UG/ano/fonte a partir do DataFrame processado."""
+    """Gera regras básicas por UG/ano/fonte/fonte_rj a partir do DataFrame processado."""
     regras = []
-    gcols = ["ug", "ano_fonte", "FONTE_STN"]
+    gcols = ["ug", "ano_fonte", "FONTE"]
 
     if df.empty:
-        return pd.DataFrame(columns=["ug", "ano_fonte", "FONTE_STN", "parte", "expressao"])
+        return pd.DataFrame(columns=["ug", "ano_fonte", "FONTE", "parte", "expressao"])
 
     for (ug, ano, fonte), dfg in df.groupby(gcols, dropna=False):
         ug_str = str(ug).strip()
-        fonte_stn = str(fonte).strip()
+        fonte = str(fonte).strip()
         
-        if not ug_str or not fonte_stn:
+        if not ug_str or not fonte:
             continue
             
         dets = sorted(dfg["detalhamento"].dropna().astype(str).unique().tolist())
@@ -55,7 +55,7 @@ def montar_regras_por_ug(df: pd.DataFrame, max_terms_por_expressao: int | None =
             regra = (
                 f"([UNIDADE GESTORA EMITENTE].[CÓDIGO] = {ug_str} e "
                 f"[IDENTIFICADOR EXERCÍCIO FONTE].[CÓDIGO] = {int(ano)} e "
-                f"[FONTE].[CÓDIGO] = {fonte_stn} e "
+                f"extrai([DETALHAMENTO DE FONTE].[CÓDIGO], 1, 3) pertence ({fonte}) e "
                 f"não extrai([DETALHAMENTO DE FONTE].[CÓDIGO], 7, 6) pertence ({det_join}))"
             )
             try:
@@ -65,27 +65,27 @@ def montar_regras_por_ug(df: pd.DataFrame, max_terms_por_expressao: int | None =
             regras.append({
                 "ug": ug_str,
                 "ano_fonte": ano_val,
-                "FONTE_STN": fonte_stn,
+                "FONTE": fonte,
                 "parte": parte,
                 "expressao": regra,
             })
 
     return pd.DataFrame(regras).sort_values(
-        ["ug", "ano_fonte", "FONTE_STN", "parte"]
+        ["ug", "ano_fonte", "FONTE", "parte"]
     ).reset_index(drop=True)
 
 
 def combinar_regras_com_limite(df_regras: pd.DataFrame, max_chars_por_regra: int = 3500) -> pd.DataFrame:
     """
-    Agrupa regras por UG/ano/fonte, unindo-as com 'OU' e quebrando em partes
+    Agrupa regras por UG/ano/fonte/fonte_rj, unindo-as com 'OU' e quebrando em partes
     quando o tamanho excede max_chars_por_regra.
     """
 
     if df_regras.empty:
-        return pd.DataFrame(columns=["ug", "ano_fonte", "FONTE_STN", "parte", "tamanho", "expressao_combinada"])
+        return pd.DataFrame(columns=["ug", "ano_fonte", "FONTE", "parte", "tamanho", "expressao_combinada"])
 
     saidas = []
-    for (ug, ano, fonte), grupo in df_regras.groupby(["ug", "ano_fonte", "FONTE_STN"], dropna=False):
+    for (ug, ano, fonte), grupo in df_regras.groupby(["ug", "ano_fonte", "FONTE"], dropna=False):
         exprs = grupo["expressao"].astype(str).tolist()
         parte, buffer = 1, []
 
@@ -99,7 +99,7 @@ def combinar_regras_com_limite(df_regras: pd.DataFrame, max_chars_por_regra: int
             saidas.append({
                 "ug": str(ug),
                 "ano_fonte": ano,
-                "FONTE_STN": str(fonte),
+                "FONTE": str(fonte),
                 "parte": parte,
                 "tamanho": len(regra_final),
                 "expressao_combinada": regra_final
@@ -119,7 +119,7 @@ def combinar_regras_com_limite(df_regras: pd.DataFrame, max_chars_por_regra: int
                 fecha()
         fecha()
 
-    return pd.DataFrame(saidas).sort_values(["ug", "ano_fonte", "FONTE_STN", "parte"]).reset_index(drop=True)
+    return pd.DataFrame(saidas).sort_values(["ug", "ano_fonte", "FONTE", "parte"]).reset_index(drop=True)
 
 
 def gerar_regras(df_negativos: pd.DataFrame, max_chars: int) -> pd.DataFrame:
@@ -141,6 +141,69 @@ def gerar_regras(df_negativos: pd.DataFrame, max_chars: int) -> pd.DataFrame:
     return df_final
 
 
+def agrupar_por_processo_contabil(df_negativos: pd.DataFrame, max_chars_linha: int = 3500) -> dict:
+    """
+    Agrupa regras por processo contábil, separando UG 999900 das demais.
+    Combina múltiplas regras com OU, respeitando o limite de caracteres por linha.
+    
+    Retorna dicionário com as regras prontas para copiar/colar.
+    """
+    if df_negativos.empty:
+        return {}
+    
+    # Separar por UG
+    ug_999900 = df_negativos[df_negativos["ug"] == "999900"].copy()
+    outras_ugs = df_negativos[df_negativos["ug"] != "999900"].copy()
+    
+    resultado = {}
+    
+    # Processar cada grupo
+    for nome_grupo, df_grupo in [("outras_ugs", outras_ugs), ("ug_999900", ug_999900)]:
+        if df_grupo.empty:
+            resultado[nome_grupo] = []
+            continue
+            
+        # Gerar regras básicas
+        regras_basicas = montar_regras_por_ug(df_grupo, max_terms_por_expressao=None)
+        
+        if regras_basicas.empty:
+            resultado[nome_grupo] = []
+            continue
+        
+        # Agrupar por UG+Ano+Fonte e combinar com OU
+        linhas_finais = []
+        buffer_atual = []
+        tamanho_atual = 0
+        
+        for _, row in regras_basicas.iterrows():
+            expressao = row["expressao"]
+            tamanho_expr = len(expressao)
+            
+            # Se adicionar esta expressão ultrapassar o limite
+            if buffer_atual and (tamanho_atual + len(" OU ") + tamanho_expr) > max_chars_linha:
+                # Fechar linha atual
+                linha_completa = " OU ".join(buffer_atual)
+                linhas_finais.append(linha_completa)
+                # Iniciar nova linha
+                buffer_atual = [expressao]
+                tamanho_atual = tamanho_expr
+            else:
+                # Adicionar à linha atual
+                if buffer_atual:
+                    tamanho_atual += len(" OU ")
+                buffer_atual.append(expressao)
+                tamanho_atual += tamanho_expr
+        
+        # Adicionar última linha
+        if buffer_atual:
+            linha_completa = " OU ".join(buffer_atual)
+            linhas_finais.append(linha_completa)
+        
+        resultado[nome_grupo] = linhas_finais
+    
+    return resultado
+
+
 def _extrair_negativos(df: pd.DataFrame, coluna_processo: str) -> pd.DataFrame:
     """Filtra e formata detalhamentos com saldo negativo conforme a coluna informada."""
     if coluna_processo not in df.columns:
@@ -148,7 +211,7 @@ def _extrair_negativos(df: pd.DataFrame, coluna_processo: str) -> pd.DataFrame:
 
     negativos = df[df[coluna_processo] < 0].copy()
     if negativos.empty:
-        return pd.DataFrame(columns=["ug", "ano_fonte", "FONTE_STN", "detalhamento"])
+        return pd.DataFrame(columns=["ug", "ano_fonte", "FONTE","detalhamento"])
 
     # Adicionar a coluna UG ao resultado
     negativos["ug"] = negativos["ug_original"].astype(str).str.strip()
@@ -163,18 +226,18 @@ def _extrair_negativos(df: pd.DataFrame, coluna_processo: str) -> pd.DataFrame:
     )
     negativos = negativos.assign(conta_corrente_limpa=conta_limpa)
     negativos = negativos[negativos["conta_corrente_limpa"].notna()]
-    negativos = negativos[negativos["conta_corrente_limpa"].str.len() >= 7]
+    negativos = negativos[negativos["conta_corrente_limpa"].str.len() >= 10]  # Agora precisa ter pelo menos 10 dígitos
 
     negativos["ano_fonte"] = negativos["conta_corrente_limpa"].str[:1]
-    negativos["FONTE_STN"] = negativos["conta_corrente_limpa"].str[1:4].str.zfill(3)
+    negativos["FONTE"] = negativos["conta_corrente_limpa"].str[1:4].str.zfill(3)
     negativos["detalhamento"] = serie_6dig(negativos["conta_corrente_limpa"].str[-6:])
     negativos = negativos[negativos["ano_fonte"].str.isdigit()]
 
     resultado = (
-        negativos[["ug", "ano_fonte", "FONTE_STN", "detalhamento"]]
+        negativos[["ug", "ano_fonte", "FONTE", "detalhamento"]]
         .dropna()
         .drop_duplicates()
-        .sort_values(["ug", "ano_fonte", "FONTE_STN", "detalhamento"])
+        .sort_values(["ug", "ano_fonte", "FONTE", "detalhamento"])
         .reset_index(drop=True)
     )
 
@@ -331,7 +394,177 @@ if uploaded_file is not None:
 regras_82115 = st.session_state.get("regras_82115")
 regras_82114 = st.session_state.get("regras_82114")
 
+# ============================================================================
+# NOVA SEÇÃO: EXPORTAÇÃO POR PROCESSO CONTÁBIL
+# ============================================================================
+
+if uploaded_file is not None:
+    st.header("📋 Exportação por Processo Contábil")
+    st.markdown("""
+    Esta seção agrupa as regras por **Processo Contábil**, separando automaticamente:
+    - **Processo 90**: Conta 82115 - UGs ≠ 999900
+    - **Processo 94**: Conta 82115 - UG = 999900
+    - **Processo 92**: Conta 82114 - UGs ≠ 999900
+    - **Processo 93**: Conta 82114 - UG = 999900
+    """)
+    
+    col_limite, col_espaco = st.columns([2, 3])
+    with col_limite:
+        max_chars_linha = st.number_input(
+            "Limite de caracteres por linha no SIAFERIO",
+            min_value=1000,
+            max_value=10000,
+            value=3500,
+            step=500,
+            help="Ajuste conforme o limite do sistema. Se a regra for cortada, diminua este valor."
+        )
+    
+    st.markdown("---")
+    
+    # Processar regras por processo contábil
+    df, df_negativos_82115, df_negativos_82114 = processar_csv_disponibilidade(arquivo)
+    
+    # Processo 82115
+    regras_proc_82115 = agrupar_por_processo_contabil(df_negativos_82115, max_chars_linha)
+    
+    # Processo 82114
+    regras_proc_82114 = agrupar_por_processo_contabil(df_negativos_82114, max_chars_linha)
+    
+    # Exibir Processo 90 (82115 - outras UGs)
+    st.subheader("🔹 Processo 90 - Conta 82115 (UGs ≠ 999900)")
+    linhas_90 = regras_proc_82115.get("outras_ugs", [])
+    
+    if not linhas_90:
+        st.info("Nenhuma regra para este processo.")
+    else:
+        st.success(f"✅ {len(linhas_90)} linha(s) gerada(s)")
+        
+        for idx, linha in enumerate(linhas_90, 1):
+            with st.expander(f"📄 Linha {idx} - {len(linha)} caracteres", expanded=(idx==1)):
+                st.code(linha, language="text")
+                st.download_button(
+                    f"📥 Download Linha {idx}",
+                    linha,
+                    f"processo_90_linha_{idx}.txt",
+                    "text/plain",
+                    key=f"proc90_linha{idx}"
+                )
+        
+        # Botão para baixar todas as linhas juntas
+        texto_completo_90 = "\n\n".join([f"-- Linha {i}\n{linha}" for i, linha in enumerate(linhas_90, 1)])
+        st.download_button(
+            "📥 Download Todas as Linhas do Processo 90",
+            texto_completo_90,
+            "processo_90_completo.txt",
+            "text/plain",
+            type="primary",
+            key="proc90_all"
+        )
+    
+    st.markdown("---")
+    
+    # Exibir Processo 94 (82115 - UG 999900)
+    st.subheader("🔹 Processo 94 - Conta 82115 (UG = 999900)")
+    linhas_94 = regras_proc_82115.get("ug_999900", [])
+    
+    if not linhas_94:
+        st.info("Nenhuma regra para este processo.")
+    else:
+        st.success(f"✅ {len(linhas_94)} linha(s) gerada(s)")
+        
+        for idx, linha in enumerate(linhas_94, 1):
+            with st.expander(f"📄 Linha {idx} - {len(linha)} caracteres", expanded=(idx==1)):
+                st.code(linha, language="text")
+                st.download_button(
+                    f"📥 Download Linha {idx}",
+                    linha,
+                    f"processo_94_linha_{idx}.txt",
+                    "text/plain",
+                    key=f"proc94_linha{idx}"
+                )
+        
+        texto_completo_94 = "\n\n".join([f"-- Linha {i}\n{linha}" for i, linha in enumerate(linhas_94, 1)])
+        st.download_button(
+            "📥 Download Todas as Linhas do Processo 94",
+            texto_completo_94,
+            "processo_94_completo.txt",
+            "text/plain",
+            type="primary",
+            key="proc94_all"
+        )
+    
+    st.markdown("---")
+    
+    # Exibir Processo 92 (82114 - outras UGs)
+    st.subheader("🔹 Processo 92 - Conta 82114 (UGs ≠ 999900)")
+    linhas_92 = regras_proc_82114.get("outras_ugs", [])
+    
+    if not linhas_92:
+        st.info("Nenhuma regra para este processo.")
+    else:
+        st.success(f"✅ {len(linhas_92)} linha(s) gerada(s)")
+        
+        for idx, linha in enumerate(linhas_92, 1):
+            with st.expander(f"📄 Linha {idx} - {len(linha)} caracteres", expanded=(idx==1)):
+                st.code(linha, language="text")
+                st.download_button(
+                    f"📥 Download Linha {idx}",
+                    linha,
+                    f"processo_92_linha_{idx}.txt",
+                    "text/plain",
+                    key=f"proc92_linha{idx}"
+                )
+        
+        texto_completo_92 = "\n\n".join([f"-- Linha {i}\n{linha}" for i, linha in enumerate(linhas_92, 1)])
+        st.download_button(
+            "📥 Download Todas as Linhas do Processo 92",
+            texto_completo_92,
+            "processo_92_completo.txt",
+            "text/plain",
+            type="primary",
+            key="proc92_all"
+        )
+    
+    st.markdown("---")
+    
+    # Exibir Processo 93 (82114 - UG 999900)
+    st.subheader("🔹 Processo 93 - Conta 82114 (UG = 999900)")
+    linhas_93 = regras_proc_82114.get("ug_999900", [])
+    
+    if not linhas_93:
+        st.info("Nenhuma regra para este processo.")
+    else:
+        st.success(f"✅ {len(linhas_93)} linha(s) gerada(s)")
+        
+        for idx, linha in enumerate(linhas_93, 1):
+            with st.expander(f"📄 Linha {idx} - {len(linha)} caracteres", expanded=(idx==1)):
+                st.code(linha, language="text")
+                st.download_button(
+                    f"📥 Download Linha {idx}",
+                    linha,
+                    f"processo_93_linha_{idx}.txt",
+                    "text/plain",
+                    key=f"proc93_linha{idx}"
+                )
+        
+        texto_completo_93 = "\n\n".join([f"-- Linha {i}\n{linha}" for i, linha in enumerate(linhas_93, 1)])
+        st.download_button(
+            "📥 Download Todas as Linhas do Processo 93",
+            texto_completo_93,
+            "processo_93_completo.txt",
+            "text/plain",
+            type="primary",
+            key="proc93_all"
+        )
+
+st.divider()
+
+# ============================================================================
+# SEÇÃO ORIGINAL: Visualização Detalhada das Regras
+# ============================================================================
+
 if regras_82115 is not None or regras_82114 is not None:
+    st.header("📊 Visualização Detalhada das Regras por UG")
     st.subheader("Processo 82115 – Regras de Encerramento")
     if regras_82115 is None or regras_82115.empty:
         st.info("Nenhuma regra gerada para o processo 82115.")
