@@ -117,23 +117,54 @@ def processar_rp_a_pagar(arquivo_rp, base_acoes):
     # Converter Saldo para numérico
     rp_saldo['Saldo'] = pd.to_numeric(rp_saldo['Saldo'], errors='coerce')
     
-    # Merge e identificar erros
-    final = rp_saldo.merge(base_acoes, on="concat", how="left")
-    erros = final[final.isnull().any(axis=1)].copy()
+    # Merge com informações completas da base (incluindo Status Ativo)
+    final = rp_saldo.merge(
+        base_acoes[['concat', 'Ativo', 'Nome']], 
+        on="concat", 
+        how="left"
+    )
     
-    # Agrupamento
-    if len(erros) > 0:
-        df_resultado = erros.groupby(['UO_x','Esfera_x','Função_x','Subfunção_x',
-                                      'Programa_x','Ação_x'])['Saldo'].sum().reset_index()
-        df_resultado.columns = ['UO', 'Esfera', 'Função', 'Subfunção', 'Programa', 'Ação', 'Saldo RP']
-        df_resultado = df_resultado.sort_values('Saldo RP', ascending=False)
-    else:
-        df_resultado = pd.DataFrame()
+    # Identificar 3 situações:
+    # 1. Não encontrados (não existem na base)
+    nao_encontrados = final[final['Ativo'].isna()].copy()
+    
+    # 2. Encontrados mas inativos
+    encontrados_inativos = final[(final['Ativo'].notna()) & (final['Ativo'] == 'Não')].copy()
+    
+    # 3. Encontrados e ativos (OK)
+    encontrados_ativos = final[(final['Ativo'].notna()) & (final['Ativo'] == 'Sim')].copy()
+    
+    # Agrupar não encontrados
+    df_nao_encontrados = pd.DataFrame()
+    if len(nao_encontrados) > 0:
+        df_nao_encontrados = nao_encontrados.groupby(['UO','Esfera','Função','Subfunção','Programa','Ação'])['Saldo'].sum().reset_index()
+        df_nao_encontrados.columns = ['UO', 'Esfera', 'Função', 'Subfunção', 'Programa', 'Ação', 'Saldo RP']
+        df_nao_encontrados['Situação'] = 'Não Cadastrado'
+        df_nao_encontrados['Ação Necessária'] = 'Cadastrar'
+        df_nao_encontrados['Nome da Ação'] = ''
+    
+    # Agrupar inativos
+    df_inativos = pd.DataFrame()
+    if len(encontrados_inativos) > 0:
+        df_inativos = encontrados_inativos.groupby(['UO','Esfera','Função','Subfunção','Programa','Ação', 'Nome'])['Saldo'].sum().reset_index()
+        df_inativos.columns = ['UO', 'Esfera', 'Função', 'Subfunção', 'Programa', 'Ação', 'Nome da Ação', 'Saldo RP']
+        df_inativos['Situação'] = 'Inativo'
+        df_inativos['Ação Necessária'] = 'Reativar'
+        # Reordenar colunas
+        df_inativos = df_inativos[['UO', 'Esfera', 'Função', 'Subfunção', 'Programa', 'Ação', 
+                                   'Saldo RP', 'Situação', 'Ação Necessária', 'Nome da Ação']]
+    
+    # Combinar ambos os resultados
+    df_resultado = pd.concat([df_nao_encontrados, df_inativos], ignore_index=True)
+    df_resultado = df_resultado.sort_values('Saldo RP', ascending=False)
     
     stats = {
         'total_registros': len(rp_saldo),
-        'registros_encontrados': len(final) - len(erros),
-        'registros_nao_encontrados': len(erros)
+        'registros_ok': len(encontrados_ativos),
+        'registros_nao_encontrados': len(nao_encontrados),
+        'registros_inativos': len(encontrados_inativos),
+        'pts_nao_cadastrados': len(df_nao_encontrados),
+        'pts_inativos': len(df_inativos)
     }
     
     return df_resultado, stats
@@ -252,18 +283,23 @@ with tab1:
     st.markdown("### Análise de Restos a Pagar a Pagar")
     st.info("📌 **Conta analisada:** 632110101 - RP Processado a Pagar")
     
-    st.success("""
-    ✅ **Lógica da Conferência:** 
-    - Base de análise = **SALDOS** (o que tem movimentação financeira)
-    - Conferência com = **TODAS as ações** (ativas E inativas)
-    - Se tem saldo em RP, deve existir na base de ações (ativa ou inativa)
+    st.warning("""
+    ⚠️ **Atenção - PTs que Requerem Ação:** 
+    
+    Esta análise identifica **2 tipos de problemas**:
+    
+    1. **❌ Não Cadastrados:** PTs com saldo que não existem na base → **Ação: CADASTRAR**
+    2. **⚠️ Inativos:** PTs com saldo em ações inativas → **Ação: REATIVAR**
+    
+    Ambos requerem ação corretiva no SIAFERIO, pois não devem ter movimentação financeira.
     """)
     
     col1a, col2a = st.columns(2)
     
     with col1a:
-        st.markdown("#### 1. Base de Ações (SIAFERIO)")
-        st.caption("Planejamento >> Plano Plurianual >> Ação")
+        st.markdown("### 1. Base de Ações (SIAFERIO)")
+        st.markdown("###### Caminho: Planejamento >> Plano Plurianual >> Ação")
+        st.markdown("###### Imprimir a Tabela, Exportar para formato XLS e Depois Salvar em Formato XLSX no computador")
         file_acoes_tab1 = st.file_uploader(
             "Upload Base Ações (.xlsx)", 
             type=["xlsx"], 
@@ -271,8 +307,9 @@ with tab1:
         )
     
     with col2a:
-        st.markdown("#### 2. Saldo RP a Pagar (Flexvision)")
-        st.caption("Consulta: 079062 (LISUGSALDO 632110101)")
+        st.markdown("### 2. Saldo RP a Pagar (Flexvision)")
+        st.markdown("###### Consulta Flexvision: 079062 (LISUGSALDO 632110101 na Pasta do Usuário Marcelo Jandussi e na pasta RP)")
+        st.markdown("###### Exportar a consulta para formato Excel e Depois Salvar em Formato XLSX no computador")
         file_rp_tab1 = st.file_uploader(
             "Upload Saldo RP a Pagar (.xlsx)", 
             type=["xlsx"], 
@@ -290,42 +327,105 @@ with tab1:
             # Estatísticas
             col_m1, col_m2, col_m3 = st.columns(3)
             col_m1.metric("Total de Registros RP", f"{stats['total_registros']:,}")
-            col_m2.metric("Ações Encontradas", f"{stats['registros_encontrados']:,}")
-            col_m3.metric("⚠️ Não Encontradas", f"{stats['registros_nao_encontrados']:,}")
+            col_m2.metric("✅ Registros OK", f"{stats['registros_ok']:,}")
+            col_m3.metric("⚠️ Requerem Ação", f"{stats['registros_nao_encontrados'] + stats['registros_inativos']:,}")
             
             st.divider()
             
             # Resultados
             if len(df_resultado) == 0:
-                st.success("🎉 **Excelente!** Todos os PTs com saldo de RP foram encontrados na base de ações.")
+                st.success("🎉 **Excelente!** Todos os PTs com saldo foram encontrados e estão ativos.")
             else:
-                qtd_pts = len(df_resultado)
+                # Métricas consolidadas
+                qtd_pts_total = len(df_resultado)
+                qtd_nao_cadastrados = stats['pts_nao_cadastrados']
+                qtd_inativos = stats['pts_inativos']
                 total_saldo = df_resultado['Saldo RP'].sum()
                 
-                col_r1, col_r2 = st.columns(2)
-                col_r1.metric("PTs com Saldo sem Cadastro", f"{qtd_pts}")
-                col_r2.metric("Valor Total Envolvido", f"R$ {total_saldo:,.2f}")
+                col_r1, col_r2, col_r3, col_r4 = st.columns(4)
+                col_r1.metric("Total de PTs com Problema", f"{qtd_pts_total}", 
+                             delta=None, delta_color="inverse")
+                col_r2.metric("❌ Não Cadastrados", f"{qtd_nao_cadastrados}",
+                             help="PTs que não existem na base de ações")
+                col_r3.metric("⚠️ Inativos", f"{qtd_inativos}",
+                             help="PTs que existem mas estão com status 'Inativo'")
+                col_r4.metric("💰 Valor Total", f"R$ {total_saldo:,.2f}")
                 
-                st.warning(f"⚠️ **Atenção:** {qtd_pts} programas de trabalho com saldo não constam na base ativa.")
+                st.error(f"""
+                **⚠️ Atenção:** Encontrados **{qtd_pts_total} programas de trabalho** que requerem ação:
+                - **{qtd_nao_cadastrados} PTs não cadastrados** → Necessário **CADASTRAR** no SIAFERIO
+                - **{qtd_inativos} PTs inativos** → Necessário **REATIVAR** no SIAFERIO
+                """)
                 
                 # Formatação da tabela
                 df_display = df_resultado.copy()
                 df_display['Saldo RP'] = df_display['Saldo RP'].apply(lambda x: f"R$ {x:,.2f}")
-                st.dataframe(df_display, use_container_width=True, hide_index=True)
                 
-                # Download
+                st.markdown("### 📋 Tabela Consolidada - PTs que Requerem Ação")
+                
+                # Tabs para separar visualização
+                tab_todos, tab_nao_cad, tab_inativos = st.tabs([
+                    f"📊 Todos ({qtd_pts_total})",
+                    f"❌ Não Cadastrados ({qtd_nao_cadastrados})",
+                    f"⚠️ Inativos ({qtd_inativos})"
+                ])
+                
+                with tab_todos:
+                    st.dataframe(
+                        df_display,
+                        use_container_width=True,
+                        hide_index=True
+                    )
+                
+                with tab_nao_cad:
+                    if qtd_nao_cadastrados > 0:
+                        df_nao_cad = df_display[df_display['Situação'] == 'Não Cadastrado']
+                        st.error(f"**{qtd_nao_cadastrados} PTs** não existem na base de ações. **Ação:** Cadastrar no SIAFERIO.")
+                        st.dataframe(df_nao_cad, use_container_width=True, hide_index=True)
+                    else:
+                        st.success("✅ Nenhum PT não cadastrado encontrado!")
+                
+                with tab_inativos:
+                    if qtd_inativos > 0:
+                        df_inat = df_display[df_display['Situação'] == 'Inativo']
+                        st.warning(f"**{qtd_inativos} PTs** existem na base mas estão inativos. **Ação:** Reativar no SIAFERIO.")
+                        st.dataframe(df_inat, use_container_width=True, hide_index=True)
+                    else:
+                        st.success("✅ Nenhum PT inativo com saldo encontrado!")
+                
+                # Download consolidado
+                st.markdown("---")
+                st.markdown("### 📥 Download do Relatório Completo")
+                
                 output = io.BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                    df_resultado.to_excel(writer, index=False, sheet_name='PTs_Sem_Cadastro')
+                    # Aba 1: Consolidado
+                    df_resultado.to_excel(writer, index=False, sheet_name='Consolidado')
+                    
+                    # Aba 2: Não Cadastrados
+                    if qtd_nao_cadastrados > 0:
+                        df_resultado[df_resultado['Situação'] == 'Não Cadastrado'].to_excel(
+                            writer, index=False, sheet_name='Não_Cadastrados'
+                        )
+                    
+                    # Aba 3: Inativos
+                    if qtd_inativos > 0:
+                        df_resultado[df_resultado['Situação'] == 'Inativo'].to_excel(
+                            writer, index=False, sheet_name='Inativos'
+                        )
+                    
+                    # Aba 4: Estatísticas
                     pd.DataFrame([stats]).T.to_excel(writer, sheet_name='Estatisticas')
+                
                 output.seek(0)
                 
                 st.download_button(
-                    label="📥 Baixar Relatório (Excel)",
+                    label="📥 Baixar Relatório Completo (Excel)",
                     data=output,
-                    file_name="RP_a_Pagar_Sem_Cadastro.xlsx",
+                    file_name="RP_a_Pagar_COMPLETO.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    type="primary"
+                    type="primary",
+                    help="Arquivo Excel com abas: Consolidado, Não Cadastrados, Inativos, Estatísticas"
                 )
         
         except Exception as e:
@@ -355,8 +455,9 @@ with tab2:
     col1b, col2b = st.columns(2)
     
     with col1b:
-        st.markdown("#### 1. Base de Ações (SIAFERIO)")
-        st.caption("Planejamento >> Plano Plurianual >> Ação")
+        st.markdown("### 1. Base de Ações (SIAFERIO)")
+        st.markdown("###### Caminho: Planejamento >> Plano Plurianual >> Ação")
+        st.markdown("###### Imprimir a Tabela, Exportar para formato XLS e Depois Salvar em Formato XLSX no computador")
         file_acoes_tab2 = st.file_uploader(
             "Upload Base Ações (.xlsx)", 
             type=["xlsx"], 
@@ -364,8 +465,9 @@ with tab2:
         )
     
     with col2b:
-        st.markdown("#### 2. Saldo RP Pagos/Cancelados (Flexvision)")
-        st.caption("Consulta: LISUGSALDO (contas 631x e 632x)")
+        st.markdown("### 2. Saldo RP Pagos/Cancelados (Flexvision)")
+        st.markdown("###### Consulta Flexvision: 079301 (LISUGSALDO RP PAGO ou CANCELADO na Pasta do Usuário Marcelo Jandussi e na pasta RP)")
+        st.markdown("###### Exportar a consulta para formato Excel e Depois Salvar em Formato XLSX no computador")
         file_rp_tab2 = st.file_uploader(
             "Upload Saldo RP Pagos/Cancelados (.xlsx)", 
             type=["xlsx"], 
@@ -565,14 +667,21 @@ with st.expander("ℹ️ Instruções de Uso"):
     st.markdown("""
     ## Como usar esta ferramenta:
     
-    ### 🎯 Lógica da Conferência
+    ### 🎯 Objetivo da Análise
     
-    **Base de análise = SALDOS** (o que tem movimentação financeira)
+    Identificar **Programas de Trabalho (PTs) que requerem ação** por estarem em situação irregular:
     
-    A conferência é feita com **TODAS as ações** (ativas E inativas) porque:
-    - ✅ Se tem saldo em RP, deve existir na base (ativa ou inativa)
-    - ✅ Ações inativas com saldo são **NORMAIS** (RPs de exercícios anteriores)
-    - ❌ Problemas reais = PTs com saldo que **NÃO existem** na base
+    **2 Tipos de Problemas Identificados:**
+    
+    1. **❌ Não Cadastrados** 
+       - PTs com saldo que **não existem** na base de ações
+       - **Ação:** CADASTRAR no SIAFERIO
+       - **Gravidade:** Alta
+    
+    2. **⚠️ Inativos**
+       - PTs com saldo em ações com status **"Inativo"**
+       - **Ação:** REATIVAR no SIAFERIO (ou transferir saldo)
+       - **Gravidade:** Média
     
     ---
     
@@ -588,6 +697,11 @@ with st.expander("ℹ️ Instruções de Uso"):
     2. **Saldo RP a Pagar do Flexvision**
        - Consulta: 079062 (LISUGSALDO 632110101)
        - Exportar para Excel e salvar como XLSX
+    
+    **Resultados:**
+    - Tabela consolidada com todos os PTs que requerem ação
+    - Separação em abas: Todos / Não Cadastrados / Inativos
+    - Excel com múltiplas abas para distribuir tarefas
     
     ---
     
@@ -610,10 +724,35 @@ with st.expander("ℹ️ Instruções de Uso"):
        - Executar LISUGSALDO para as contas acima
        - Exportar para Excel e salvar como XLSX
     
-    **Informação Adicional:**
-    - O expander "PTs em Ações Inativas" mostra ações inativas que ainda têm saldo
-    - **Isso é NORMAL** para RPs Pagos/Cancelados (resíduos de exercícios anteriores)
-    - Não são erros, apenas situações para acompanhamento
+    **Resultados:**
+    - Mesma estrutura da Aba 1
+    - Tabela consolidada com coluna "Situação" e "Ação Necessária"
+    - Excel organizado para distribuir tarefas
+    
+    ---
+    
+    ### 📊 Estrutura dos Resultados (Ambas as Abas)
+    
+    **Tabela Consolidada com:**
+    
+    | Coluna | Descrição |
+    |--------|-----------|
+    | UO, Esfera, Função... | Campos orçamentários |
+    | Saldo RP | Valor em R$ |
+    | **Situação** | "Não Cadastrado" ou "Inativo" |
+    | **Ação Necessária** | "Cadastrar" ou "Reativar" |
+    | Nome da Ação | Nome (quando existir) |
+    
+    **Visualização em 3 Abas:**
+    - 📊 **Todos:** Visão consolidada completa
+    - ❌ **Não Cadastrados:** Filtro para equipe de cadastro
+    - ⚠️ **Inativos:** Filtro para equipe de reativação
+    
+    **Arquivo Excel Exportado:**
+    - Aba "Consolidado" - Todos os PTs
+    - Aba "Não_Cadastrados" - Apenas não cadastrados
+    - Aba "Inativos" - Apenas inativos
+    - Aba "Estatisticas" - Números do processamento
     
     ---
     
@@ -623,29 +762,43 @@ with st.expander("ℹ️ Instruções de Uso"):
     |----------------|------------|---------------------|
     | **Método de extração** | Split simples por ponto | Regex (padrão complexo) |
     | **Formato Conta Corrente** | Estruturado | Campo extenso com vários códigos |
-    | **Contas analisadas** | 632110101 | 631x e 632x (6 contas) |
+    | **Contas analisadas** | 632110101 (1 conta) | 631x e 632x (6 contas) |
     | **Status do RP** | Pendente de pagamento | Já pago ou cancelado |
-    | **Ações inativas com saldo** | Menos comum | Mais comum (exercícios anteriores) |
+    | **Frequência recomendada** | Mensal | Anual/Prestação de contas |
     
-    ### O que a ferramenta faz:
-    
-    - ✅ Extrai campos orçamentários do Conta Corrente
-    - 🔍 Cruza com **TODAS** as ações do SIAFERIO (ativas e inativas)
-    - ⚠️ Identifica PTs com saldo que **NÃO EXISTEM** na base
-    - 💰 Totaliza valores por Programa de Trabalho
-    - 📊 Mostra informação adicional sobre PTs em ações inativas (Aba 2)
-    - 📥 Gera relatório Excel completo
+    ---
     
     ### 💡 Interpretação dos Resultados:
     
-    **PTs sem cadastro (resultado principal):**
-    - São **problemas reais** que precisam ser corrigidos
-    - Não existem na base (nem ativas nem inativas)
-    - Podem ser erros de digitação, lançamentos incorretos, etc.
+    **❌ Não Cadastrados (Problema Grave):**
+    - Não existem na base de ações
+    - Violação de princípios contábeis
+    - **Providência:** Cadastrar imediatamente ou regularizar lançamentos
     
-    **PTs em ações inativas (informação adicional - Aba 2):**
-    - São **situações normais** de acompanhamento
-    - Existem na base, mas estão inativas
-    - Representam RPs de exercícios anteriores sendo regularizados
-    - Não requerem ação imediata, apenas monitoramento
+    **⚠️ Inativos (Problema Moderado):**
+    - Existem na base mas estão marcados como "Inativo"
+    - Não deveria haver movimentação financeira
+    - **Providência:** Reativar ação ou transferir saldo para ação ativa
+    
+    ---
+    
+    ### 🎯 Fluxo de Trabalho Sugerido:
+    
+    1. **Execute a análise** (mensal para Aba 1, anual para Aba 2)
+    2. **Baixe o relatório Excel**
+    3. **Distribua as abas:**
+       - "Não_Cadastrados" → Equipe de cadastro
+       - "Inativos" → Gestores das UOs
+    4. **Acompanhe as correções**
+    5. **Execute novamente** para verificar se foi resolvido
+    
+    ---
+    
+    ### 📞 Observações Importantes:
+    
+    - O sistema sempre usa **TODAS as ações** (ativas + inativas)
+    - Ações inativas com saldo **são consideradas problemas**
+    - Ambos os tipos requerem ação corretiva
+    - Excel organizado facilita distribuição de tarefas
+    - Use regularmente para manter conformidade contábil
     """)
