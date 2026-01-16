@@ -433,7 +433,8 @@ if not manuais:
     st.stop()
 
 # Seletor de manual
-st.subheader("📖 Selecione um Manual")
+st.markdown("# Selecione um Manual:")
+st.subheader("Opções:")
 
 manual_selecionado = st.selectbox(
     "Manual:",
@@ -501,9 +502,9 @@ if manual_selecionado:
         else:
             # Criar selectbox para navegação entre seções
             secoes_opcoes = [f"{i+1}. {title}" for i, (title, _) in enumerate(sections)]
-
+            st.markdown("# Selecione uma seção:")
             secao_selecionada_idx = st.selectbox(
-                "Selecione uma seção:",
+                "Opções:",
                 options=range(len(secoes_opcoes)),
                 format_func=lambda x: secoes_opcoes[x]
             )
