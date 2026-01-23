@@ -1678,6 +1678,8 @@ Parte do Manual com o objetivo de centralizar os Bloqueios de Funcionalidades qu
 - [ ] Alterar relatórios Gerenciais
 - [ ] Bloquear Funcionalidades por Usuários
 - [ ] Cadastrar Agendamento de Execução de Consultas
+- [ ] Cadastrar Conformidade Contábil
+- [ ] Cadastrar Conformidade Diária
 - [ ] Cadastrar Mensagens de Alerta
 - [ ] Cadastrar o Responsável pela Contabilidade
 - [ ] Cadastrar o Responsável pelos Cheques
