@@ -1719,21 +1719,13 @@ Parte do Manual com o objetivo de centralizar os Bloqueios de Funcionalidades qu
 
 
 **Banco de Abertura**
-- [ ] Não Bloqueia Nada
+- [ ] Não Bloqueia Nada (Obs: verificar se a opção de Emitir Balanços precisa ainda ficar Bloqueada)
 
 ---
 
 **ATENÇÃO**
-OBS: Após a término em definitivo do Banco, deixar apenas as funcionalidades de "consultas" LIBERADAS.
 
-VERBOS para deixar LIBERADOS!! (Colocar no filtro “Código >> contém”)
-Emitir
-Consultar
-Conciliar
-Filtrar
-Visualizar
-
-E marcar a Flag de Bloquear Todos os usuários (importante para não deixar que novos usuários do sistema entrem desbloqueados na funcionalidade)
+Verificar se está marcada a Flag de "Bloquear Todos os usuários" (importante para não deixar que novos usuários do sistema entrem desbloqueados na funcionalidade)
 
 
 ---
