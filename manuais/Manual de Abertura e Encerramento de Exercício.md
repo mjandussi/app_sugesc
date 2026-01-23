@@ -1576,101 +1576,6 @@ Parte do Manual com o objetivo de centralizar os Bloqueios de Funcionalidades qu
 
 
 **Banco de Encerramento - Bloquear tudo e deixar LIBERADAS**
-- [ ] Alterar Conta Contábil de Sistema
-- [ ] Alterar Regra de Compatibilidade
-- [ ] ALterar relatórios da LRF
-- [ ] Alterar Relatórios do Balanço
-- [ ] Alterar relatórios Gerenciais
-- [ ] Bloquear Funcionalidades por Usuários
-- [ ] Bloquear/Desbloquear Tipo de Item Patrimonial
-- [ ] Cadastrar Agendamento de Execucão de Consultas
-- [ ] Cadastrar Conciliação Bancária Mensal
-- [ ] Cadastrar Conformidade Contábil
-- [ ] Cadastrar Conformidade Diária
-- [ ] Cadastrar Conta Contábil
-- [ ] Cadastrar Evento
-- [ ] Cadastrar Item Patrimonial
-- [ ] Cadastrar Mensagens de Alerta
-- [ ] Cadastrar Nota de Sistema
-- [ ] Cadastrar o Responsável pela Contabilidade
-- [ ] Cadastrar o Responsável pelos Cheques
-- [ ] Cadastrar Operação Patrimonial
-- [ ] Cadastrar Parametros SPED (Sistema Público de Escrituração Digital)
-- [ ] Cadastrar Perfil Institucional
-- [ ] Cadastrar Plano de Contas Referencial
-- [ ] Cadastrar Processo de Encerramento
-- [ ] Cadastrar Regra de Compatibilidade
-- [ ] Cadastrar Regra de Mapeamento
-- [ ] Cadastrar Regra de Negócio
-- [ ] Cadastrar Regra de Validação Contábil
-- [ ] Cadastrar Tipo de Item Patrimonial
-- [ ] Cadastrar Tipo de Operação Patrimonial
-- [ ] Conciliar Ordem Bancária
-- [ ] Configurar Parâmetros do Sistema
-- [ ] Consultar Mensagens
-- [ ] Emitir Balancete
-- [ ] Emitir Balancete Geral
-- [ ] Emitir Balanços
-- [ ] Emitir Detalhamento Conta Contábil
-- [ ] Emitir Diário
-- [ ] Emitir Exercício
-- [ ] Emitir Livro Razão
-- [ ] Emitir Razão
-- [ ] Emitir relatórios da LRF
-- [ ] Emitir relatórios Gerenciais
-- [ ] Encerrar Mês
-- [ ] Encerrar mês definitivamente
-- [ ] Enviar e Conciliar Ordem Bancária
-- [ ] Enviar Email Pendência Acompanhamento
-- [ ] Exclui tarefa agendada no Quartz
-- [ ] Executar Fechamento do Dia
-- [ ] Executar Regra de Validação Contábil
-- [ ] Executar relatório gerencial da Educação no âmbito de todas as Unidades Gestoras.
-- [ ] Executar relatório gerencial da FAPERJ no âmbito de todas as Unidades Gestoras.
-- [ ] Executar relatório gerencial da FECAM no âmbito de todas as Unidades Gestoras.
-- [ ] Executar relatório gerencial da FECP no âmbito de todas as Unidades Gestoras.
-- [ ] Executar relatório gerencial da FEHIS no âmbito de todas as Unidades Gestoras.
-- [ ] Executar relatório gerencial da FUNDEB no âmbito de todas as Unidades Gestoras.
-- [ ] Executar relatório gerencial da SAÚDE no âmbito de todas as Unidades Gestoras.
-- [ ] Executar relatório gerencial de Demonstrativos no âmbito de todas as Unidades Gestoras.
-- [ ] Executar relatório gerencial de inscrição de RP
-- [ ] Exportação de Arquivo
-- [ ] Filtrar Programação de Desembolso - Agendamento
-- [ ] Filtrar Programação de Desembolso - Flexvision
-- [ ] Filtrar Programação de Desembolso - Padrão
-- [ ] Gerar arquivo SPED
-- [ ] Gerar Resumo domicílio e fonte
-- [ ] Imprimir a Relação de Envio
-- [ ] Imprimir Importação da Receita
-- [ ] Imprimir Registro de Envio
-- [ ] Migração de Tabelas
-- [ ] Monitorar processamento
-- [ ] Permite Acessar o Sistema em Modo Encerramento
-- [ ] Permite Emitir Relatórios de Orçamento para todas as UGs
-- [ ] Permite realizar a limpeza do cache
-- [ ] Processar Conciliacao Bancaria
-- [ ] Processar Fechamento do Dia
-- [ ] Reabrir Conciliação Bancária Mensal
-- [ ] Reabrir mês definitivamente encerrado
-- [ ] Realizar Análise Boletim Inscrição RP
-- [ ] Realizar Processo de Encerramento de Exercício
-- [ ] Restaurar operações excluídas
-- [ ] Sincronizar perfil institucional de todos usuários no Flexvision
-- [ ] Verificar Procedimentos para Inscrição de RP
-- [ ] E todas as funcionalidades de "VISUALIZAR" (OBS: digitar nome contém visualizar para filtrar)
-
-
-**Banco de Abertura**
-- [ ] Emitir Balanços
-
-### 11.4. Bloqueios Funcionalidades Usuários - APÓS O FECHAMENTO DO MÊS 14
-
-|-----------------------------------------------------------|
-| **Banco de Encerramento** >> Como bloqueia quase tudo, é mais fácil bloquear tudo e depois liberar conforme lista a seguir (Obs: fica mais fácil o trabalho). Essas funcionalides que ficam desbloqueadas são funcionalidades que precisam ser utilizadas mesmo com o banco encerrado, como as funcionalidades de visualização e também outras em particular como as funcionalidades do SPED, de conciliação bancária, etc          |
-| **Banco de Abertura**     >> Libera todas as Funcionalidades | 
-|-----------------------------------------------------------|
-
-**Banco de Encerramento - Bloquear tudo e deixar LIBERADAS**
 - [ ] Alterar Regra de Compatibilidade
 - [ ] ALterar relatórios da LRF
 - [ ] Alterar Relatórios do Balanço
@@ -1751,6 +1656,67 @@ Parte do Manual com o objetivo de centralizar os Bloqueios de Funcionalidades qu
 - [ ] Sincronizar perfil institucional de todos usuários no Flexvision
 - [ ] Verificar Procedimentos para Inscrição de RP
 - [ ] E todas as funcionalidades de "VISUALIZAR" (OBS: digitar nome contém visualizar para filtrar)
+
+
+
+**Banco de Abertura**
+- [ ] Emitir Balanços
+
+### 11.4. Bloqueios Funcionalidades Usuários - APÓS O FECHAMENTO DO MÊS 14
+
+|-----------------------------------------------------------|
+| **Banco de Encerramento** >> Como bloqueia quase tudo, é mais fácil bloquear tudo e depois liberar conforme lista a seguir (Obs: fica mais fácil o trabalho). Essas funcionalides que ficam desbloqueadas são funcionalidades que precisam ser utilizadas mesmo com o banco encerrado, como as funcionalidades de visualização e também outras em particular como as funcionalidades do SPED, de conciliação bancária, etc          |
+| **Banco de Abertura**     >> Libera todas as Funcionalidades | 
+|-----------------------------------------------------------|
+
+**Banco de Encerramento - Bloquear tudo e deixar LIBERADAS**
+>> Liberar por ordem alfabética de funcionalidades
+- [ ] Alterar Conta Contábil de Sistema
+- [ ] Alterar Regra de Compatibilidade
+- [ ] ALterar relatórios da LRF
+- [ ] Alterar Relatórios do Balanço
+- [ ] Alterar relatórios Gerenciais
+- [ ] Bloquear Funcionalidades por Usuários
+- [ ] Cadastrar Agendamento de Execução de Consultas
+- [ ] Cadastrar Mensagens de Alerta
+- [ ] Cadastrar o Responsável pela Contabilidade
+- [ ] Cadastrar o Responsável pelos Cheques
+- [ ] Cadastrar Parâmetros SPED (Sistema Público de Escrituração Digital)
+- [ ] Cadastrar Perfil Institucional
+- [ ] Cadastrar Plano de Contas Referencial
+- [ ] Cadastrar Regra de Compatibilidade
+- [ ] Cadastrar Regra de Mapeamento
+- [ ] Cadastrar Regra de Negócio
+- [ ] Cadastrar Regra de Validação Contábil
+- [ ] Configurar Parâmetros do Sistema
+- [ ] Consultar Mensagens
+- [ ] Encerrar Mês
+- [ ] Encerrar mês definitivamente
+- [ ] Exclui tarefa agendada no Quartz
+- [ ] Gerar arquivo SPED
+- [ ] Gerar Resumo domicílio e fonte
+- [ ] Migração de Tabelas
+- [ ] Monitorar processamento
+- [ ] Permite Acessar o Sistema em Modo Encerramento
+- [ ] Permite Emitir Relatórios de Orçamento para todas as UGs
+- [ ] Permite realizar a limpeza do cache
+- [ ] Processar Fechamento do Dia
+- [ ] Reabrir mês definitivamente encerrado
+- [ ] Realizar Análise Boletim Inscrição RP
+- [ ] Sincronizar perfil institucional de todos usuários no Flexvision
+- [ ] Verificar Procedimentos para Inscrição de RP
+>> Liberar todas pela ação (mas com exceções)
+- [ ] E todas as funcionalidades de "VISUALIZAR" (OBS: digitar nome contém visualizar para filtrar)
+- [ ] E todas as funcionalidades de "Emitir" (menos: "Permite emitir Descentralizações internas através da Nota de Crédito)
+- [ ] E todas as funcionalidades de "Executar" (menos: as de Executar PDs)
+- [ ] E todas as funcionalidades de "Imprimir" e "Filtrar"
+>> Conciliação Bancária do Tesouro
+- [ ] Conciliar Ordem Bancária
+- [ ] Enviar e Conciliar Ordem Bancária
+- [ ] Processar Conciliação Bancária
+- [ ] Excluir extrato na Conciliação Bancária
+- [ ] Carregar extrato na Conciliação Bancária
+
 
 **Banco de Abertura**
 - [ ] Não Bloqueia Nada
