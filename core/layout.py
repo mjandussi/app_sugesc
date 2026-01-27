@@ -2,6 +2,7 @@
 import os
 from copy import deepcopy
 import streamlit as st
+from core.auth import require_login, render_logout
 
 # Menu lateral compartilhado por todas as páginas do app
 APP_MENU = {
@@ -44,7 +45,12 @@ def get_app_menu() -> dict:
     """Retorna uma cópia do menu padrão para evitar mutações acidentais."""
     return deepcopy(APP_MENU)
 
-def setup_page(page_title: str = "SICONFI DADOS", layout: str = "wide", hide_default_nav: bool = False):
+def setup_page(
+    page_title: str = "SICONFI DADOS",
+    layout: str = "wide",
+    hide_default_nav: bool = False,
+    require_login_enabled: bool = True,
+):
     st.set_page_config(page_title=page_title, page_icon="🏠", layout=layout)
     css = """
     <style>
@@ -61,6 +67,8 @@ def setup_page(page_title: str = "SICONFI DADOS", layout: str = "wide", hide_def
         """
     css += "</style>"
     st.markdown(css, unsafe_allow_html=True)
+    if require_login_enabled:
+        require_login(app_name=page_title)
 
 def sidebar_menu(structure: dict, *, use_expanders: bool = True, expanded: bool = True, show_env_info: bool = True):
     """
@@ -76,6 +84,7 @@ def sidebar_menu(structure: dict, *, use_expanders: bool = True, expanded: bool 
     }
     """
     with st.sidebar:
+        render_logout()
         # Indicador de ambiente
         if show_env_info:
             db_url_env = os.environ.get("DB_URL")
