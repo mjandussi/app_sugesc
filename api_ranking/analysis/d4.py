@@ -1666,15 +1666,8 @@ def d4_00037(receita, df_rreo_6):
     imposto_rreo_6['dimensao'] = 'D4_00037_Rec.Impostos'
     imposto_rreo_6 = imposto_rreo_6.groupby('dimensao').agg({'valor': 'sum'}).reset_index()
 
-    rec_total = receita.copy()
-    if 'natureza_conta' in rec_total.columns:
-        mascara_retificadora = (
-            rec_total['conta_contabil'].astype(str).str.startswith('6') &
-            rec_total['natureza_conta'].eq('D') &
-            (~rec_total['tipo_valor'].eq('period_change'))
-        )
-        rec_total.loc[mascara_retificadora, 'valor'] *= -1
-    rec_realizada_imposto_msc = rec_total[rec_total['natureza_receita'].str.match(r"^(111450|111251|111252|111303)")]
+    rec_realizada_imposto_msc = receita[receita['natureza_receita'].str.match(r"^(111450|111251|111252|111303)")]
+    rec_realizada_imposto_msc = rec_realizada_imposto_msc[rec_realizada_imposto_msc['mes_referencia'] == 12]
     rec_realizada_imposto_msc['dimensao'] = 'D4_00037_Rec.Impostos'
     rec_realizada_imposto_msc = rec_realizada_imposto_msc.groupby(['dimensao'])['valor'].sum().reset_index()
 
@@ -1760,15 +1753,8 @@ def d4_00039(receita, df_rreo_6):
     transf_rreo_6['dimensao'] = 'D4_00039_Transf.Const'
     transf_rreo_6 = transf_rreo_6.groupby('dimensao').agg({'valor': 'sum'}).reset_index()
 
-    rec_total = receita.copy()
-    if 'natureza_conta' in rec_total.columns:
-        mascara_retificadora = (
-            rec_total['conta_contabil'].astype(str).str.startswith('6') &
-            rec_total['natureza_conta'].eq('D') &
-            (~rec_total['tipo_valor'].eq('period_change'))
-        )
-        rec_total.loc[mascara_retificadora, 'valor'] *= -1
-    transf_msc = rec_total[rec_total['natureza_receita'].str.match(r"^(171150|771150|1715|1751|7715|7751)")]
+    transf_msc = receita[receita['natureza_receita'].str.match(r"^(171150|771150|1715|1751|7715|7751)")]
+    transf_msc = transf_msc[transf_msc['mes_referencia'] == 12]
     transf_msc['dimensao'] = 'D4_00039_Transf.Const'
     transf_msc = transf_msc.groupby(['dimensao'])['valor'].sum().reset_index()
 

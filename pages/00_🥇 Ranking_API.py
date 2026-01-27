@@ -5,17 +5,9 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import io
+from io import BytesIO
 from core.utils import convert_df_to_excel, convert_df_to_csv
 from core.layout import setup_page, sidebar_menu, get_app_menu
-
-import asyncio
-from io import BytesIO
-import os
-import re
-import numpy as np
-import pandas as pd
-import streamlit as st
 
 import api_ranking.analysis.d1 as d1_analysis
 import api_ranking.analysis.d2_antecipada as d2_ant_analysis
@@ -28,7 +20,7 @@ from api_ranking.services.api_loader import get_extratos, load_all_data_cached, 
 from api_ranking.services.check_types import (detectar_tipo_relatorio, 
             verificar_disponibilidade_demonstrativos, verificacao_disponivel,)
 
-from api_ranking.services.formatting import highlight_resposta, emoji_por_resposta, mostrar_tabela_formatada
+from api_ranking.services.formatting import highlight_resposta
 
 from api_ranking.renders.render_d1 import render_tab_d1
 from api_ranking.renders.render_d2_antecipada import render_d2_antecipada
@@ -71,13 +63,17 @@ def main():
 
     st.header("📋 Seleção de Parâmetros")
 
-    # 1. Selecionar Tipo de Ente
-    tipo_ente = st.selectbox(
-        "Tipo de Ente:",
-        options=["E", "M"],
-        format_func=lambda x: "Estado" if x == "E" else "Município",
-        index=0
-    )
+    col1, col2, col3 = st.columns(3)
+
+    # 1️⃣ Tipo de Ente
+    with col1:
+        # 1. Selecionar Tipo de Ente
+        tipo_ente = st.selectbox(
+            "Tipo de Ente:",
+            options=["E", "M"],
+            format_func=lambda x: "Estado" if x == "E" else "Município",
+            index=0
+        )
 
     # 2. Carregar base correspondente (com cache de 24 horas)
     try:
@@ -85,15 +81,19 @@ def main():
             tipo_ente, CAMINHO_BASE_ESTADOS, CAMINHO_BASE_MUNICIPIOS
         )
 
-        # 3. Obter anos disponíveis (apenas 2023 e 2024)
-        anos_disponiveis = [2025, 2024, 2023]
 
-        # 4. Selecionar Ano (2024 como padrão por enquanto)
-        ano = st.selectbox(
-            "Ano de Exercício:",
-            options=anos_disponiveis,
-            index=1  # 2024 é o segundo da lista
-        )
+        
+        # 2️⃣ Ano de Exercício
+        with col2:
+            # 3. Obter anos disponíveis (apenas 2023 e 2024)
+            anos_disponiveis = [2025, 2024, 2023]
+
+            # 4. Selecionar Ano (2024 como padrão por enquanto)
+            ano = st.selectbox(
+                "Ano de Exercício:",
+                options=anos_disponiveis,
+                index=1  # 2024 é o segundo da lista
+            )
 
         # 5. Filtrar base pelo ano selecionado
         # Para anos em andamento (como 2025) que não estão na base de ranking,
@@ -125,11 +125,13 @@ def main():
             except (IndexError, ValueError):
                 default_index = 0
 
-        ente_selecionado = st.selectbox(
-            f"{'Estado' if tipo_ente == 'E' else 'Município'}:",
-            options=df_ano['display_name'].tolist(),
-            index=default_index
-        )
+        # 3️⃣ Estado / Município
+        with col3:
+            ente_selecionado = st.selectbox(
+                f"{'Estado' if tipo_ente == 'E' else 'Município'}:",
+                options=df_ano['display_name'].tolist(),
+                index=default_index
+            )
 
         # 8. Extrair código do ente selecionado
         ente_row = df_ano[df_ano['display_name'] == ente_selecionado].iloc[0]
@@ -1069,11 +1071,12 @@ def main():
     # Criando matrizes Específicas para as análises
     
     msc_dez = msc.query('mes_referencia == 12')
-    
-    msc_e = msc.query('tipo_valor == "ending_balance"')
-    
+
     msc_consolidada_e = msc_consolidada.query('tipo_valor == "ending_balance"')
     msc_consolidada_b = msc_consolidada.query('tipo_valor == "beginning_balance"')
+
+    msc_e = msc.query('tipo_valor == "ending_balance"')
+    msc_b = msc.query('tipo_valor == "beginning_balance"')
     
     msc_orig_e = msc_orig.query('tipo_valor == "ending_balance"')
     msc_orig_b = msc_orig.query('tipo_valor == "beginning_balance"')
@@ -1094,11 +1097,8 @@ def main():
         
     # Criando Variáveis da MSC
     # Variáveis da MSC       
-    #receita = msc_dez.query('conta_contabil == "621200000" or conta_contabil == "621310100" or conta_contabil == "621310200" or conta_contabil == "621390000"')
-    #receita = msc_consolidada_e.query('conta_contabil == "621200000" or conta_contabil == "621310100" or conta_contabil == "621310200" or conta_contabil == "621390000"')
-    receita = msc_consolidada_e[msc_consolidada_e['conta_contabil'].str.match(r"^(6212|6213)")]
-    
-    
+    # Receita não pegar o Saldo Final da Matriz de Encerramento (por isso não usa a "msc_consolidada_e")
+    receita = msc_e[msc_e['conta_contabil'].str.match(r"^(6212|6213)")]
     receita['cat_receita'] = receita['natureza_receita'].astype(str).str[0]
     receita_corr = receita.query('cat_receita == "1"')
     receita_capi = receita.query('cat_receita == "2"')
