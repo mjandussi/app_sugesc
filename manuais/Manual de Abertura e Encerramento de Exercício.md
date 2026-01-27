@@ -1718,6 +1718,9 @@ Parte do Manual com o objetivo de centralizar os Bloqueios de Funcionalidades qu
 - [ ] Processar Conciliação Bancária
 - [ ] Excluir extrato na Conciliação Bancária
 - [ ] Carregar extrato na Conciliação Bancária
+>> Conciliação Bancária Mensal (da Contabilidade)
+- [ ] Cadastrar Conciliação Bancária Mensal
+- [ ] Reabrir Conciliação Bancária Mensal
 
 
 **Banco de Abertura**

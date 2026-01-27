@@ -61,6 +61,7 @@ st.markdown(
       <li><strong>✅ Conferência do Plano de Contas</strong>: Página voltada para o processo de encerramento, analisa a integridade das contas contábeis e identifica possíveis falhas na configuração do Plano de Contas e suas regras de transferência (casos em que a conta deveria transferir saldo e não está configurada, e vice-versa).</li>
       <li><strong>❌ Conferência dos Programas de Trabalho e os Saldos de RPP</strong>: Página que permite identificar quais Programas de Trabalho possuem saldos nas contas de Restos a Pagar, mas não estão cadastrados nas tabelas de apoio do SIAFERIO.</li>
       <li><strong>⚖️ Conferência Migração de Saldos</strong>: Página destinada à verificação da Transferência Diária, esta ferramenta valida se o balancete de encerramento está em conformidade com o de abertura, respeitando as regras de transferência de cada conta no Plano de Contas.</li>
+      <li><strong>🗑️ Análise de PDs Lixo</strong>: Página para realizar as análises das PDs Lixo/Flexvision.</li>
     </ul>
     <h4 style="margin-top:1.1rem;">🏦 Manuais</h4>
     <ul>
