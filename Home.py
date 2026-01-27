@@ -30,6 +30,7 @@ st.markdown(
   <div class="home-section">
     <h4>🏆 MSC e Ranking</h4>
     <ul>
+      <li><strong>🥇 Ranking API</strong>: Realiza as análises completas do ranking através dos dados extraídos da API do SICONFI.</li>
       <li><strong>🗓️ Análise MSC Mensal</strong>: Validação da Matriz de Saldos Contábeis conforme as Dimensões D1 do ranking SICONFI.</li>
       <li><strong>📊 Análise MSC x FLEX</strong>: Conciliação entre a MSC e alguns relatórios do FLEX para identificar possíveis divergências de dados.</li>
       <li><strong>🗓️ Análise MSC API Acumulado Mensal</strong>: Consulta à API do SICONFI sobre os dados da Matriz de Saldos Contábeis nas Dimensões D1 do ranking.</li>
