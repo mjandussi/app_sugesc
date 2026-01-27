@@ -201,12 +201,12 @@ if uploaded_file:
     col1, col2 = st.columns(2)
 
     with col1:
-        ano = st.selectbox("Ano", ['2023', '2024', '2025'], index=2)
+        ano = st.selectbox("Ano", ['2024', '2025', '2026'], index=2)
 
     with col2:
         mes = st.selectbox(
-            "Mês",
-            [f"{i:02d}" for i in range(1, 13)],
+            "Mês (Obs: para a matriz de encerramento escolha o mês 13)",
+            [f"{i:02d}" for i in range(1, 14)],
             index=8  # setembro como padrão
         )
 

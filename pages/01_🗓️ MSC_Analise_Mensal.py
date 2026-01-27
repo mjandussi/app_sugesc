@@ -951,17 +951,17 @@ col1, col2 = st.columns(2)
 with col1:
     ano_analise = st.number_input(
         "Ano de Análise",
-        min_value=2020,
-        max_value=2030,
-        value=2025,
+        min_value=2024,
+        max_value=2026,
+        value=2026,
         step=1
     )
 
 with col2:
     mes_analise = st.selectbox(
-        "Mês de Análise",
-        options=['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'],
-        index=0
+        "Mês de Análise (Obs: para a Matriz de Encerramento use o mês 13)",
+        options=['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13'],
+        index=8
     )
 
 st.markdown("---")
