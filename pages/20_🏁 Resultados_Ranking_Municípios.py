@@ -42,7 +42,7 @@ with st.spinner('Carregando dados...'):
 # Sidebar com filtros
 st.header("🔍 Filtros")
 
-c1, c2, c3 = st.columns
+c1, c2, c3 = st.columns(3)
 with c1:
     # Filtro de ano
     anos = sorted(df['VA_EXERCICIO'].unique())
