@@ -152,7 +152,6 @@ def load_data():
 # ============================================================
 # UI
 # ============================================================
-st.title("🏁 Análise dos Resultados Históricos dos Estados no Ranking Siconfi")
 
 with st.spinner("Carregando dados..."):
     df = load_data()
