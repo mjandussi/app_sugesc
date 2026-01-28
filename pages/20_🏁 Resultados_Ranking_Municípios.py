@@ -42,17 +42,19 @@ with st.spinner('Carregando dados...'):
 # Sidebar com filtros
 st.header("🔍 Filtros")
 
-# Filtro de ano
-anos = sorted(df['VA_EXERCICIO'].unique())
-ano_selecionado = st.selectbox('Exercício', anos, index=len(anos)-1)
-
-# Filtro de UF
-ufs = ['Todos'] + sorted(df['UF'].unique().tolist())
-uf_selecionada = st.selectbox('Estado (UF)', ufs)
-
-# Filtro de região
-regioes = ['Todas'] + sorted(df['CO_REGIAO'].dropna().unique().tolist())
-regiao_selecionada = st.selectbox('Região', regioes)
+c1, c2, c3 = st.columns
+with c1:
+    # Filtro de ano
+    anos = sorted(df['VA_EXERCICIO'].unique())
+    ano_selecionado = st.selectbox('Exercício', anos, index=len(anos)-1)
+with c2:
+    # Filtro de UF
+    ufs = ['Todos'] + sorted(df['UF'].unique().tolist())
+    uf_selecionada = st.selectbox('Estado (UF)', ufs)
+with c3:
+    # Filtro de região
+    regioes = ['Todas'] + sorted(df['CO_REGIAO'].dropna().unique().tolist())
+    regiao_selecionada = st.selectbox('Região', regioes)
 
 # Aplicar filtros
 df_filtered = df[df['VA_EXERCICIO'] == ano_selecionado].copy()
