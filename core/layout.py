@@ -16,6 +16,8 @@ APP_MENU = {
         {"path": "pages/10_🗓️ MSC_Analise_Mensal_Acum_API.py", "label": "Análise MSC API Acumulado Mensal", "icon": "🗓️"},
         {"path": "pages/03_📑 Extratos_Homologacoes.py", "label": "Extratos de Homologações", "icon": "📑"},
         {"path": "pages/09_⚖️ Analise_Novas_Dimensões.py", "label": "Análise das Novas Dimensões", "icon": "⚖️"},
+        {"path": "pages/21_🏁 Resultados_Ranking_Estados.py", "label": "Analisar os Resultados dos Estados no Ranking", "icon": "🏁"},
+        {"path": "pages/20_🏁 Resultados_Ranking_Municípios.py", "label": "Analisar os Resultados dos Municípios no Ranking", "icon": "🏁"},
         {"path": "pages/11_🚨 MSC_Acertos_Fonte_Banco.py", "label": "Acerto de Fontes em Banco", "icon": "🚨"},
         {"path": "pages/13_✔️ MSC_Conferencia_com_Layout_STN.py", "label": "Conferência entre Matriz e Layout da STN", "icon": "✔️"},
         {"path": "pages/15_🔍 Analisar_Tabela_de_Dimensoes_Ranking.py", "label": "Analisar a Tabela das Dimensões do Ranking", "icon": "🔍"},
@@ -26,7 +28,7 @@ APP_MENU = {
     "Análises Carga da LOA": [
         {"path": "pages/05_📊 LME_Conferencias_Saldos.py", "label": "Conferência de Saldos de LME", "icon": "📊"},
         {"path": "pages/06_🧮 LME_Analise_TXT.py", "label": "Análise dos TXT de LME", "icon": "🧮"}, 
-        {"path": "pages/18_✔️ Conferencia_Carga_Receita.py", "label": "Conferência da Carga da Receita da LOA no Siaferio", "icon": "✔️"},
+        {"path": "pages/18_✔️ Conferencia_Carga_Receita.py", "label": "Conferência da Carga da Receita da LOA no Siaferio", "icon": "✔️"}, 
     ],
     "Outras Análises": [
         {"path": "pages/07_🧩 Encerramento_Disponibilidades.py", "label": "Encerramento de Disponibilidades Financeiras", "icon": "🧩"},
