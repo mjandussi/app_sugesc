@@ -55,9 +55,9 @@ def montar_regras_por_ug(df: pd.DataFrame, max_terms_por_expressao: int | None =
             det_join = ",".join(pedaco)
             regra = (
                 f"([UNIDADE GESTORA EMITENTE].[CÓDIGO] = {ug_str} e "
-                f"[IDENTIFICADOR EXERCÍCIO FONTE].[CÓDIGO] = {int(ano)} e "
+                f"([IDENTIFICADOR EXERCÍCIO FONTE].[CÓDIGO] = {int(ano)} e "
                 f"extrai([DETALHAMENTO DE FONTE].[CÓDIGO], 1, 3) pertence ({fonte}) e "
-                f"não extrai([DETALHAMENTO DE FONTE].[CÓDIGO], 7, 6) pertence ({det_join}))"
+                f"não extrai([DETALHAMENTO DE FONTE].[CÓDIGO], 7, 6) pertence ({det_join})))"
             )
             try:
                 ano_val = int(str(ano))

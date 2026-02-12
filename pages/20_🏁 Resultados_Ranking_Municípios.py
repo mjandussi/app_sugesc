@@ -17,23 +17,88 @@ sidebar_menu(get_app_menu(), use_expanders=True, expanded=False)
 st.title("🏁 Análise dos Resultados Histórico dos Municípios no Ranking Siconfi")
 
 
-# Cache para carregar dados
+BASE_MUNICIPIOS = "api_ranking/base_ranking/municipios_bspn_base.csv"
+METODOLOGIA_XLSX = "metodologia_ranking_2024_analise_completa.xlsx"  # coloque este arquivo na raiz do projeto
+
 @st.cache_data
 def load_data():
-    df = pd.read_csv('api_ranking/base_ranking/municipios_bspn_base.csv', sep=';', decimal=',')
-    
-    # Converter colunas numéricas
-    numeric_cols = ['TOTAL', 'DIM-I', 'DIM-II', 'DIM-III', 'DIM-IV', 'PER_ACERTOS']
+    df = pd.read_csv(BASE_MUNICIPIOS, sep=";", decimal=",", dtype={"ID_ENTE": str})
+    # numéricos principais
+    numeric_cols = ['TOTAL', 'DIM-I', 'DIM-II', 'DIM-III', 'DIM-IV', 'PER_ACERTOS', 'POS_RANKING', 'VA_EXERCICIO']
     for col in numeric_cols:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce')
-    
-    # Converter colunas de indicadores (D1_, D2_, D3_, D4_)
-    indicator_cols = [col for col in df.columns if col.startswith(('D1_', 'D2_', 'D3_', 'D4_'))]
+
+    # indicadores (D1_, D2_, D3_, D4_)
+    indicator_cols = [c for c in df.columns if str(c).startswith(("D1_", "D2_", "D3_", "D4_"))]
     for col in indicator_cols:
         df[col] = pd.to_numeric(df[col], errors='coerce')
-    
+
+    # trims básicos
+    for c in ["UF", "NOME_ENTE", "NO_ICF", "CO_REGIAO"]:
+        if c in df.columns:
+            df[c] = df[c].astype(str).str.strip()
+
     return df
+
+
+@st.cache_data
+def load_metodologia():
+    met = pd.read_excel(METODOLOGIA_XLSX)
+    # tentativas de padronização (caso os nomes de colunas variem)
+    # você pode ajustar depois olhando o head do met
+    met.columns = [str(c).strip() for c in met.columns]
+    # coluna do código
+    col_cod = None
+    for cand in ["Código", "CODIGO", "cod_verificacao", "verificacao", "Indicador"]:
+        if cand in met.columns:
+            col_cod = cand
+            break
+
+    if col_cod is None:
+        # fallback: cria uma tabela vazia pra não quebrar o app
+        return pd.DataFrame(columns=["Código", "Título", "Dimensão", "Relatório", "É_Cruzamento"])
+
+    met = met.rename(columns={col_cod: "Código"})
+
+    met["Código"] = met["Código"].astype(str).str.strip()
+
+    # tenta mapear colunas comuns (se existirem)
+    ren = {}
+    for cand in ["Título", "TITULO", "Descricao", "Descrição"]:
+        if cand in met.columns:
+            ren[cand] = "Título"
+            break
+    for cand in ["Dimensão", "DIMENSAO", "Dimensao"]:
+        if cand in met.columns:
+            ren[cand] = "Dimensão"
+            break
+    for cand in ["Relatório", "RELATORIO", "Relatorio"]:
+        if cand in met.columns:
+            ren[cand] = "Relatório"
+            break
+    for cand in ["É_Cruzamento", "E_CRUZAMENTO", "Cruzamento", "CRUZAMENTO"]:
+        if cand in met.columns:
+            ren[cand] = "É_Cruzamento"
+            break
+
+    met = met.rename(columns=ren)
+
+    # garante colunas mínimas
+    for c in ["Título", "Dimensão", "Relatório", "É_Cruzamento"]:
+        if c not in met.columns:
+            met[c] = np.nan
+
+    # normaliza flag cruzamento
+    if "É_Cruzamento" in met.columns:
+        met["É_Cruzamento"] = met["É_Cruzamento"].astype(str).str.lower().isin(["1", "true", "sim", "s", "yes"])
+
+    return met[["Código", "Título", "Dimensão", "Relatório", "É_Cruzamento"]].drop_duplicates("Código")
+
+
+met = load_metodologia()
+
+##################################################################################################################
 
 # Carregar dados
 with st.spinner('Carregando dados...'):
@@ -75,11 +140,12 @@ with c3:
     st.metric("Taxa Média de Acertos", f"{df_filtered['PER_ACERTOS'].mean()*100:.1f}%")
 
 # Abas principais
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📊 Visão Geral do Ranking", 
     "🔬 Análise Avançada",
     "🎯 Potencial de Melhoria na Consistência do Cruzamentos de Dados",
     "🔍 Diagnóstico por Município",
+    "📈 Municípios do RJ",
 ])
 
 # TAB 1: VISÃO GERAL
@@ -360,37 +426,37 @@ with tab2:
                 height=400
             )
             st.plotly_chart(fig_evolucao, use_container_width=True)
-    with col2:
-        # Análise de clustering (grupos de desempenho)
-        st.subheader("Segmentação de Municípios por Desempenho")
+        with col2:
+            # Análise de clustering (grupos de desempenho)
+            st.subheader("Segmentação de Municípios por Desempenho")
+            
+            df_filtered['Categoria'] = pd.cut(
+                df_filtered['TOTAL'],
+                bins=[0, 100, 130, 160, 200],
+                labels=['Baixo', 'Médio', 'Alto', 'Excelente']
+            )
+            
+            categoria_count = df_filtered['Categoria'].value_counts().reset_index()
+            categoria_count.columns = ['Categoria', 'Quantidade']
+            
+            fig_categoria = px.pie(
+                categoria_count,
+                values='Quantidade',
+                names='Categoria',
+                title='Distribuição de Municípios por Categoria de Desempenho',
+                color_discrete_sequence=px.colors.qualitative.Bold
+            )
+            fig_categoria.update_layout(height=450)
+            st.plotly_chart(fig_categoria, use_container_width=True)
         
-        df_filtered['Categoria'] = pd.cut(
-            df_filtered['TOTAL'],
-            bins=[0, 100, 130, 160, 200],
-            labels=['Baixo', 'Médio', 'Alto', 'Excelente']
-        )
-        
-        categoria_count = df_filtered['Categoria'].value_counts().reset_index()
-        categoria_count.columns = ['Categoria', 'Quantidade']
-        
-        fig_categoria = px.pie(
-            categoria_count,
-            values='Quantidade',
-            names='Categoria',
-            title='Distribuição de Municípios por Categoria de Desempenho',
-            color_discrete_sequence=px.colors.qualitative.Bold
-        )
-        fig_categoria.update_layout(height=450)
-        st.plotly_chart(fig_categoria, use_container_width=True)
-    
-    # Estatísticas por categoria
-    st.subheader("Estatísticas por Categoria de Desempenho")
-    cat_stats = df_filtered.groupby('Categoria').agg({
-        'NOME_ENTE': 'count',
-        'TOTAL': ['mean', 'min', 'max'],
-        'PER_ACERTOS': 'mean'
-    }).round(2)
-    st.dataframe(cat_stats, use_container_width=True)
+        # Estatísticas por categoria
+        st.subheader("Estatísticas por Categoria de Desempenho")
+        cat_stats = df_filtered.groupby('Categoria').agg({
+            'NOME_ENTE': 'count',
+            'TOTAL': ['mean', 'min', 'max'],
+            'PER_ACERTOS': 'mean'
+        }).round(2)
+        st.dataframe(cat_stats, use_container_width=True)
 
     st.divider()
 
@@ -748,22 +814,18 @@ with tab3:
             df_entregaram['Possivel_PER_ACERTOS'] = df_entregaram['PER_ACERTOS'] + df_entregaram['Percentual_Acrescimo']
             
             # Determinar possível ICF
-            def calcular_icf(valor):
-                if valor >= 0.95:
-                    return 'A+'
-                elif valor >= 0.90:
-                    return 'A'
-                elif valor > 0.85:
-                    return 'B+'
-                elif valor > 0.75:
-                    return 'B'
-                elif valor > 0.65:
-                    return 'C+'
-                elif valor > 0.50:
-                    return 'C'
+            def calcular_icf(per_acertos: float) -> str:
+                if per_acertos >= 0.95:
+                    return "A"
+                elif per_acertos >= 0.85:
+                    return "B"
+                elif per_acertos >= 0.75:
+                    return "C"
+                elif per_acertos >= 0.65:
+                    return "D"
                 else:
-                    return 'D'
-            
+                    return "E"
+                
             df_entregaram['Possivel_ICF'] = df_entregaram['Possivel_PER_ACERTOS'].apply(calcular_icf)
             
             # Ordenar por potencial de melhora
@@ -1498,9 +1560,507 @@ Críticos: {reprovados if 'reprovados' in locals() else 'N/A'}
         )
 
 
+# TAB 5: Municípios RJ
+with tab5:
+    st.header("📊 Desempenho dos Municípios do RJ")
+
+    # sempre mostra RJ (não depende do filtro global)
+    anos_disp = sorted(df["VA_EXERCICIO"].dropna().unique().tolist())
+
+    if len(anos_disp) > 1 and 2023 in anos_disp and 2024 in anos_disp:
+        rj_23 = df[(df["UF"] == "RJ") & (df["VA_EXERCICIO"] == 2023)]
+        rj_24 = df[(df["UF"] == "RJ") & (df["VA_EXERCICIO"] == 2024)]
+
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.metric(
+                "RJ — Nota média (TOTAL)",
+                f"{rj_24['TOTAL'].mean():.2f}",
+                f"{(rj_24['TOTAL'].mean() - rj_23['TOTAL'].mean()):+.2f}"
+            )
+        with c2:
+            st.metric(
+                "RJ — % acertos médio",
+                f"{rj_24['PER_ACERTOS'].mean()*100:.1f}%",
+                f"{(rj_24['PER_ACERTOS'].mean() - rj_23['PER_ACERTOS'].mean())*100:+.1f} p.p."
+            )
+        with c3:
+            st.metric(
+                "RJ — DIM-IV média",
+                f"{rj_24['DIM-IV'].mean():.2f}",
+                f"{(rj_24['DIM-IV'].mean() - rj_23['DIM-IV'].mean()):+.2f}"
+            )
+    else:
+        st.info("Base não contém RJ 2023 e 2024 ao mesmo tempo (ou só há 1 ano disponível).")
+
+    st.divider()
+
+    st.subheader("📌 Painel RJ (2019–2024) — Comparações, ICF e Diagnóstico de Verificações")
+
+    df_rj = df[df["UF"] == "RJ"].copy()
+
+    # ----------------------------
+    # (A) Tabela RJ 2023 vs 2024
+    # ----------------------------
+    if (2023 in df_rj["VA_EXERCICIO"].unique()) and (2024 in df_rj["VA_EXERCICIO"].unique()):
+
+        def resumo_rj(ano: int) -> dict:
+            d = df_rj[df_rj["VA_EXERCICIO"] == ano].copy()
+
+            uf_rank = (
+                df[df["VA_EXERCICIO"] == ano]
+                .groupby("UF", as_index=False)["TOTAL"].mean()
+                .sort_values("TOTAL", ascending=False)
+                .reset_index(drop=True)
+            )
+            uf_rank["Rank_UF_TOTAL"] = uf_rank.index + 1
+            rank_rj = int(uf_rank.loc[uf_rank["UF"] == "RJ", "Rank_UF_TOTAL"].iloc[0])
+
+            return {
+                "Ano": ano,
+                "N municípios": int(len(d)),
+                "TOTAL (média)": float(d["TOTAL"].mean()),
+                "TOTAL (desvio)": float(d["TOTAL"].std()),
+                "PER_ACERTOS (média)": float(d["PER_ACERTOS"].mean()),
+                "PER_ACERTOS (desvio)": float(d["PER_ACERTOS"].std()),
+                "DIM-I (média)": float(d["DIM-I"].mean()),
+                "DIM-II (média)": float(d["DIM-II"].mean()),
+                "DIM-III (média)": float(d["DIM-III"].mean()),
+                "DIM-IV (média)": float(d["DIM-IV"].mean()),
+                "POS_RANKING (mediana)": float(d["POS_RANKING"].median()),
+                "Rank do RJ entre UFs (média TOTAL)": rank_rj,
+                "Qtd UFs no ano": int(uf_rank["UF"].nunique()),
+            }
+
+        df_comp = pd.DataFrame([resumo_rj(2023), resumo_rj(2024)]).set_index("Ano")
+        delta = (df_comp.loc[2024] - df_comp.loc[2023]).to_frame().T
+        delta.index = ["Δ (2024-2023)"]
+        df_out = pd.concat([df_comp, delta], axis=0)
+
+        # formatação correta (delta em p.p. e com +/−)
+        df_show = df_out.copy()
+        for idx in df_show.index:
+            for col in df_show.columns:
+                v = df_show.loc[idx, col]
+                if pd.isna(v):
+                    df_show.loc[idx, col] = ""
+                    continue
+
+                is_delta = (idx == "Δ (2024-2023)")
+
+                if "PER_ACERTOS" in col:
+                    df_show.loc[idx, col] = f"{v*100:+.2f} p.p." if is_delta else f"{v*100:.2f}%"
+                elif "Rank" in col or "N municípios" in col or "Qtd UFs" in col:
+                    df_show.loc[idx, col] = f"{int(round(v))}"
+                elif "POS_RANKING" in col:
+                    df_show.loc[idx, col] = f"{v:.0f}"
+                else:
+                    df_show.loc[idx, col] = f"{v:+.2f}" if is_delta else f"{v:.2f}"
+
+        st.markdown("### ✅ RJ 2023 vs 2024 — resumo e ranking relativo")
+        st.dataframe(df_show, use_container_width=True)
+
+    else:
+        st.info("RJ 2023/2024 não encontrado no dataset atual.")
+
+    # -------------------------------------
+    # (B) Distribuição ICF RJ (2019–2024)
+    # -------------------------------------
+    st.markdown("### 🧾 Distribuição do ICF no RJ (2019–2024)")
+
+    icf_rj = (
+        df_rj[df_rj["VA_EXERCICIO"].between(2019, 2024)]
+        .groupby(["VA_EXERCICIO", "NO_ICF"])
+        .size()
+        .reset_index(name="Qtd")
+    )
+
+    if len(icf_rj) > 0:
+        fig_icf_rj = px.bar(
+            icf_rj,
+            x="VA_EXERCICIO",
+            y="Qtd",
+            color="NO_ICF",
+            barmode="stack",
+            title="RJ — Distribuição de municípios por classificação ICF (2019–2024)",
+            labels={"VA_EXERCICIO": "Ano", "Qtd": "Quantidade", "NO_ICF": "ICF"}
+        )
+        fig_icf_rj.update_layout(height=450)
+        st.plotly_chart(fig_icf_rj, use_container_width=True)
+    else:
+        st.warning("Sem dados suficientes para a distribuição ICF no RJ.")
+
+    # -------------------------------------------------------------------
+    # (C) Top 20 verificações mais problemáticas RJ em 2024 (com metodologia)
+    # -------------------------------------------------------------------
+    st.markdown("### ❌ Top 20 verificações mais problemáticas do RJ em 2024 (com metodologia)")
+
+    df_rj_2024 = df_rj[df_rj["VA_EXERCICIO"] == 2024].copy()
+    indicator_cols_rj = [c for c in df_rj_2024.columns if str(c).startswith(("D1_", "D2_", "D3_", "D4_"))]
+
+    if len(df_rj_2024) > 0 and len(indicator_cols_rj) > 0:
+        taxa = df_rj_2024[indicator_cols_rj].mean(numeric_only=True).reset_index()
+        taxa.columns = ["Código", "Taxa_Acerto_RJ_2024"]
+        taxa["Falhas_equivalentes"] = (1 - taxa["Taxa_Acerto_RJ_2024"]) * len(df_rj_2024)
+
+        taxa = taxa.merge(met, on="Código", how="left")
+
+        top20 = taxa.sort_values("Taxa_Acerto_RJ_2024", ascending=True).head(20)
+
+        top20_show = top20[["Código", "Título", "Dimensão", "Relatório", "Taxa_Acerto_RJ_2024", "Falhas_equivalentes"]].copy()
+        top20_show["Taxa_Acerto_RJ_2024"] = (top20_show["Taxa_Acerto_RJ_2024"] * 100).round(2).astype(str) + "%"
+        top20_show["Falhas_equivalentes"] = top20_show["Falhas_equivalentes"].round(0).astype(int)
+
+        st.dataframe(top20_show, use_container_width=True, height=520)
+
+        fig_top20 = px.bar(
+            top20.sort_values("Taxa_Acerto_RJ_2024", ascending=True),
+            x="Taxa_Acerto_RJ_2024",
+            y="Código",
+            orientation="h",
+            title="RJ 2024 — 20 verificações com menor taxa média de acerto",
+            hover_data=["Título", "Dimensão", "Relatório", "Falhas_equivalentes"]
+        )
+        fig_top20.update_layout(height=650)
+        st.plotly_chart(fig_top20, use_container_width=True)
+
+    else:
+        st.warning("Não foi possível calcular Top 20 (faltam indicadores ou RJ 2024 não está na base).")
+
+    # ----------------------------------------------------------
+    # (D) Pareto — 10 verificações que mais explicam as falhas RJ 2024
+    # ----------------------------------------------------------
+    st.markdown("### 📉 Pareto — Top 10 verificações que mais explicam as falhas no RJ (2024)")
+
+    if len(df_rj_2024) > 0 and len(indicator_cols_rj) > 0:
+        falhas = (1 - df_rj_2024[indicator_cols_rj]).sum(numeric_only=True).reset_index()
+        falhas.columns = ["Código", "Falhas_equivalentes"]
+
+        falhas = falhas.merge(met, on="Código", how="left").sort_values("Falhas_equivalentes", ascending=False)
+        falhas["Participação"] = falhas["Falhas_equivalentes"] / falhas["Falhas_equivalentes"].sum()
+        falhas["Acumulado"] = falhas["Participação"].cumsum()
+
+        pareto10 = falhas.head(10).copy()
+
+        fig_pareto = go.Figure()
+
+        fig_pareto.add_trace(go.Bar(
+            x=pareto10["Código"],
+            y=pareto10["Falhas_equivalentes"],
+            name="Falhas (equivalentes)",
+            hovertext=pareto10["Título"].fillna(""),
+            hoverinfo="text+y"
+        ))
+
+        fig_pareto.add_trace(go.Scatter(
+            x=pareto10["Código"],
+            y=(pareto10["Acumulado"] * 100),
+            name="% acumulado",
+            mode="lines+markers",
+            yaxis="y2"
+        ))
+
+        fig_pareto.update_layout(
+            title="RJ 2024 — Pareto das falhas (Top 10 verificações)",
+            xaxis_title="Verificação",
+            yaxis_title="Falhas equivalentes",
+            yaxis2=dict(
+                title="% acumulado",
+                overlaying="y",
+                side="right",
+                range=[0, 100]
+            ),
+            height=520,
+            hovermode="x unified"
+        )
+
+        st.plotly_chart(fig_pareto, use_container_width=True)
+
+        pareto_show = pareto10[["Código", "Título", "Dimensão", "Relatório", "Falhas_equivalentes", "Participação", "Acumulado"]].copy()
+        pareto_show["Participação"] = (pareto_show["Participação"] * 100).round(2).astype(str) + "%"
+        pareto_show["Acumulado"] = (pareto_show["Acumulado"] * 100).round(2).astype(str) + "%"
+
+        st.dataframe(pareto_show, use_container_width=True)
+
+    else:
+        st.warning("Não foi possível calcular Pareto (faltam indicadores ou RJ 2024 não está na base).")
 
     
-    
-    
-    
+    st.markdown("---")
+    st.header("📎 Verificações de Cruzamento — Evolução e Impacto")
 
+    # Identificar verificações de cruzamento pela metodologia
+    cruzamentos = met.loc[met["É_Cruzamento"] == True, "Código"].tolist()
+
+    # Filtrar apenas as que existem no dataset
+    cruzamentos_disp = [c for c in cruzamentos if c in df.columns]
+
+    if len(cruzamentos_disp) > 0:
+
+        # ===== RJ =====
+        cruz_rj = (
+            df[df["UF"] == "RJ"]
+            .groupby("VA_EXERCICIO")[cruzamentos_disp]
+            .mean(numeric_only=True)
+            .mean(axis=1)  # média geral das médias
+            .reset_index(name="Taxa_Cruzamento_RJ")
+        )
+
+        # ===== Brasil =====
+        cruz_br = (
+            df.groupby("VA_EXERCICIO")[cruzamentos_disp]
+            .mean(numeric_only=True)
+            .mean(axis=1)
+            .reset_index(name="Taxa_Cruzamento_BR")
+        )
+
+        cruz_comp = cruz_rj.merge(cruz_br, on="VA_EXERCICIO")
+
+        fig_cruz = px.line(
+            cruz_comp,
+            x="VA_EXERCICIO",
+            y=["Taxa_Cruzamento_RJ", "Taxa_Cruzamento_BR"],
+            markers=True,
+            title="Evolução da Taxa Média de Acerto — Verificações de Cruzamento",
+            labels={"value": "Taxa Média", "VA_EXERCICIO": "Ano"}
+        )
+
+        fig_cruz.update_layout(height=450)
+        st.plotly_chart(fig_cruz, use_container_width=True)
+
+    else:
+        st.warning("Nenhuma verificação de cruzamento encontrada no dataset.")
+
+    # ============================
+    # Evolução da DIM-IV
+    # ============================
+    st.subheader("📊 Evolução da DIM-IV (proxy estrutural de consistência)")
+
+    dim4_rj = df[df["UF"]=="RJ"].groupby("VA_EXERCICIO")["DIM-IV"].mean().reset_index()
+    dim4_br = df.groupby("VA_EXERCICIO")["DIM-IV"].mean().reset_index()
+
+    fig_dim4 = go.Figure()
+
+    fig_dim4.add_trace(go.Scatter(
+        x=dim4_rj["VA_EXERCICIO"],
+        y=dim4_rj["DIM-IV"],
+        mode="lines+markers",
+        name="RJ"
+    ))
+
+    fig_dim4.add_trace(go.Scatter(
+        x=dim4_br["VA_EXERCICIO"],
+        y=dim4_br["DIM-IV"],
+        mode="lines+markers",
+        name="Brasil"
+    ))
+
+    fig_dim4.update_layout(
+        title="Evolução da Dimensão IV — RJ vs Brasil",
+        height=450
+    )
+    st.plotly_chart(fig_dim4, use_container_width=True)
+            
+
+
+    # ============================
+    # Impacto (Correlação) - Geral
+    # ============================
+    st.subheader("📈 Impacto das Verificações de Cruzamento no Ranking (Correlação)")
+
+    # garante que você tem a lista de cruzamentos disponíveis
+    # cruzamentos_disp = [c for c in dimensoes_cruzamento if c in df.columns]  # exemplo, se ainda não existir
+
+    df_impacto = df.copy()
+
+    if len(cruzamentos_disp) == 0:
+        st.warning("Não encontrei colunas de cruzamento disponíveis para calcular a média.")
+    else:
+        df_impacto["Media_Cruzamento"] = df_impacto[cruzamentos_disp].mean(axis=1)
+
+        # remove linhas inválidas (evita erro no polyfit)
+        df_impacto = df_impacto.dropna(subset=["Media_Cruzamento", "TOTAL"])
+
+        if len(df_impacto) < 2:
+            st.warning("Dados insuficientes para calcular tendência (precisa de pelo menos 2 pontos).")
+        else:
+            x = df_impacto["Media_Cruzamento"]
+            y = df_impacto["TOTAL"]
+
+            coef = np.polyfit(x, y, 1)
+            poly1d_fn = np.poly1d(coef)
+
+            fig_scatter = px.scatter(
+                df_impacto,
+                x="Media_Cruzamento",
+                y="TOTAL",
+                title="Relação entre Consistência de Cruzamentos e Nota Total",
+                hover_data=["UF", "NOME_ENTE", "VA_EXERCICIO"]
+            )
+
+            fig_scatter.add_trace(
+                go.Scatter(
+                    x=np.sort(x),
+                    y=poly1d_fn(np.sort(x)),
+                    mode="lines",
+                    name="Tendência Linear"
+                )
+            )
+
+            fig_scatter.update_layout(height=450)
+            st.plotly_chart(fig_scatter, use_container_width=True)
+
+
+    # ============================
+    # Comparação RJ vs Demais UFs 
+    # ============================
+    st.subheader("📌 Comparação RJ vs Demais UFs — Média de Cruzamentos (2024)")
+
+    if len(cruzamentos_disp) == 0:
+        st.warning("Sem cruzamentos disponíveis no dataset para 2024.")
+    else:
+        df_2024 = df[df["VA_EXERCICIO"] == 2024].copy()
+        df_2024["Media_Cruzamento"] = df_2024[cruzamentos_disp].mean(axis=1)
+
+        uf_media = (
+            df_2024.groupby("UF")["Media_Cruzamento"]
+            .mean()
+            .reset_index()
+            .sort_values("Media_Cruzamento", ascending=False)
+        )
+
+        fig_uf_cruz = px.bar(
+            uf_media,
+            x="Media_Cruzamento",
+            y="UF",
+            orientation="h",
+            title="Média de Acerto em Cruzamentos por UF (2024)"
+        )
+
+        fig_uf_cruz.update_layout(height=600)
+        st.plotly_chart(fig_uf_cruz, use_container_width=True)
+                    
+            
+
+    #################################################################################
+
+    def calcular_resultados_cruzamentos(df: pd.DataFrame, met: pd.DataFrame, uf="RJ", anos=(2019, 2024)) -> dict:
+        # 1) lista de cruzamentos a partir da metodologia
+        cruz = met.loc[met["É_Cruzamento"] == True, "Código"].astype(str).tolist()
+        cruz_disp = [c for c in cruz if c in df.columns]
+
+        out = {
+            "uf": uf,
+            "anos": anos,
+            "n_cruzamentos": len(cruz_disp),
+            "cruzamentos_disp": cruz_disp,
+            "ok": len(cruz_disp) > 0
+        }
+
+        if not out["ok"]:
+            return out
+
+        # 2) recorte RJ e Brasil
+        df_periodo = df[df["VA_EXERCICIO"].between(anos[0], anos[1])].copy()
+        df_periodo["Media_Cruzamento"] = df_periodo[cruz_disp].mean(axis=1, numeric_only=True)
+
+        df_rj = df_periodo[df_periodo["UF"] == uf].copy()
+
+        # 3) séries anuais (média)
+        serie_rj = df_rj.groupby("VA_EXERCICIO", as_index=False).agg(
+            Media_Cruzamento=("Media_Cruzamento", "mean"),
+            TOTAL=("TOTAL", "mean"),
+            PER_ACERTOS=("PER_ACERTOS", "mean"),
+            N=("ID_ENTE", "nunique")
+        )
+
+        serie_br = df_periodo.groupby("VA_EXERCICIO", as_index=False).agg(
+            Media_Cruzamento=("Media_Cruzamento", "mean"),
+            TOTAL=("TOTAL", "mean"),
+            PER_ACERTOS=("PER_ACERTOS", "mean"),
+            N=("ID_ENTE", "nunique")
+        )
+
+        # 4) correlação cruzamentos vs TOTAL (período inteiro)
+        # (sem statsmodels: só Pearson simples)
+        df_corr = df_periodo[["Media_Cruzamento", "TOTAL"]].dropna()
+        corr = df_corr["Media_Cruzamento"].corr(df_corr["TOTAL"])
+
+        # 5) variação no período (primeiro vs último ano)
+        def delta_serie(s: pd.DataFrame, col: str) -> float:
+            s2 = s.sort_values("VA_EXERCICIO")
+            if len(s2) < 2:
+                return np.nan
+            return float(s2[col].iloc[-1] - s2[col].iloc[0])
+
+        out.update({
+            "serie_rj": serie_rj,
+            "serie_br": serie_br,
+            "corr_cruz_total": float(corr) if pd.notna(corr) else np.nan,
+            "delta_rj_cruz": delta_serie(serie_rj, "Media_Cruzamento"),
+            "delta_br_cruz": delta_serie(serie_br, "Media_Cruzamento"),
+            "delta_rj_total": delta_serie(serie_rj, "TOTAL"),
+            "delta_br_total": delta_serie(serie_br, "TOTAL"),
+            "rj_ultimo": serie_rj.sort_values("VA_EXERCICIO").tail(1).to_dict("records")[0] if len(serie_rj) else None,
+            "br_ultimo": serie_br.sort_values("VA_EXERCICIO").tail(1).to_dict("records")[0] if len(serie_br) else None,
+        })
+
+        return out
+
+
+    def gerar_texto_academico_cruzamentos(res: dict) -> str:
+        if not res.get("ok", False):
+            return (
+                "Não foi possível gerar a análise de cruzamentos porque não foram encontradas "
+                "verificações marcadas como cruzamento de dados (É_Cruzamento) que existam na base."
+            )
+
+        uf = res["uf"]
+        a0, a1 = res["anos"]
+        ncruz = res["n_cruzamentos"]
+        corr = res["corr_cruz_total"]
+
+        rj_u = res["rj_ultimo"]
+        br_u = res["br_ultimo"]
+
+        # valores do último ano
+        rj_cr = rj_u["Media_Cruzamento"] if rj_u else np.nan
+        br_cr = br_u["Media_Cruzamento"] if br_u else np.nan
+        rj_tot = rj_u["TOTAL"] if rj_u else np.nan
+        br_tot = br_u["TOTAL"] if br_u else np.nan
+
+        # deltas
+        d_rj = res["delta_rj_cruz"]
+        d_br = res["delta_br_cruz"]
+
+        # qualificação textual simples
+        def qual_corr(x):
+            if pd.isna(x): return "não estimável"
+            ax = abs(x)
+            if ax >= 0.70: return "elevada"
+            if ax >= 0.50: return "moderada a forte"
+            if ax >= 0.30: return "moderada"
+            return "fraca"
+
+        qcorr = qual_corr(corr)
+
+        texto = f"""
+    ### Verificações de cruzamento de dados e seus impactos no desempenho
+
+    Com base na metodologia oficial, foram identificadas **{ncruz} verificações classificadas como cruzamento de dados** (É_Cruzamento) com correspondência na base analisada. Essas verificações capturam a consistência entre demonstrativos distintos e, por conseguinte, funcionam como um proxy da qualidade de integração e coerência das informações declaradas pelos entes.
+
+    No período de **{a0} a {a1}**, observa-se que a relação entre a consistência nos cruzamentos e a pontuação geral do ranking apresenta associação **{qcorr}**, com **correlação de Pearson r = {corr:.3f}** (estimada a partir das médias municipais). Em termos interpretativos, esse achado é consistente com a hipótese de que divergências interdemonstrativos afetam o desempenho agregado no ranking, uma vez que penalizações em verificações de cruzamento tendem a se acumular e reduzir a pontuação total.
+
+    Ao comparar **{uf}** com o comportamento médio nacional no último ano do período analisado, verifica-se que a média de acerto em cruzamentos no **{uf}** foi de **{rj_cr*100:.1f}%**, enquanto a média nacional atingiu **{br_cr*100:.1f}%**. Em paralelo, a nota total média foi de **{rj_tot:.2f}** no **{uf}** e **{br_tot:.2f}** no agregado nacional, sugerindo convergência entre consistência contábil e desempenho geral.
+
+    Adicionalmente, a evolução temporal indica variação de **{d_rj*100:+.2f} p.p.** na média de cruzamentos no **{uf}** entre {a0} e {a1}, em contraste com **{d_br*100:+.2f} p.p.** no agregado nacional. Esses resultados permitem avaliar se a trajetória do estado acompanha, supera ou diverge do padrão observado no conjunto dos entes, fornecendo subsídios para intervenções direcionadas (capacitação, padronização de rotinas, validações automáticas e melhorias na governança dos dados).
+    """
+        return texto.strip()
+
+
+    res = calcular_resultados_cruzamentos(df=df, met=met, uf="RJ", anos=(2019, 2024))
+    texto = gerar_texto_academico_cruzamentos(res)
+
+    st.markdown(texto)
+    st.dataframe(res["serie_rj"], use_container_width=True)
+    st.dataframe(res["serie_br"], use_container_width=True)
