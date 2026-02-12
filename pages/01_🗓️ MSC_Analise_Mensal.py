@@ -793,6 +793,34 @@ def dimensao_d1_00035(df_base, pc_estendido):
     return resultado, d1_00035_erros
 
 
+def dimensao_d1_00036(df_original):
+    """
+    D1_00036: Envio de MSC encerramento com saldo final nas contas VPA e VPD.
+
+    Args:
+        df_original: DataFrame original
+
+    Returns:
+        Tuple (resultado, DataFrame com divergências)
+    """
+    # Agrupa por conta e aplica as inversões de saldo
+    analise = df_original.groupby(['CONTA', 'mes', 'TIPO_VALOR', 'NATUREZA_VALOR'])['VALOR'].sum().reset_index()
+    analise["Grupo_Contas"] = analise["CONTA"].str[0]
+
+    d1_00036_t = analise.query('(Grupo_Contas == "3" or Grupo_Contas == "4") and TIPO_VALOR == "ending_balance"')
+
+    #FAZER A CONDIÇÃO PARA DAR A RESPOSTA EM UMA LINHA (APÓS VERIFICAÇÃO)
+    condicao = d1_00036_t['VALOR'] == 0  
+    d1_00036_erros = (d1_00036_t['VALOR'] != 0).sum()   
+
+    if condicao.all():
+        resultado = 'OK'
+    else:
+        resultado = 'ERRO'
+
+    return resultado, d1_00036_erros
+
+
 def dimensao_d1_00037(df_base):
     """
     D1_00037: Verifica se estados e municípios enviaram informações em fontes de recursos da União (de 000 a 499).
@@ -1109,33 +1137,63 @@ if 'msc_base' in st.session_state:
         resultado_33, erros_33 = dimensao_d1_00033(msc_base)
         resultado_34, erros_34 = dimensao_d1_00034(msc_base, pc_estendido)
         resultado_35, erros_35 = dimensao_d1_00035(msc_base, pc_estendido)
+        resultado_36, erros_36 = dimensao_d1_00036(msc_original)
         resultado_37, erros_37 = dimensao_d1_00037(msc_base)
         resultado_38, erros_38 = dimensao_d1_00038(msc_base, pc_estendido)
 
-    # Montar resumo (1 erro por dimensão, não por linha)
-    resultados_resumo = [
-        ('D1_00017', 'Valores Negativos', resultado_17, 1 if resultado_17 == 'ERRO' else 0),
-        ('D1_00018', 'SI + MOV = SF', resultado_18, 1 if resultado_18 == 'ERRO' else 0),
-        ('D1_00019', 'Códigos de Poderes', resultado_19, 1 if resultado_19 == 'ERRO' else 0),
-        ('D1_00020', 'SI = SF mês anterior', resultado_20, 1 if resultado_20 == 'ERRO' else 0),
-        ('D1_00021', 'Natureza Ativo', resultado_21, 1 if resultado_21 == 'ERRO' else 0),
-        ('D1_00022', 'IC1 Preenchido', resultado_22, 1 if resultado_22 == 'ERRO' else 0),
-        ('D1_00023', 'Dados Executivo', resultado_23, 1 if resultado_23 == 'ERRO' else 0),
-        ('D1_00024', 'Dados Legislativo', resultado_24, 1 if resultado_24 == 'ERRO' else 0),
-        ('D1_00025', 'Natureza Passivo', resultado_25, 1 if resultado_25 == 'ERRO' else 0),
-        ('D1_00026', 'Natureza PL', resultado_26, 1 if resultado_26 == 'ERRO' else 0),
-        ('D1_00027', 'ISF sem FR', resultado_27, 1 if resultado_27 == 'ERRO' else 0),
-        ('D1_00028', 'Classes Completas', resultado_28, 1 if resultado_28 == 'ERRO' else 0),
-        ('D1_00029', 'Contas 621x sem IC2', resultado_29, 1 if resultado_29 == 'ERRO' else 0),
-        ('D1_00030', 'Contas 621x sem IC4', resultado_30, 1 if resultado_30 == 'ERRO' else 0),
-        ('D1_00031', 'Contas 62213 sem IC5', resultado_31, 1 if resultado_31 == 'ERRO' else 0),
-        ('D1_00032', 'Contas 62213 sem IC2', resultado_32, 1 if resultado_32 == 'ERRO' else 0),
-        ('D1_00033', 'Contas 52/62 sem IC3', resultado_33, 1 if resultado_33 == 'ERRO' else 0),
-        ('D1_00034', 'Natureza VPD', resultado_34, 1 if resultado_34 == 'ERRO' else 0),
-        ('D1_00035', 'Natureza VPA', resultado_35, 1 if resultado_35 == 'ERRO' else 0),
-        ('D1_00037', 'Fontes União (000-499)', resultado_37, 1 if resultado_37 == 'ERRO' else 0),
-        ('D1_00038', 'Natureza Classes 5 e 6', resultado_38, 1 if resultado_38 == 'ERRO' else 0),
-    ]
+
+    if mes_analise == "13":
+        resultados_resumo = [
+            ('D1_00017', 'Valores Negativos', resultado_17, 1 if resultado_17 == 'ERRO' else 0),
+            ('D1_00018', 'SI + MOV = SF', resultado_18, 1 if resultado_18 == 'ERRO' else 0),
+            ('D1_00019', 'Códigos de Poderes', resultado_19, 1 if resultado_19 == 'ERRO' else 0),
+            ('D1_00020', 'SI = SF mês anterior', resultado_20, 1 if resultado_20 == 'ERRO' else 0),
+            ('D1_00021', 'Natureza Ativo', resultado_21, 1 if resultado_21 == 'ERRO' else 0),
+            ('D1_00022', 'IC1 Preenchido', resultado_22, 1 if resultado_22 == 'ERRO' else 0),
+            ('D1_00023', 'Dados Executivo', resultado_23, 1 if resultado_23 == 'ERRO' else 0),
+            ('D1_00024', 'Dados Legislativo', resultado_24, 1 if resultado_24 == 'ERRO' else 0),
+            ('D1_00025', 'Natureza Passivo', resultado_25, 1 if resultado_25 == 'ERRO' else 0),
+            ('D1_00026', 'Natureza PL', resultado_26, 1 if resultado_26 == 'ERRO' else 0),
+            ('D1_00027', 'ISF sem FR', resultado_27, 1 if resultado_27 == 'ERRO' else 0),
+            ('D1_00028', 'Classes Completas', resultado_28, 1 if resultado_28 == 'ERRO' else 0),
+            ('D1_00029', 'Contas 621x sem IC2', resultado_29, 1 if resultado_29 == 'ERRO' else 0),
+            ('D1_00030', 'Contas 621x sem IC4', resultado_30, 1 if resultado_30 == 'ERRO' else 0),
+            ('D1_00031', 'Contas 62213 sem IC5', resultado_31, 1 if resultado_31 == 'ERRO' else 0),
+            ('D1_00032', 'Contas 62213 sem IC2', resultado_32, 1 if resultado_32 == 'ERRO' else 0),
+            ('D1_00033', 'Contas 52/62 sem IC3', resultado_33, 1 if resultado_33 == 'ERRO' else 0),
+            ('D1_00034', 'Natureza VPD', resultado_34, 1 if resultado_34 == 'ERRO' else 0),
+            ('D1_00035', 'Natureza VPA', resultado_35, 1 if resultado_35 == 'ERRO' else 0),
+            ('D1_00036', 'Encerramento de VPDs e VPAs (Mês 13)', resultado_36, 1 if resultado_36 == 'ERRO' else 0),
+            ('D1_00037', 'Fontes União (000-499)', resultado_37, 1 if resultado_37 == 'ERRO' else 0),
+            ('D1_00038', 'Natureza Classes 5 e 6', resultado_38, 1 if resultado_38 == 'ERRO' else 0),
+        ]
+
+
+    else:
+        resultados_resumo = [
+            ('D1_00017', 'Valores Negativos', resultado_17, 1 if resultado_17 == 'ERRO' else 0),
+            ('D1_00018', 'SI + MOV = SF', resultado_18, 1 if resultado_18 == 'ERRO' else 0),
+            ('D1_00019', 'Códigos de Poderes', resultado_19, 1 if resultado_19 == 'ERRO' else 0),
+            ('D1_00020', 'SI = SF mês anterior', resultado_20, 1 if resultado_20 == 'ERRO' else 0),
+            ('D1_00021', 'Natureza Ativo', resultado_21, 1 if resultado_21 == 'ERRO' else 0),
+            ('D1_00022', 'IC1 Preenchido', resultado_22, 1 if resultado_22 == 'ERRO' else 0),
+            ('D1_00023', 'Dados Executivo', resultado_23, 1 if resultado_23 == 'ERRO' else 0),
+            ('D1_00024', 'Dados Legislativo', resultado_24, 1 if resultado_24 == 'ERRO' else 0),
+            ('D1_00025', 'Natureza Passivo', resultado_25, 1 if resultado_25 == 'ERRO' else 0),
+            ('D1_00026', 'Natureza PL', resultado_26, 1 if resultado_26 == 'ERRO' else 0),
+            ('D1_00027', 'ISF sem FR', resultado_27, 1 if resultado_27 == 'ERRO' else 0),
+            ('D1_00028', 'Classes Completas', resultado_28, 1 if resultado_28 == 'ERRO' else 0),
+            ('D1_00029', 'Contas 621x sem IC2', resultado_29, 1 if resultado_29 == 'ERRO' else 0),
+            ('D1_00030', 'Contas 621x sem IC4', resultado_30, 1 if resultado_30 == 'ERRO' else 0),
+            ('D1_00031', 'Contas 62213 sem IC5', resultado_31, 1 if resultado_31 == 'ERRO' else 0),
+            ('D1_00032', 'Contas 62213 sem IC2', resultado_32, 1 if resultado_32 == 'ERRO' else 0),
+            ('D1_00033', 'Contas 52/62 sem IC3', resultado_33, 1 if resultado_33 == 'ERRO' else 0),
+            ('D1_00034', 'Natureza VPD', resultado_34, 1 if resultado_34 == 'ERRO' else 0),
+            ('D1_00035', 'Natureza VPA', resultado_35, 1 if resultado_35 == 'ERRO' else 0),
+            ('D1_00037', 'Fontes União (000-499)', resultado_37, 1 if resultado_37 == 'ERRO' else 0),
+            ('D1_00038', 'Natureza Classes 5 e 6', resultado_38, 1 if resultado_38 == 'ERRO' else 0),
+        ]
+    
 
     # Mostrar resumo primeiro
     st.header("📋 Resumo Geral da Análise")
@@ -1427,6 +1485,19 @@ if 'msc_base' in st.session_state:
             st.dataframe(erros_35, use_container_width=True, height=300)
             st.download_button("📥 Download Erros (Excel)", convert_df_to_excel(erros_35), "d1_00035_erros.xlsx", key="btn_35")
 
+    # D1_00036
+    if mes_analise == "13":
+        
+        with st.expander(format_expander_title("D1_00036", "Encerramento de VPDs e VPAs (Mês 13)", resultado_36)):
+            st.markdown("**Descrição:** Verifica se as contas de VPD e VPA foram encerradas na Matriz de Encerramento")
+            if resultado_36 == 'OK':
+                st.success(f"✅ {resultado_36} - Encerramentos realizados")
+            else:
+                st.error(f"❌ {resultado_36} - {len(erros_36)} Contas com saldos no mês 13")
+                st.dataframe(erros_36, use_container_width=True, height=300)
+                st.download_button("📥 Download Erros (Excel)", convert_df_to_excel(erros_36), "d1_00036_erros.xlsx", key="btn_36")
+
+
     # D1_00037
     with st.expander(format_expander_title("D1_00037", "Fontes de Recursos da União (000-499)", resultado_37)):
         st.markdown("**Descrição:** Verifica se estados e municípios enviaram informações em fontes de recursos da União (de 000 a 499)")
@@ -1490,6 +1561,7 @@ else:
     - **D1_00033**: Contas 5221/5222/6221/6222/6223 com IC3 (FR) preenchido
     - **D1_00034**: Natureza VPD (Variações Patrimoniais Diminutivas)
     - **D1_00035**: Natureza VPA (Variações Patrimoniais Aumentativas)
+    - **D1_00036**: Encerramento de VPDs e VPAs (OBS: APENAS NA MATRIZ DE ENCERRAMENTO - Mês 13)
     - **D1_00037**: Fontes de Recursos da União (000-499) - Estados/Municípios
     - **D1_00038**: Natureza de saldo das Classes 5 e 6 conforme PCASP
     """)
