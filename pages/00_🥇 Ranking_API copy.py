@@ -884,40 +884,9 @@ def main():
         'DCA - Anexo I-F': not df_dca_f.empty,
         'DCA - Anexo I-G': not df_dca_g.empty,
         'DCA - Anexo I-HI': not df_dca_hi.empty,
+        'RREO': not rreo.empty if isinstance(rreo, pd.DataFrame) else len(rreo) > 0,
+        'RGF': not rgf_total.empty,
     }
-
-    status_rreo = {
-        'RREO - Anexo 1': not df_rreo_1.empty,
-        'RREO - Anexo 2': not df_rreo_2.empty,
-        'RREO - Anexo 3': not df_rreo_3.empty,
-        'RREO - Anexo 6': not df_rreo_6.empty,
-        'RREO - Anexo 7': not df_rreo_7.empty,
-        'RREO - Anexo 9': not df_rreo_9.empty,
-    }
-
-    status_rgf = {
-        'RGF - Anexo 1 (E)': not df_rgf_1e.empty,
-        'RGF - Anexo 2 (E)': not df_rgf_2e.empty,
-        'RGF - Anexo 3 (E)': not df_rgf_3e.empty,
-        'RGF - Anexo 4 (E)': not df_rgf_4e.empty,
-        'RGF - Anexo 5 (E)': not df_rgf_5e.empty,
-    }
-    if tipo_ente == "E":
-        # Estados: E, L, J, M, D
-        status_rgf.update({
-        'RGF - Anexo 5 (L)': not rgf.get('5l', pd.DataFrame()).empty,
-        'RGF - Anexo 5 (J)': not rgf.get('5j', pd.DataFrame()).empty,
-        'RGF - Anexo 5 (M)': not rgf.get('5m', pd.DataFrame()).empty,
-        'RGF - Anexo 5 (D)': not rgf.get('5d', pd.DataFrame()).empty,
-        })
-    else:
-        # Municípios: apenas E e L
-        status_rgf.update({
-        'RGF - Anexo 5 (L)': not rgf.get('5l', pd.DataFrame()).empty,
-        })
-
-    demonstrativos_status.update(status_rreo)
-    demonstrativos_status.update(status_rgf)
 
     # Classificar demonstrativos por criticidade
     criticos_d1 = ['MSC Patrimonial', 'MSC Orçamentária', 'MSC Controle']
@@ -956,7 +925,7 @@ def main():
 
     # Expander com detalhes
     with st.expander("🔍 Ver Detalhes dos Demonstrativos", expanded=total_faltando > 0):
-        col_msc, col_dca, col_rreo, col_rgf = st.columns(4)
+        col_msc, col_dca, col_outros = st.columns(3)
 
         with col_msc:
             st.markdown("**MSC (Matriz de Saldos Contábeis)**")
@@ -976,16 +945,13 @@ def main():
                 else:
                     st.markdown(f"❌ {demo}")
 
-        with col_rreo:
-            st.markdown("RREO (Relatório Resumido de Execução Orçamentária)")
-            for nome, ok in status_rreo.items():
-                st.markdown(f"{'✅' if ok else '❌'} {nome}")
-
-        with col_rgf:
-            st.markdown("**RGF (Relatório de Gestão Fiscal)**")
-            for nome, ok in status_rgf.items():
-                st.markdown(f"{'✅' if ok else '❌'} {nome}")
-
+        with col_outros:
+            st.markdown("**Outros Relatórios**")
+            for demo in ['RREO', 'RGF']:
+                if demonstrativos_status.get(demo, False):
+                    st.markdown(f"✅ {demo}")
+                else:
+                    st.markdown(f"❌ {demo}")
 
     # Alertas específicos
     if faltantes:
