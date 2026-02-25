@@ -19,7 +19,7 @@ st.markdown("Analisar a tabela das Dimensões do Ranking obtidas da página de m
 
 with st.expander("Como obter o arquivo HTML?"):
     st.write("""
-    1. Abra o site do [Tesouro Nacional](https://ranking-municipios.tesouro.gov.br/metodologia).
+    1. Abra o site do Tesouro Nacional [Metodologia do Ranking Siconfi](https://ranking-municipios.tesouro.gov.br/metodologia).
     2. Espere a página carregar completamente.
     3. Pressione `Ctrl + S` (Windows) ou `Cmd + S` (Mac).
     4. Certifique-se de que o tipo do arquivo seja **Página Web, Somente HTML** ou **Página Web Completa**.

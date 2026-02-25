@@ -14,6 +14,8 @@ st.markdown("---")
 # Menu lateral estruturado
 sidebar_menu(get_app_menu(), use_expanders=True, expanded=False)
 
+API_ROOT = "https://apidatalake.tesouro.gov.br/ords/siconfi/tt"
+
 
 ##############################################################################
 ##############################################################################
@@ -21,111 +23,38 @@ sidebar_menu(get_app_menu(), use_expanders=True, expanded=False)
 ##############################################################################
 ##############################################################################
 
-import asyncio
-import random
-import httpx
-import pandas as pd
-
-API_ROOT = "https://apidatalake.tesouro.gov.br/ords/siconfi/tt"
-
-# ---------------------------------------------------------
-# HTTP robusto: retry + backoff + jitter + limites
-# ---------------------------------------------------------
-
-TRANSIENT_STATUS = {429, 500, 502, 503, 504}
-
-def _retry_sleep(attempt: int, base: float = 0.6, cap: float = 10.0) -> float:
-    # Exponencial com jitter (evita rajada sincronizada)
-    wait = min(cap, base * (2 ** attempt))
-    return wait + random.uniform(0, 0.35)
-
-async def _request_json(
-    client: httpx.AsyncClient,
-    url: str,
-    params: dict,
-    sem: asyncio.Semaphore | None,
-    retries: int = 6,
-    timeout: float = 90.0,
-):
-    last_exc: Exception | None = None
-
+async def _request_json(client, url, params, sem, retries=3, backoff=0.5, timeout=120):
     for attempt in range(retries):
+        if sem:
+            await sem.acquire()
         try:
-            if sem is None:
-                resp = await client.get(url, params=params, timeout=timeout)
-            else:
-                async with sem:
-                    resp = await client.get(url, params=params, timeout=timeout)
-
-            # rate-limit/erros transitórios do servidor
-            if resp.status_code in TRANSIENT_STATUS:
-                # respeitar Retry-After quando existir
-                ra = resp.headers.get("Retry-After")
-                if ra and ra.isdigit():
-                    await asyncio.sleep(min(float(ra), 15.0))
-                else:
-                    await asyncio.sleep(_retry_sleep(attempt))
+            resp = await client.get(url, params=params, timeout=timeout)
+            if resp.status_code in (429, 500, 502, 503, 504):
+                await asyncio.sleep(backoff * (2 ** attempt))
                 continue
-
             resp.raise_for_status()
             data = resp.json()
             return data.get("items", [])
+        finally:
+            if sem:
+                sem.release()
+    resp.raise_for_status()
 
-        except (httpx.RemoteProtocolError, httpx.ReadTimeout, httpx.ConnectTimeout, httpx.NetworkError) as e:
-            last_exc = e
-            await asyncio.sleep(_retry_sleep(attempt))
-            continue
-
-        except httpx.HTTPStatusError as e:
-            # erros "definitivos" (ex: 400/404) normalmente não adianta tentar muito
-            last_exc = e
-            # mas se cair aqui por algum motivo com status transitório, já tratamos acima
-            break
-
-    # se chegou aqui, falhou tudo
-    if last_exc:
-        raise last_exc
-    raise RuntimeError("Falha inesperada em _request_json sem exceção registrada.")
-
-async def fetch_paginated(
-    client: httpx.AsyncClient,
-    path: str,
-    params: dict,
-    sem: asyncio.Semaphore | None = None,
-    page_size: int = 5000,
-    delay: float = 0.15,  # pequeno espaçamento ajuda MUITO
-):
+async def fetch_paginated(client, path, params, sem=None, page_size=5000, delay=0.0):
     frames, offset = [], 0
-
     while True:
         q = dict(params)
         q.update({"offset": offset, "limit": page_size})
-
         items = await _request_json(client, f"{API_ROOT}/{path}", q, sem)
-
         if not items:
             break
-
         frames.append(pd.DataFrame(items))
         offset += page_size
-
         if delay:
             await asyncio.sleep(delay)
-
     return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
 
-async def load_msc_group(
-    client: httpx.AsyncClient,
-    path: str,
-    classes: list,
-    co_tipo_matriz: str,
-    tipos_balanco: list,
-    meses: list,
-    ente: str,
-    ano: str,
-    sem: asyncio.Semaphore,
-    delay: float = 0.15,
-):
+async def load_msc_group(client, path, classes, co_tipo_matriz, tipos_balanco, meses, ente, ano, sem, delay=0.0):
     tasks = []
     for classe in map(str, classes):
         for tipo in tipos_balanco:
@@ -139,49 +68,16 @@ async def load_msc_group(
                     "id_tv": tipo,
                 }
                 tasks.append(fetch_paginated(client, path, params, sem=sem, delay=delay))
+    dfs = await asyncio.gather(*tasks)
+    return pd.concat([df for df in dfs if not df.empty], ignore_index=True) if dfs else pd.DataFrame()
 
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-
-    dfs = []
-    errs = []
-    for r in results:
-        if isinstance(r, Exception):
-            errs.append(r)
-        elif r is not None and not r.empty:
-            dfs.append(r)
-
-    # se deu erro em tudo, explodimos com a primeira (mas pelo menos não mata à toa quando só 1 falha)
-    if not dfs and errs:
-        raise errs[0]
-
-    return pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
-
-async def load_msc_all(
-    ente: str,
-    ano: str,
-    meses: list,
-    tipos_balanco: list,
-    co_tipo_matriz: str = "MSCC",
-    concurrency: int = 3,   # <- BAIXE ISSO (2..4)
-    delay: float = 0.15,    # <- AUMENTE ISSO (0.10..0.25)
-):
+async def load_msc_all(ente, ano, meses, tipos_balanco, co_tipo_matriz="MSCC", concurrency=8, delay=0.05):
     sem = asyncio.Semaphore(concurrency)
-
-    limits = httpx.Limits(max_connections=10, max_keepalive_connections=5)
-    timeout = httpx.Timeout(90.0, connect=10.0)
-
-    headers = {
-        "User-Agent": "streamlit-app/msc-analise (httpx)"
-    }
-
-    # IMPORTANTE: forçar HTTP/1.1
-    async with httpx.AsyncClient(http2=False, limits=limits, timeout=timeout, headers=headers) as client:
+    async with httpx.AsyncClient(http2=True) as client:
         msc_patrimonial = await load_msc_group(client, "msc_patrimonial", [1,2,3,4], co_tipo_matriz, tipos_balanco, meses, ente, ano, sem, delay)
         msc_orcam       = await load_msc_group(client, "msc_orcamentaria", [5,6],   co_tipo_matriz, tipos_balanco, meses, ente, ano, sem, delay)
         msc_ctr         = await load_msc_group(client, "msc_controle",     [7,8],   co_tipo_matriz, tipos_balanco, meses, ente, ano, sem, delay)
-
     return msc_patrimonial, msc_orcam, msc_ctr
-
 
 def run_async(coro):
     try:
@@ -198,7 +94,7 @@ def fetch_and_prepare(ente: str, ano: str, mes_selecionado: int):
     tipos_balanco = ["ending_balance", "beginning_balance", "period_change"]
 
     msc_patrimonial, msc_orcam, msc_ctr = run_async(
-        load_msc_all(ente, ano, meses, tipos_balanco, co_tipo_matriz="MSCC", concurrency=3, delay=0.15)
+        load_msc_all(ente, ano, meses, tipos_balanco, co_tipo_matriz="MSCC", concurrency=8, delay=0.05)
     )
 
     msc_patrimonial_orig = msc_patrimonial.copy()
@@ -260,7 +156,7 @@ def fetch_and_prepare(ente: str, ano: str, mes_selecionado: int):
         return context, max_mes_disponivel, meses_disponiveis
     else:
         msc_patr_encerr, msc_orcam_encerr, msc_ctr_encerr = run_async(
-            load_msc_all(ente, ano, [12], tipos_balanco, co_tipo_matriz="MSCE", concurrency=3, delay=0.15)
+            load_msc_all(ente, ano, [12], tipos_balanco, co_tipo_matriz="MSCE", concurrency=8, delay=0.05)
         )
         msc_patr_encerr_orig = msc_patr_encerr.copy()
         msc_orcam_encerr_orig = msc_orcam_encerr.copy()
