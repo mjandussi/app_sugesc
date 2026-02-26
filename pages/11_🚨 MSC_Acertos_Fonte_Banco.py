@@ -29,7 +29,7 @@ st.markdown("""
   <p><b>Contas processadas:</b></p>
   <ul>
     <li>111110200, 111110602, 111110603, 111110604, 111111900</li>
-    <li>111113000, 111115000, 113810600, 113829900, 114410101</li>
+    <li>111113000, 111115000, 113810600, 113829900, 114410101, 113859900</li>
   </ul>
 
   <p><b>Regra aplicada:</b> Quando <code>IC2 = '1'</code> (Financeiro) e <code>IC3</code> está vazio,
@@ -48,7 +48,7 @@ st.divider()
 # Lista de contas que devem receber ajuste de fonte
 LISTA_CONTAS_ATIVO_F = [
     '111110200', '111110602', '111110603', '111110604', '111111900',
-    '111113000', '111115000', '113810600', '113829900', '114410101'
+    '111113000', '111115000', '113810600', '113829900', '114410101', '113859900'
 ]
 
 # Colunas para agrupamento
