@@ -26,11 +26,17 @@ st.markdown("""
 **Validação cruzada** entre a Matriz de Saldos Contábeis (MSC) e os relatórios do Flexvision (FLEX).
 
 Esta ferramenta realiza 5 análises comparativas:
-- **Item 1**: Saldo Final (mês anterior FLEX) vs Saldo Inicial (MSC atual)
-- **Item 2**: Análise por Grupo de Contas (SI, SF, Movimento)
-- **Item 3**: Receita Realizada por Poder e Fonte
-- **Item 4**: Despesa Empenhada a Liquidar por Poder e Fonte
-- **Item 5**: Restos a Pagar por Poder, Função/Subfunção, Fonte e Ano de Inscrição
+- **Item 1**: Saldo Final (mês anterior FLEX) vs Saldo Inicial (MSC atual) >> RELATÓRIO DO FLEX - 042612 (DETABALAN)
+- **Item 2**: Análise por Grupo de Contas (SI, SF, Movimento) >> RELATÓRIO DO FLEX - 042697 (RECEITA REALIZADA)
+- **Item 3**: Receita Realizada por Poder e Fonte >> RELATÓRIO DO FLEX - 042612 (DETABALAN)
+- **Item 4**: Despesa Empenhada a Liquidar por Poder e Fonte >> RELATÓRIO DO FLEX - 042612 (DETABALAN)
+- **Item 5**: Restos a Pagar por Poder, Função/Subfunção, Fonte e Ano de Inscrição >> RELATÓRIO DO FLEX - 042612 (DETABALAN)
+            
+4 CONSULTAS A SEREM GERADAS NO FLEXVISION:
+- **042612 - 1)DETABALAN**
+- **042697 - 2)Receita Realizada**
+- **051574 - 3)Despesa Empenhada a Liquidar**
+- **049181 - 4)RPP a Pagar
 """)
 
 st.divider()
