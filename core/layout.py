@@ -37,6 +37,7 @@ APP_MENU = {
         {"path": "pages/16_❌ Conferencia_PTs.py", "label": "Conferência dos PTs e Saldos de RPP", "icon": "❌"},
         {"path": "pages/17_⚖️ Conferencia_Virada_de_Saldos.py", "label": "Conferência de Saldos Virada do Exercício", "icon": "⚖️"},
         {"path": "pages/19_🗑️ Analise_PDs_Lixo.py", "label": "Análise de PDs Lixo", "icon": "🗑️"},
+        {"path": "pages/22_🔢 Calculo_Boleto_Fator_Vencimento.py", "label": "Cálculo de Fator de Vencimento de Boletos", "icon": "🔢"},
     ],
     "Manuais": [
         {"path": "pages/08_🏦 Manuais_SUGESC.py", "label": "Manuais SUGESC (SUBCONT)", "icon": "🏦"},
