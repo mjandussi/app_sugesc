@@ -21,6 +21,7 @@ APP_MENU = {
         {"path": "pages/11_🚨 MSC_Acertos_Fonte_Banco.py", "label": "Acerto de Fontes em Banco", "icon": "🚨"},
         {"path": "pages/13_✔️ MSC_Conferencia_com_Layout_STN.py", "label": "Conferência entre Matriz e Layout da STN", "icon": "✔️"},
         {"path": "pages/15_🔍 Analisar_Tabela_de_Dimensoes_Ranking.py", "label": "Analisar a Tabela das Dimensões do Ranking", "icon": "🔍"},
+        {"path": "pages/23_🔍 Análise_CO.py", "label": "Análise do CO", "icon": "🔍"},
     ],
     "Dashboards": [
         {"path": "pages/04_📊 Dashboard_RREO.py", "label": "Dashboard RREO", "icon": "📊"},
